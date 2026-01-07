@@ -1,6 +1,7 @@
+import { createTicket } from "@/app/api/tickets";
+import { uploadImage } from "@/app/api/uploadImage";
 import Header from "@/components/header";
 import useToast from "@/components/toast/useToast";
-
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
@@ -46,7 +47,7 @@ export default function CreateTicketScreen() {
     setImage(asset.uri);
   };
 
-  const onSave = () => {
+  const onSave = async () => {
     if (!title.trim()) {
       Alert.alert("Validation", "Title is required");
       return;
@@ -66,6 +67,37 @@ export default function CreateTicketScreen() {
 
     Alert.alert("Success", "Ticket saved");
     console.log("Ticket saved");
+     try {
+
+      let imageUrl = null;
+
+    if (image) {
+      console.log(image);
+      
+      imageUrl = await uploadImage(image); // ⭐ CLOUDINARY
+    }
+
+    // ---------- API CALL ----------
+    await createTicket({
+      title: title.trim(),
+      info: info.trim(),
+      priority,
+      budget,
+      image,
+    });
+
+    toast.show("Ticket created successfully", "success");
+
+    // ---------- RESET FORM ----------
+    setTitle("");
+    setInfo("");
+    setPriority("P1");
+    setBudget("");
+    setImage(null);
+  } catch (error) {
+    console.error(error);
+    toast.show("Failed to create ticket", "error");
+  }
   };
 
   return (
