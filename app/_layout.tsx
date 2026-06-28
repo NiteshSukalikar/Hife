@@ -1,4 +1,5 @@
 import { ToastProvider } from "@/components/toast/toastProvider";
+import StartupIntro from "@/components/startup-intro";
 import {
   DarkTheme,
   ThemeProvider,
@@ -41,9 +42,10 @@ export default function RootLayout() {
               options={{ presentation: "modal", title: "About Hife" }}
             />
           </Stack>
+          <StartupIntro />
         </ToastProvider>
 
-        <StatusBar style="auto" />
+        <StatusBar style="light" />
       </ThemeProvider>
     </SafeAreaProvider>
   );
