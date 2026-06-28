@@ -1,6 +1,16 @@
 import Header from "@/components/header";
 import useToast from "@/components/toast/useToast";
-import { BudgetSettings, PurchaseRequest, RequestPriority } from "@/constants/types";
+import {
+  AiDecisionResult,
+  AiRecommendation,
+  BudgetSettings,
+  PurchaseRequest,
+  RequestPriority,
+} from "@/constants/types";
+import {
+  getAiDecisionForDraft,
+  MONTHLY_AI_USAGE_LIMIT,
+} from "@/services/aiDecisionAssistant";
 import { getBudgetSettings } from "@/services/budgets";
 import { createPurchaseRequest, getPurchaseRequests } from "@/services/purchaseRequests";
 import { uploadImage } from "@/services/uploadImage";
@@ -16,7 +26,7 @@ import { parseProductLinks } from "@/utils/productLinks";
 import { Picker } from "@react-native-picker/picker";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -30,6 +40,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const AI_RECOMMENDATION_LABELS: Record<AiRecommendation, string> = {
+  approve: "Approve",
+  decline: "Decline",
+  buy_later: "Buy later",
+  needs_more_info: "Needs more info",
+};
 
 export default function CreateRequestScreen() {
   const [image, setImage] = useState<string | null>(null);
@@ -47,6 +64,9 @@ export default function CreateRequestScreen() {
     DEFAULT_BUDGET_SETTINGS
   );
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
+  const [aiDecision, setAiDecision] = useState<AiDecisionResult | null>(null);
+  const [aiError, setAiError] = useState("");
+  const [isAskingAi, setIsAskingAi] = useState(false);
 
   const toast = useToast();
 
@@ -77,6 +97,11 @@ export default function CreateRequestScreen() {
     expectedAmount > budgetSummary.remainingBudget;
   const exceedsCategoryBudget =
     !!categorySummary?.budget && expectedAmount > categorySummary.remaining;
+
+  useEffect(() => {
+    setAiDecision(null);
+    setAiError("");
+  }, [productName, reason, priority, expectedPrice, maxBudget, category]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -109,6 +134,73 @@ export default function CreateRequestScreen() {
     setLinksText("");
     setImage(null);
     setImageError("");
+    setAiDecision(null);
+    setAiError("");
+  };
+
+  const validateDraftForAi = () => {
+    if (!productName.trim()) {
+      Alert.alert("Validation", "Product name is required before asking AI");
+      return false;
+    }
+    if (!reason.trim()) {
+      Alert.alert("Validation", "Reason is required before asking AI");
+      return false;
+    }
+    if (!expectedPrice) {
+      Alert.alert("Validation", "Expected price is required before asking AI");
+      return false;
+    }
+    if (!maxBudget) {
+      Alert.alert("Validation", "Maximum budget is required before asking AI");
+      return false;
+    }
+
+    return true;
+  };
+
+  const onAskAi = async () => {
+    if (isAskingAi || !validateDraftForAi()) return;
+
+    try {
+      setIsAskingAi(true);
+      setAiError("");
+      const result = await getAiDecisionForDraft({
+        title: productName,
+        reason,
+        price: Number(expectedPrice),
+        budget: Number(maxBudget),
+        priority,
+        category,
+        recentSpending: {
+          monthKey: budgetSummary.currentMonthKey,
+          monthlyBudget: budgetSummary.monthlyBudget,
+          approvedThisMonth: budgetSummary.approvedTotal,
+          pendingThisMonth: budgetSummary.pendingTotal,
+          monthlyRemaining: budgetSummary.remainingBudget,
+          categoryBudget: categorySummary?.budget || 0,
+          categoryRemaining: categorySummary?.remaining || 0,
+        },
+      });
+
+      setAiDecision(result);
+      toast.show(
+        result.fromCache
+          ? "Loaded saved AI recommendation"
+          : "AI recommendation ready",
+        "success"
+      );
+    } catch (error: any) {
+      console.error(error);
+      const message =
+        error?.code === "ai/monthly-limit-reached"
+          ? error.message
+          : "AI recommendation failed. You can still create the request.";
+      setAiError(message);
+      toast.show("AI recommendation failed", "error");
+    } finally {
+      setIsAskingAi(false);
+    }
   };
 
   const onSave = async () => {
@@ -333,6 +425,77 @@ export default function CreateRequestScreen() {
               ) : null}
             </View>
 
+            <View style={styles.aiPanel}>
+              <View style={styles.aiHeader}>
+                <View style={styles.aiHeaderText}>
+                  <Text style={styles.aiTitle}>AI decision assistant</Text>
+                  <Text style={styles.aiHint}>
+                    Optional. Cached per draft, limited to {MONTHLY_AI_USAGE_LIMIT} new recommendations each month.
+                  </Text>
+                </View>
+                <Pressable
+                  style={[
+                    styles.askAiButton,
+                    isAskingAi ? styles.disabledBtn : null,
+                  ]}
+                  disabled={isAskingAi}
+                  onPress={onAskAi}
+                >
+                  <Text style={styles.askAiText}>
+                    {isAskingAi ? "Asking..." : "Ask AI"}
+                  </Text>
+                </Pressable>
+              </View>
+
+              {aiError ? <Text style={styles.errorText}>{aiError}</Text> : null}
+
+              {aiDecision ? (
+                <View style={styles.aiResult}>
+                  <View style={styles.aiResultTop}>
+                    <View>
+                      <Text style={styles.aiResultLabel}>Recommendation</Text>
+                      <Text style={styles.aiResultValue}>
+                        {AI_RECOMMENDATION_LABELS[aiDecision.recommendation]}
+                      </Text>
+                    </View>
+                    <View style={styles.aiPriorityPill}>
+                      <Text style={styles.aiPriorityText}>
+                        {aiDecision.suggestedPriority}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {aiDecision.suggestedPriority !== priority ? (
+                    <Pressable
+                      style={styles.applyPriorityButton}
+                      onPress={() => setPriority(aiDecision.suggestedPriority)}
+                    >
+                      <Text style={styles.applyPriorityText}>
+                        Use suggested priority
+                      </Text>
+                    </Pressable>
+                  ) : null}
+
+                  <Text style={styles.aiSectionLabel}>Budget impact</Text>
+                  <Text style={styles.aiBody}>{aiDecision.budgetImpact}</Text>
+
+                  <Text style={styles.aiSectionLabel}>Reasoning</Text>
+                  <Text style={styles.aiBody}>{aiDecision.reasoning}</Text>
+
+                  <Text style={styles.aiSectionLabel}>Suggested message</Text>
+                  <Text style={styles.aiMessage}>
+                    {aiDecision.suggestedMessage}
+                  </Text>
+
+                  {aiDecision.fromCache ? (
+                    <Text style={styles.aiCacheText}>
+                      Showing a saved result for this draft.
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
+            </View>
+
             <Text style={styles.label}>Product links</Text>
             <TextInput
               style={[styles.input, styles.linksInput]}
@@ -483,6 +646,119 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
     marginTop: 6,
+  },
+  aiPanel: {
+    backgroundColor: "#101312",
+    borderColor: "#263026",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 16,
+    padding: 12,
+  },
+  aiHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+  },
+  aiHeaderText: {
+    flex: 1,
+  },
+  aiTitle: {
+    color: "#39FF14",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  aiHint: {
+    color: "#A1A1AA",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 3,
+  },
+  askAiButton: {
+    backgroundColor: "#39FF14",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  askAiText: {
+    color: "#050505",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  aiResult: {
+    borderTopColor: "#263026",
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 12,
+  },
+  aiResultTop: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  aiResultLabel: {
+    color: "#A1A1AA",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  aiResultValue: {
+    color: "#F8FAFC",
+    fontSize: 16,
+    fontWeight: "800",
+    marginTop: 2,
+  },
+  aiPriorityPill: {
+    backgroundColor: "#39FF14",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  aiPriorityText: {
+    color: "#050505",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  applyPriorityButton: {
+    alignSelf: "flex-start",
+    borderColor: "#39FF14",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  applyPriorityText: {
+    color: "#39FF14",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  aiSectionLabel: {
+    color: "#B8FFB0",
+    fontSize: 12,
+    fontWeight: "800",
+    marginTop: 12,
+    textTransform: "uppercase",
+  },
+  aiBody: {
+    color: "#F8FAFC",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 4,
+  },
+  aiMessage: {
+    backgroundColor: "#171A18",
+    borderRadius: 8,
+    color: "#F8FAFC",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 6,
+    padding: 10,
+  },
+  aiCacheText: {
+    color: "#A1A1AA",
+    fontSize: 12,
+    marginTop: 10,
   },
   linksInput: {
     minHeight: 72,

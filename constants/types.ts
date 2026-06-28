@@ -9,6 +9,12 @@ export type RequestStatus =
   | "purchased"
   | "cancelled";
 
+export type AiRecommendation =
+  | "approve"
+  | "decline"
+  | "buy_later"
+  | "needs_more_info";
+
 export type ProductLink = {
   url: string;
   source: string;
@@ -19,6 +25,16 @@ export type CategoryBudgetMap = Record<string, number>;
 export type BudgetSettings = {
   monthlyBudget: number;
   categoryBudgets: CategoryBudgetMap;
+};
+
+export type AiDecisionResult = {
+  suggestedPriority: RequestPriority;
+  recommendation: AiRecommendation;
+  budgetImpact: string;
+  reasoning: string;
+  suggestedMessage: string;
+  fromCache?: boolean;
+  source?: "configured_ai" | "local_assistant" | "cache";
 };
 
 export type PurchaseRequest = {

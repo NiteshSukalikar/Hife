@@ -85,18 +85,18 @@ Goal: Help users make decisions based on money, priority, and monthly spending.
 
 Goal: Add useful AI features that support household purchase decisions without increasing cost too much.
 
-- [ ] Add an `Ask AI` button on the create request screen.
-- [ ] Send title, reason, price, budget, priority, category, and recent spending to AI.
-- [ ] Return suggested priority.
-- [ ] Return recommendation: approve, decline, buy later, or need more info.
-- [ ] Return budget impact explanation.
-- [ ] Return short reasoning.
-- [ ] Return a polite suggested message for approval or decline.
-- [ ] Cache AI result in Firestore.
-- [ ] Show previously generated AI result instead of calling AI again.
-- [ ] Add monthly AI usage limit per household.
-- [ ] Add error handling for failed AI calls.
-- [ ] Make AI optional so the app still works without paid usage.
+- [x] Add an `Ask AI` button on the create request screen.
+- [x] Send title, reason, price, budget, priority, category, and recent spending to AI.
+- [x] Return suggested priority.
+- [x] Return recommendation: approve, decline, buy later, or need more info.
+- [x] Return budget impact explanation.
+- [x] Return short reasoning.
+- [x] Return a polite suggested message for approval or decline.
+- [x] Cache AI result in Firestore.
+- [x] Show previously generated AI result instead of calling AI again.
+- [x] Add monthly AI usage limit per household.
+- [x] Add error handling for failed AI calls.
+- [x] Make AI optional so the app still works without paid usage.
 
 ## Phase 7: Real-Time Collaboration And Notifications
 
