@@ -1,4 +1,4 @@
-import { createTicket } from "@/app/api/tickets";
+import { createPurchaseRequest } from "@/app/api/tickets";
 import { uploadImage } from "@/app/api/uploadImage";
 import Header from "@/components/header";
 import useToast from "@/components/toast/useToast";
@@ -18,19 +18,20 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-export default function CreateTicketScreen() {
+
+export default function CreateRequestScreen() {
   const [image, setImage] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [info, setInfo] = useState("");
   const [priority, setPriority] = useState("P1");
   const [budget, setBudget] = useState("");
 
-  const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1 MB
+  const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
   const toast = useToast();
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"], // ✅ modern API
+      mediaTypes: ["images"],
       quality: 0.8,
     });
 
@@ -38,7 +39,6 @@ export default function CreateTicketScreen() {
 
     const asset = result.assets[0];
 
-    // ✅ Use fileSize directly
     if (asset.fileSize && asset.fileSize > MAX_IMAGE_SIZE) {
       toast.show("Image must be under 1 MB", "error");
       return;
@@ -61,43 +61,36 @@ export default function CreateTicketScreen() {
       return;
     }
     if (!budget) {
-      Alert.alert("Validation", "Budget required");
+      Alert.alert("Validation", "Budget is required");
       return;
     }
 
-    Alert.alert("Success", "Ticket saved");
-    console.log("Ticket saved");
-     try {
-
+    try {
       let imageUrl = null;
 
-    if (image) {
-      console.log(image);
-      
-      imageUrl = await uploadImage(image); // ⭐ CLOUDINARY
+      if (image) {
+        imageUrl = await uploadImage(image);
+      }
+
+      await createPurchaseRequest({
+        title: title.trim(),
+        info: info.trim(),
+        priority,
+        budget,
+        image: imageUrl,
+      });
+
+      toast.show("Request created successfully", "success");
+
+      setTitle("");
+      setInfo("");
+      setPriority("P1");
+      setBudget("");
+      setImage(null);
+    } catch (error) {
+      console.error(error);
+      toast.show("Failed to create request", "error");
     }
-
-    // ---------- API CALL ----------
-    await createTicket({
-      title: title.trim(),
-      info: info.trim(),
-      priority,
-      budget,
-      image,
-    });
-
-    toast.show("Ticket created successfully", "success");
-
-    // ---------- RESET FORM ----------
-    setTitle("");
-    setInfo("");
-    setPriority("P1");
-    setBudget("");
-    setImage(null);
-  } catch (error) {
-    console.error(error);
-    toast.show("Failed to create ticket", "error");
-  }
   };
 
   return (
@@ -106,23 +99,21 @@ export default function CreateTicketScreen() {
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView
           style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 60}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 60}
         >
           <ScrollView
             contentContainerStyle={styles.scroll}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Image Picker */}
             <Pressable style={styles.imagePicker} onPress={pickImage}>
               {image ? (
                 <Image source={{ uri: image }} style={styles.image} />
               ) : (
-                <Text style={styles.imageText}>Pick Image</Text>
+                <Text style={styles.imageText}>Add product image</Text>
               )}
             </Pressable>
 
-            {/* Title */}
             <Text style={styles.label}>Title (max 20 chars)</Text>
             <TextInput
               style={styles.input}
@@ -132,7 +123,6 @@ export default function CreateTicketScreen() {
               placeholder="Enter title"
             />
 
-            {/* Info */}
             <Text style={styles.label}>Info (max 500 chars)</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
@@ -143,18 +133,16 @@ export default function CreateTicketScreen() {
               maxLength={500}
             />
 
-            {/* Priority */}
             <Text style={styles.label}>Priority</Text>
             <View style={styles.pickerWrapper}>
               <Picker selectedValue={priority} onValueChange={setPriority}>
-                <Picker.Item label="P0 – Immediate (12 hrs)" value="P0" />
-                <Picker.Item label="P1 – Within 24 hrs" value="P1" />
-                <Picker.Item label="P2 – Within 48 hrs" value="P2" />
-                <Picker.Item label="P3 – Within 72 hrs" value="P3" />
+                <Picker.Item label="P0 - Immediate (12 hrs)" value="P0" />
+                <Picker.Item label="P1 - Within 24 hrs" value="P1" />
+                <Picker.Item label="P2 - Within 48 hrs" value="P2" />
+                <Picker.Item label="P3 - Within 72 hrs" value="P3" />
               </Picker>
             </View>
 
-            {/* Budget */}
             <Text style={styles.label}>Budget (INR)</Text>
             <TextInput
               style={styles.input}
@@ -164,12 +152,10 @@ export default function CreateTicketScreen() {
               placeholder="Enter budget"
             />
 
-            {/* Spacer to push button down */}
-            <View style={{ flexGrow: 1 }} />
+            <View style={styles.spacer} />
 
-            {/* Save */}
             <Pressable style={styles.saveBtn} onPress={onSave}>
-              <Text style={styles.saveText}>Save Ticket</Text>
+              <Text style={styles.saveText}>Create Request</Text>
             </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -187,7 +173,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scroll: {
-    flexGrow: 1, // ⭐ KEY FIX
+    flexGrow: 1,
     padding: 16,
   },
   imagePicker: {
@@ -228,6 +214,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#d1d5db",
     borderRadius: 8,
+  },
+  spacer: {
+    flexGrow: 1,
   },
   saveBtn: {
     marginTop: 24,

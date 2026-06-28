@@ -1,7 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
-export default function TaskDetailsScreen() {
+export default function RequestDetailsScreen() {
   const router = useRouter();
   const { title, image, info, priority, budget } = useLocalSearchParams();
 
@@ -9,26 +9,29 @@ export default function TaskDetailsScreen() {
     <>
       <Stack.Screen
         options={{
-          title: title as string, // 👈 dynamic header title
+          title: title as string,
           headerTitleAlign: "center",
         }}
       />
       <View style={styles.container}>
-        {/* Image at top center */}
-        <Image source={{ uri: image as string }} style={styles.image} />
+        {image ? (
+          <Image source={{ uri: image as string }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Text style={styles.imagePlaceholderText}>No image added</Text>
+          </View>
+        )}
 
-        {/* Details */}
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.info}>{info}</Text>
 
         <View style={styles.meta}>
           <Text style={styles.metaText}>Priority: {priority}</Text>
-          <Text style={styles.metaText}>Budget: ${budget}</Text>
+          <Text style={styles.metaText}>Budget: INR {budget}</Text>
         </View>
 
-        {/* Cancel Button */}
         <Pressable style={styles.cancelBtn} onPress={() => router.back()}>
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={styles.cancelText}>Back</Text>
         </Pressable>
       </View>
     </>
@@ -47,6 +50,16 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 12,
     marginBottom: 16,
+  },
+  imagePlaceholder: {
+    alignItems: "center",
+    backgroundColor: "#e5e7eb",
+    justifyContent: "center",
+  },
+  imagePlaceholderText: {
+    color: "#64748b",
+    fontSize: 14,
+    fontWeight: "600",
   },
   title: {
     fontSize: 22,
@@ -70,7 +83,7 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     marginTop: "auto",
-    backgroundColor: "#ef4444",
+    backgroundColor: "#0f172a",
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,

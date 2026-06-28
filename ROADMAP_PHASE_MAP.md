@@ -1,0 +1,188 @@
+# Hife Roadmap And Phase Map
+
+This roadmap is organized so each phase can be completed one by one. Every item starts as incomplete and can be updated as the application improves.
+
+Status legend:
+
+- `[ ]` Incomplete
+- `[x]` Complete
+
+## Phase 1: Product Cleanup And Foundation
+
+Goal: Make the app clearly feel like a household purchase approval app instead of a generic ticket app.
+
+- [x] Rename user-facing language from `Ticket` to `Purchase Request` or `Request`.
+- [x] Rename `Explore` tab to `Create` or `New Request`.
+- [x] Replace Expo starter README content with Hife-specific documentation.
+- [x] Replace React logo usage in the header with Hife branding or a simple text-only header.
+- [x] Fix corrupted UI characters such as `â`, `Â`, and broken currency symbols.
+- [x] Use INR consistently across all screens.
+- [x] Remove unused starter modal or replace it with a real Hife screen.
+- [x] Add proper empty states for no requests and no comments.
+- [x] Add loading and error states for request list, details, and comments.
+
+## Phase 2: Core Purchase Request Flow
+
+Goal: Build the main product loop from request creation to partner decision.
+
+- [ ] Update the request model to include product name, reason, expected price, max budget, category, and links.
+- [ ] Add structured product links instead of keeping links only inside comments.
+- [ ] Add request statuses: `pending`, `approved`, `declined`, `needs_more_info`, `buy_later`, `purchased`, and `cancelled`.
+- [ ] Add approve action.
+- [ ] Add decline action.
+- [ ] Add buy-later action.
+- [ ] Add ask-for-more-info action.
+- [ ] Add decision reason input.
+- [ ] Show request status clearly on the home screen.
+- [ ] Add status filters such as Pending, Approved, Declined, Buy Later, and Purchased.
+- [ ] Add a request detail screen that shows all purchase information clearly.
+- [ ] Add a mark-as-purchased action for approved requests.
+
+## Phase 3: Image And Link Reliability
+
+Goal: Make product images and product links reliable across both partners' devices.
+
+- [x] Fix request image upload to save the Cloudinary `imageUrl` instead of local device URI.
+- [ ] Validate image size before upload.
+- [ ] Show image upload progress or loading state.
+- [ ] Add fallback UI when image upload fails.
+- [ ] Validate product links before saving.
+- [ ] Make product links tappable from request details.
+- [ ] Show source label for links such as Amazon, Flipkart, Meesho, or Other.
+- [ ] Allow multiple product links on one request.
+
+## Phase 4: Partner And Household Model
+
+Goal: Move from anonymous shared data to a real couple/household structure.
+
+- [ ] Add Firebase anonymous authentication.
+- [ ] Create a household collection.
+- [ ] Add household invite code generation.
+- [ ] Add join household by invite code.
+- [ ] Store household members.
+- [ ] Store each member's display name.
+- [ ] Add role labels such as Partner A and Partner B, or custom names.
+- [ ] Scope requests to the current household.
+- [ ] Scope comments to the current household.
+- [ ] Prevent users outside the household from reading or writing household data.
+
+## Phase 5: Budget And Decision Intelligence
+
+Goal: Help users make decisions based on money, priority, and monthly spending.
+
+- [ ] Add monthly household budget setting.
+- [ ] Add category-level budget setting.
+- [ ] Show current month approved total.
+- [ ] Show current month pending total.
+- [ ] Show remaining monthly budget.
+- [ ] Warn when a request exceeds available monthly budget.
+- [ ] Show simple budget impact on request details.
+- [ ] Add priority explanation text for P0, P1, P2, and P3.
+- [ ] Add spending history by month.
+- [ ] Add category summary such as Household, Electronics, Kitchen, Personal, Health, and Other.
+
+## Phase 6: AI Decision Assistant
+
+Goal: Add useful AI features that support household purchase decisions without increasing cost too much.
+
+- [ ] Add an `Ask AI` button on the create request screen.
+- [ ] Send title, reason, price, budget, priority, category, and recent spending to AI.
+- [ ] Return suggested priority.
+- [ ] Return recommendation: approve, decline, buy later, or need more info.
+- [ ] Return budget impact explanation.
+- [ ] Return short reasoning.
+- [ ] Return a polite suggested message for approval or decline.
+- [ ] Cache AI result in Firestore.
+- [ ] Show previously generated AI result instead of calling AI again.
+- [ ] Add monthly AI usage limit per household.
+- [ ] Add error handling for failed AI calls.
+- [ ] Make AI optional so the app still works without paid usage.
+
+## Phase 7: Real-Time Collaboration And Notifications
+
+Goal: Make the app feel shared and responsive between both partners.
+
+- [ ] Replace one-time Firestore reads with real-time listeners for requests.
+- [ ] Replace one-time Firestore reads with real-time listeners for comments.
+- [ ] Add unread comment count.
+- [ ] Add last activity timestamp.
+- [ ] Add local notification permission flow.
+- [ ] Add push notification when a new request is created.
+- [ ] Add push notification when a request is approved or declined.
+- [ ] Add push notification when a comment is added.
+- [ ] Add notification settings.
+
+## Phase 8: UI And UX Polish
+
+Goal: Make the app feel clean, calm, and purpose-built for repeated daily use.
+
+- [ ] Create a consistent color system.
+- [ ] Create priority chips with clear colors.
+- [ ] Create status chips with clear colors.
+- [ ] Improve request card layout.
+- [ ] Improve create request form spacing and hierarchy.
+- [ ] Add character counters where useful.
+- [ ] Add better keyboard handling on mobile.
+- [ ] Add clear primary and secondary buttons.
+- [ ] Add confirmation dialogs for decline, cancel, and delete actions.
+- [ ] Improve comment bubble design.
+- [ ] Add accessible touch target sizes.
+- [ ] Add dark mode polish or lock the app to light mode until dark mode is ready.
+
+## Phase 9: Security, Rules, And Free-Tier Protection
+
+Goal: Keep the app safe and affordable before real users use it.
+
+- [ ] Add Firebase security rules for households.
+- [ ] Add Firebase security rules for requests.
+- [ ] Add Firebase security rules for comments.
+- [ ] Validate user membership before write operations.
+- [ ] Restrict Cloudinary unsigned upload preset.
+- [ ] Restrict allowed image formats.
+- [ ] Restrict maximum upload size.
+- [ ] Avoid logging sensitive data.
+- [ ] Add basic abuse protection for AI calls.
+- [ ] Add read/write usage monitoring.
+- [ ] Document free-tier limits.
+
+## Phase 10: Testing And Release Readiness
+
+Goal: Make the app stable enough for personal or small private usage.
+
+- [ ] Add basic unit tests for request helpers.
+- [ ] Add basic unit tests for comment helpers.
+- [ ] Add form validation tests.
+- [ ] Test create request flow.
+- [ ] Test approve and decline flow.
+- [ ] Test image upload flow.
+- [ ] Test comments flow.
+- [ ] Test household invite flow.
+- [ ] Test Android layout.
+- [ ] Test iOS layout if available.
+- [ ] Test web layout if web support is needed.
+- [ ] Update app icon and splash screen.
+- [ ] Update production README.
+- [ ] Create release checklist.
+
+## Suggested Build Order
+
+Recommended sequence:
+
+1. Complete Phase 1.
+2. Complete Phase 3 image fix early because it affects current functionality.
+3. Complete Phase 2 core approval workflow.
+4. Complete Phase 4 household model.
+5. Complete Phase 5 budget intelligence.
+6. Complete Phase 6 AI assistant.
+7. Complete Phase 7 real-time and notifications.
+8. Complete Phase 8 UI polish.
+9. Complete Phase 9 security.
+10. Complete Phase 10 testing and release readiness.
+
+## Current Recommended Next Step
+
+Start with:
+
+- [x] Fix request image upload to save the Cloudinary `imageUrl` instead of local device URI.
+
+This is the best first technical fix because it affects whether both partners can reliably see the uploaded product image.

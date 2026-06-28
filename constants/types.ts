@@ -1,4 +1,4 @@
-export type Ticket = {
+export type PurchaseRequest = {
   id: string;
   title: string;
   info: string;

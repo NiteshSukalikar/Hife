@@ -1,50 +1,40 @@
-# Welcome to your Expo app 👋
+# Hife
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Hife is a household purchase request app for couples. One partner can create a
+request with a product image, budget, priority, and details. The other partner
+can review it, discuss it, and eventually approve, decline, postpone, or mark it
+as purchased.
 
-## Get started
+The app is currently an Expo/React Native prototype using Firebase Firestore for
+data and Cloudinary for image uploads.
 
-1. Install dependencies
+## Run The Project
 
-   ```bash
-   npm install
-   ```
+Use `npm.cmd` on Windows PowerShell because `npm.ps1` may be blocked by
+execution policy.
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```powershell
+npm.cmd install
+npm.cmd run lint
+npm.cmd start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+For web:
 
-## Learn more
+```powershell
+npm.cmd run web
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Main Screens
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- `app/(tabs)/index.tsx`: Request list.
+- `app/(tabs)/explore.tsx`: Create request.
+- `app/task/[id]/index.tsx`: Request details.
+- `app/task/[id]/comments.tsx`: Request discussion.
 
-## Join the community
+## Current Direction
 
-Join our community of developers creating universal apps.
+The next product goal is to complete the core loop:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Create purchase request -> discuss -> approve/decline/buy later -> mark
+purchased.

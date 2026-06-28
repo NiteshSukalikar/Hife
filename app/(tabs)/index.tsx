@@ -1,8 +1,7 @@
 import Header from "@/components/header";
+import { PurchaseRequest } from "@/constants/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-
-import { Ticket } from "@/constants/types";
 import { useEffect, useState } from "react";
 import {
   FlatList,
@@ -12,23 +11,26 @@ import {
   Text,
   View,
 } from "react-native";
-import { getTickets } from "../api/tickets";
+import { getPurchaseRequests } from "../api/tickets";
 
 export default function HomeScreen() {
   const router = useRouter();
- const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadTickets();
+    loadRequests();
   }, []);
 
-  const loadTickets = async () => {
+  const loadRequests = async () => {
     try {
-      const data = await getTickets();
-      setTickets(data);
+      setError(null);
+      const data = await getPurchaseRequests();
+      setRequests(data);
     } catch (e) {
-      console.error("Failed to fetch tickets", e);
+      console.error("Failed to fetch requests", e);
+      setError("Could not load purchase requests. Pull to try again.");
     } finally {
       setLoading(false);
     }
@@ -39,28 +41,39 @@ export default function HomeScreen() {
       <Header />
 
       <FlatList
-        contentContainerStyle={{ padding: 12 }}
-        data={tickets}
+        contentContainerStyle={styles.listContent}
+        data={requests}
         keyExtractor={(item) => item.id}
         refreshing={loading}
-        onRefresh={loadTickets}
+        onRefresh={loadRequests}
+        ListEmptyComponent={
+          !loading ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>
+                {error ? "Requests unavailable" : "No purchase requests yet"}
+              </Text>
+              <Text style={styles.emptyText}>
+                {error
+                  ? error
+                  : "Create the first request to discuss a purchase with your partner."}
+              </Text>
+            </View>
+          ) : null
+        }
         renderItem={({ item }) => (
           <Pressable style={styles.card}>
-            {/* LEFT: IMAGE */}
             {item.image ? (
               <Image source={{ uri: item.image }} style={styles.image} />
             ) : (
               <View style={[styles.image, styles.imagePlaceholder]} />
             )}
 
-            {/* CENTER: INFO */}
             <View style={styles.info}>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.priority}>Priority: {item.priority}</Text>
-              <Text style={styles.budget}>Budget: ₹{item.budget}</Text>
+              <Text style={styles.budget}>Budget: INR {item.budget}</Text>
             </View>
 
-            {/* RIGHT: ACTIONS */}
             <View style={styles.actions}>
               <Pressable
                 hitSlop={10}
@@ -106,16 +119,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  listContent: {
+    padding: 12,
+  },
   card: {
     flexDirection: "row",
     backgroundColor: "#f2f2f2",
-    borderRadius: 12, // ⬆️ smoother corners
-    marginBottom: 16, // ⬆️ more spacing between cards
-    padding: 14, // ⬆️ more inner space
+    borderRadius: 12,
+    marginBottom: 16,
+    padding: 14,
     alignItems: "center",
   },
   image: {
-    width: 72, // ⬆️ bigger image
+    width: 72,
     height: 72,
     borderRadius: 6,
     marginRight: 10,
@@ -144,5 +160,23 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     backgroundColor: "#e5e7eb",
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 56,
+  },
+  emptyTitle: {
+    color: "#0f172a",
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  emptyText: {
+    color: "#64748b",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: "center",
   },
 });

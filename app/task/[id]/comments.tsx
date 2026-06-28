@@ -1,8 +1,11 @@
+import { addComment, getComments } from "@/app/api/comments";
+import { uploadImage } from "@/app/api/uploadImage";
 import useToast from "@/components/toast/useToast";
+import { getDeviceUserId } from "@/utils/deviceUser";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -19,10 +22,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { addComment, getComments } from "@/app/api/comments";
-import { uploadImage } from "@/app/api/uploadImage";
-import { getDeviceUserId } from "@/utils/deviceUser";
-
 type Comment = {
   id: string;
   text: string;
@@ -35,7 +34,7 @@ type Comment = {
 export default function CommentsScreen() {
   const { id: taskId, title } = useLocalSearchParams();
   const navigation = useNavigation();
-  const toast = useToast();
+  const { show } = useToast();
   const insets = useSafeAreaInsets();
 
   const [myUserId, setMyUserId] = useState<string | null>(null);
@@ -46,34 +45,31 @@ export default function CommentsScreen() {
   const [link, setLink] = useState("");
   const [image, setImage] = useState<string | null>(null);
 
-  const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1 MB
+  const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
 
-  // 🔹 Load user + header + comments
-  useEffect(() => {
-    navigation.setOptions({
-      title: `${title} · Comments`,
-      headerTitleAlign: "center",
-    });
-
-    getDeviceUserId().then(setMyUserId);
-    loadComments();
-  }, []);
-
-  // 🔹 Fetch comments
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getComments(taskId as string);
       setComments(data);
     } catch (e) {
       console.error(e);
-      toast.show("Failed to load comments", "error");
+      show("Failed to load discussion", "error");
     } finally {
       setLoading(false);
     }
-  };
+  }, [show, taskId]);
 
-  // 🔹 Pick image
+  useEffect(() => {
+    navigation.setOptions({
+      title: `${title} - Discussion`,
+      headerTitleAlign: "center",
+    });
+
+    getDeviceUserId().then(setMyUserId);
+    loadComments();
+  }, [loadComments, navigation, title]);
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -85,17 +81,16 @@ export default function CommentsScreen() {
     const asset = result.assets[0];
 
     if (asset.fileSize && asset.fileSize > MAX_IMAGE_SIZE) {
-      toast.show("Image must be under 1 MB", "error");
+      show("Image must be under 1 MB", "error");
       return;
     }
 
     setImage(asset.uri);
   };
 
-  // 🔹 Save comment
   const handleAddComment = async () => {
     if (!text.trim()) {
-      toast.show("Comment cannot be empty", "error");
+      show("Comment cannot be empty", "error");
       return;
     }
 
@@ -112,7 +107,7 @@ export default function CommentsScreen() {
         link: link || null,
       });
 
-      toast.show("Comment added", "success");
+      show("Comment added", "success");
 
       setText("");
       setLink("");
@@ -121,7 +116,7 @@ export default function CommentsScreen() {
       loadComments();
     } catch (e) {
       console.error(e);
-      toast.show("Failed to add comment", "error");
+      show("Failed to add comment", "error");
     }
   };
 
@@ -132,14 +127,18 @@ export default function CommentsScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 60}
       >
-        {/* COMMENTS */}
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ padding: 12 }}>
+          <View style={styles.commentsContent}>
             {!loading && comments.length === 0 && (
-              <Text style={styles.empty}>No comments yet</Text>
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>No discussion yet</Text>
+                <Text style={styles.emptyText}>
+                  Add a note, product link, or question to start the decision.
+                </Text>
+              </View>
             )}
 
             {comments.map((item) => {
@@ -168,7 +167,7 @@ export default function CommentsScreen() {
                   )}
 
                   <Text style={styles.time}>
-                    {isMe ? "You" : "Other"} · {item.createdAt}
+                    {isMe ? "You" : "Partner"} - {item.createdAt}
                   </Text>
                 </View>
               );
@@ -176,7 +175,6 @@ export default function CommentsScreen() {
           </View>
         </ScrollView>
 
-        {/* INPUT BAR */}
         <View
           style={[
             styles.inputArea,
@@ -217,13 +215,27 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   flex: { flex: 1 },
   scroll: { flexGrow: 1 },
-
-  empty: {
-    textAlign: "center",
-    color: "#64748b",
-    marginTop: 40,
+  commentsContent: {
+    padding: 12,
   },
-
+  emptyState: {
+    alignItems: "center",
+    marginTop: 40,
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    color: "#0f172a",
+    fontSize: 17,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  emptyText: {
+    color: "#64748b",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: "center",
+  },
   commentCard: {
     borderRadius: 10,
     padding: 12,
@@ -238,7 +250,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f1f5f9",
     alignSelf: "flex-start",
   },
-
   commentText: {
     fontSize: 15,
     marginBottom: 6,
@@ -258,7 +269,6 @@ const styles = StyleSheet.create({
     color: "#64748b",
     alignSelf: "flex-end",
   },
-
   inputArea: {
     borderTopWidth: 1,
     borderColor: "#e5e7eb",

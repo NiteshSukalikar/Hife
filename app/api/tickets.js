@@ -9,7 +9,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-export async function createTicket({ title, info, priority, budget, image }) {
+export async function createPurchaseRequest({ title, info, priority, budget, image }) {
   const userId = await getDeviceUserId();
   return await addDoc(collection(db, "tasks"), {
     title,
@@ -23,7 +23,7 @@ export async function createTicket({ title, info, priority, budget, image }) {
   });
 }
 
-export async function getTickets() {
+export async function getPurchaseRequests() {
   const q = query(collection(db, "tasks"), orderBy("createdAt", "desc"));
 
   const snapshot = await getDocs(q);
