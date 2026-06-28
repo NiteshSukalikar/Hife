@@ -45,6 +45,16 @@ const STATUS_COLORS: Record<RequestStatus, { bg: string; text: string }> = {
   cancelled: { bg: "#e5e7eb", text: "#374151" },
 };
 
+const DEFAULT_STATUS_COLOR = STATUS_COLORS.pending;
+
+function getStatusLabel(status: RequestStatus) {
+  return STATUS_LABELS[status] || STATUS_LABELS.pending;
+}
+
+function getStatusColor(status: RequestStatus) {
+  return STATUS_COLORS[status] || DEFAULT_STATUS_COLOR;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
@@ -130,7 +140,7 @@ export default function HomeScreen() {
           ) : null
         }
         renderItem={({ item }) => {
-          const statusColor = STATUS_COLORS[item.status];
+          const statusColor = getStatusColor(item.status);
 
           return (
             <Pressable
@@ -162,7 +172,7 @@ export default function HomeScreen() {
                     <Text
                       style={[styles.statusText, { color: statusColor.text }]}
                     >
-                      {STATUS_LABELS[item.status]}
+                      {getStatusLabel(item.status)}
                     </Text>
                   </View>
                 </View>

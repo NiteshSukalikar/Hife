@@ -1,8 +1,9 @@
 import Header from "@/components/header";
 import useToast from "@/components/toast/useToast";
-import { ProductLink } from "@/constants/types";
 import { createPurchaseRequest } from "@/services/purchaseRequests";
 import { uploadImage } from "@/services/uploadImage";
+import { validateImageAsset } from "@/utils/productMedia";
+import { parseProductLinks } from "@/utils/productLinks";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
@@ -29,28 +30,6 @@ const CATEGORIES = [
   "Other",
 ];
 
-function getLinkSource(url: string) {
-  const normalized = url.toLowerCase();
-
-  if (normalized.includes("amazon.")) return "Amazon";
-  if (normalized.includes("flipkart.")) return "Flipkart";
-  if (normalized.includes("meesho.")) return "Meesho";
-  if (normalized.includes("myntra.")) return "Myntra";
-
-  return "Other";
-}
-
-function parseLinks(value: string): ProductLink[] {
-  return value
-    .split(/\r?\n|,/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .map((url) => ({
-      url,
-      source: getLinkSource(url),
-    }));
-}
-
 export default function CreateRequestScreen() {
   const [image, setImage] = useState<string | null>(null);
   const [productName, setProductName] = useState("");
@@ -60,8 +39,10 @@ export default function CreateRequestScreen() {
   const [maxBudget, setMaxBudget] = useState("");
   const [category, setCategory] = useState("Household");
   const [linksText, setLinksText] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState("");
 
-  const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
   const toast = useToast();
 
   const pickImage = async () => {
@@ -73,12 +54,15 @@ export default function CreateRequestScreen() {
     if (result.canceled) return;
 
     const asset = result.assets[0];
+    const validationError = validateImageAsset(asset);
 
-    if (asset.fileSize && asset.fileSize > MAX_IMAGE_SIZE) {
-      toast.show("Image must be under 1 MB", "error");
+    if (validationError) {
+      setImageError(validationError);
+      toast.show(validationError, "error");
       return;
     }
 
+    setImageError("");
     setImage(asset.uri);
   };
 
@@ -91,9 +75,12 @@ export default function CreateRequestScreen() {
     setCategory("Household");
     setLinksText("");
     setImage(null);
+    setImageError("");
   };
 
   const onSave = async () => {
+    if (isSaving) return;
+
     if (!productName.trim()) {
       Alert.alert("Validation", "Product name is required");
       return;
@@ -119,11 +106,35 @@ export default function CreateRequestScreen() {
       return;
     }
 
+    const { links, invalidLinks } = parseProductLinks(linksText);
+
+    if (invalidLinks.length > 0) {
+      Alert.alert(
+        "Validation",
+        `Check product link: ${invalidLinks[0]}`
+      );
+      return;
+    }
+
     try {
+      setIsSaving(true);
+      setImageError("");
       let imageUrl = null;
 
       if (image) {
-        imageUrl = await uploadImage(image);
+        try {
+          setUploadingImage(true);
+          imageUrl = await uploadImage(image);
+        } catch (error) {
+          console.error(error);
+          setImageError(
+            "Image upload failed. Check your connection and try again."
+          );
+          toast.show("Image upload failed", "error");
+          return;
+        } finally {
+          setUploadingImage(false);
+        }
       }
 
       await createPurchaseRequest({
@@ -133,7 +144,7 @@ export default function CreateRequestScreen() {
         expectedPrice: Number(expectedPrice),
         maxBudget: Number(maxBudget),
         category,
-        links: parseLinks(linksText),
+        links,
         image: imageUrl,
       });
 
@@ -142,6 +153,9 @@ export default function CreateRequestScreen() {
     } catch (error) {
       console.error(error);
       toast.show("Failed to create request", "error");
+    } finally {
+      setUploadingImage(false);
+      setIsSaving(false);
     }
   };
 
@@ -158,13 +172,28 @@ export default function CreateRequestScreen() {
             contentContainerStyle={styles.scroll}
             keyboardShouldPersistTaps="handled"
           >
-            <Pressable style={styles.imagePicker} onPress={pickImage}>
+            <Pressable
+              style={[
+                styles.imagePicker,
+                imageError ? styles.imagePickerError : null,
+              ]}
+              disabled={isSaving}
+              onPress={pickImage}
+            >
               {image ? (
                 <Image source={{ uri: image }} style={styles.image} />
               ) : (
                 <Text style={styles.imageText}>Add product image</Text>
               )}
+              {uploadingImage ? (
+                <View style={styles.imageOverlay}>
+                  <Text style={styles.imageOverlayText}>Uploading image...</Text>
+                </View>
+              ) : null}
             </Pressable>
+            {imageError ? (
+              <Text style={styles.errorText}>{imageError}</Text>
+            ) : null}
 
             <Text style={styles.label}>Product name (max 40 chars)</Text>
             <TextInput
@@ -245,15 +274,25 @@ export default function CreateRequestScreen() {
               style={[styles.input, styles.linksInput]}
               value={linksText}
               onChangeText={setLinksText}
-              placeholder="Paste Amazon, Flipkart, or other links"
+              placeholder="Paste one or more links, separated by commas or lines"
               placeholderTextColor="#71717A"
               multiline
               autoCapitalize="none"
               keyboardType="url"
             />
 
-            <Pressable style={styles.saveBtn} onPress={onSave}>
-              <Text style={styles.saveText}>Create Request</Text>
+            <Pressable
+              style={[styles.saveBtn, isSaving ? styles.disabledBtn : null]}
+              disabled={isSaving}
+              onPress={onSave}
+            >
+              <Text style={styles.saveText}>
+                {uploadingImage
+                  ? "Uploading Image..."
+                  : isSaving
+                    ? "Creating..."
+                    : "Create Request"}
+              </Text>
             </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -284,14 +323,38 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  imagePickerError: {
+    borderColor: "#dc2626",
+  },
   image: {
     width: "100%",
     height: "100%",
     borderRadius: 10,
   },
+  imageOverlay: {
+    alignItems: "center",
+    backgroundColor: "rgba(5, 5, 5, 0.72)",
+    bottom: 0,
+    justifyContent: "center",
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
+  imageOverlayText: {
+    color: "#F8FAFC",
+    fontSize: 14,
+    fontWeight: "700",
+  },
   imageText: {
     fontSize: 16,
     color: "#39FF14",
+  },
+  errorText: {
+    color: "#FCA5A5",
+    fontSize: 13,
+    marginBottom: 4,
+    marginTop: -8,
   },
   label: {
     color: "#F8FAFC",
@@ -339,6 +402,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
+  },
+  disabledBtn: {
+    opacity: 0.65,
   },
   saveText: {
     color: "#050505",

@@ -20,10 +20,20 @@ export async function uploadImage(uri) {
     }
   );
 
-  const data = await response.json();
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
 
   if (!response.ok) {
     throw new Error(data.error?.message || "Upload failed");
+  }
+
+  if (!data.secure_url) {
+    throw new Error("Upload finished without an image URL");
   }
 
   return data.secure_url;

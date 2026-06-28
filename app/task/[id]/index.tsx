@@ -37,6 +37,16 @@ const STATUS_COLORS: Record<RequestStatus, { bg: string; text: string }> = {
   cancelled: { bg: "#e5e7eb", text: "#374151" },
 };
 
+const DEFAULT_STATUS_COLOR = STATUS_COLORS.pending;
+
+function getStatusLabel(status: RequestStatus) {
+  return STATUS_LABELS[status] || STATUS_LABELS.pending;
+}
+
+function getStatusColor(status: RequestStatus) {
+  return STATUS_COLORS[status] || DEFAULT_STATUS_COLOR;
+}
+
 function canMarkPurchased(status: RequestStatus) {
   return status === "approved";
 }
@@ -106,7 +116,7 @@ export default function RequestDetailsScreen() {
     Linking.openURL(link.url);
   };
 
-  const statusColor = request ? STATUS_COLORS[request.status] : null;
+  const statusColor = request ? getStatusColor(request.status) : null;
 
   return (
     <>
@@ -156,7 +166,7 @@ export default function RequestDetailsScreen() {
                   ]}
                 >
                   <Text style={[styles.statusText, { color: statusColor.text }]}>
-                    {STATUS_LABELS[request.status]}
+                    {getStatusLabel(request.status)}
                   </Text>
                 </View>
               ) : null}

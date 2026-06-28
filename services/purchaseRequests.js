@@ -14,7 +14,18 @@ import {
 
 function normalizeStatus(status) {
   if (!status || status === "open") return "pending";
-  return status;
+
+  const validStatuses = new Set([
+    "pending",
+    "approved",
+    "declined",
+    "needs_more_info",
+    "buy_later",
+    "purchased",
+    "cancelled",
+  ]);
+
+  return validStatuses.has(status) ? status : "pending";
 }
 
 function mapRequestDoc(docSnapshot) {

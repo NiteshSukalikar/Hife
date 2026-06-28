@@ -2,6 +2,8 @@ import useToast from "@/components/toast/useToast";
 import { addComment, getComments } from "@/services/comments";
 import { uploadImage } from "@/services/uploadImage";
 import { getDeviceUserId } from "@/utils/deviceUser";
+import { validateImageAsset } from "@/utils/productMedia";
+import { validateProductUrl } from "@/utils/productLinks";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useNavigation } from "expo-router";
@@ -9,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -44,8 +47,9 @@ export default function CommentsScreen() {
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
   const [image, setImage] = useState<string | null>(null);
-
-  const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
+  const [isSending, setIsSending] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState("");
 
   const loadComments = useCallback(async () => {
     try {
@@ -79,32 +83,69 @@ export default function CommentsScreen() {
     if (result.canceled) return;
 
     const asset = result.assets[0];
+    const validationError = validateImageAsset(asset);
 
-    if (asset.fileSize && asset.fileSize > MAX_IMAGE_SIZE) {
-      show("Image must be under 1 MB", "error");
+    if (validationError) {
+      setImageError(validationError);
+      show(validationError, "error");
       return;
     }
 
+    setImageError("");
     setImage(asset.uri);
   };
 
+  const openLink = async (url: string) => {
+    const canOpen = await Linking.canOpenURL(url);
+
+    if (!canOpen) {
+      show("Could not open this link", "error");
+      return;
+    }
+
+    Linking.openURL(url);
+  };
+
   const handleAddComment = async () => {
+    if (isSending) return;
+
     if (!text.trim()) {
       show("Comment cannot be empty", "error");
       return;
     }
 
+    const normalizedLink = link.trim() ? validateProductUrl(link) : null;
+
+    if (link.trim() && !normalizedLink) {
+      show("Enter a valid product link", "error");
+      return;
+    }
+
     try {
+      setIsSending(true);
+      setImageError("");
       let imageUrl = null;
 
       if (image) {
-        imageUrl = await uploadImage(image);
+        try {
+          setUploadingImage(true);
+          imageUrl = await uploadImage(image);
+        } catch (e) {
+          console.error(e);
+          setImageError(
+            "Image upload failed. Check your connection and try again."
+          );
+          show("Image upload failed", "error");
+          return;
+        } finally {
+          setUploadingImage(false);
+        }
       }
 
       await addComment(taskId as string, {
         text: text.trim(),
         image: imageUrl,
-        link: link || null,
+        link: normalizedLink,
       });
 
       show("Comment added", "success");
@@ -112,11 +153,15 @@ export default function CommentsScreen() {
       setText("");
       setLink("");
       setImage(null);
+      setImageError("");
 
       loadComments();
     } catch (e) {
       console.error(e);
       show("Failed to add comment", "error");
+    } finally {
+      setUploadingImage(false);
+      setIsSending(false);
     }
   };
 
@@ -163,7 +208,9 @@ export default function CommentsScreen() {
                   )}
 
                   {item.link && (
-                    <Text style={styles.commentLink}>{item.link}</Text>
+                    <Pressable onPress={() => openLink(item.link || "")}>
+                      <Text style={styles.commentLink}>{item.link}</Text>
+                    </Pressable>
                   )}
 
                   <Text style={styles.time}>
@@ -181,6 +228,26 @@ export default function CommentsScreen() {
             { paddingBottom: 10 + insets.bottom },
           ]}
         >
+          {image ? (
+            <View
+              style={[
+                styles.selectedImageRow,
+                imageError ? styles.selectedImageRowError : null,
+              ]}
+            >
+              <Text style={styles.selectedImageText}>
+                {uploadingImage ? "Uploading image..." : "Image attached"}
+              </Text>
+              <Pressable disabled={isSending} onPress={() => setImage(null)}>
+                <Text style={styles.removeImageText}>Remove</Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          {imageError ? (
+            <Text style={styles.errorText}>{imageError}</Text>
+          ) : null}
+
           <TextInput
             placeholder="Write a comment..."
             placeholderTextColor="#71717A"
@@ -191,7 +258,7 @@ export default function CommentsScreen() {
           />
 
           <View style={styles.actions}>
-            <Pressable onPress={pickImage}>
+            <Pressable disabled={isSending} onPress={pickImage}>
               <Ionicons name="image-outline" size={22} color="#39FF14" />
             </Pressable>
 
@@ -201,9 +268,15 @@ export default function CommentsScreen() {
               style={styles.linkInput}
               value={link}
               onChangeText={setLink}
+              autoCapitalize="none"
+              keyboardType="url"
             />
 
-            <Pressable style={styles.sendBtn} onPress={handleAddComment}>
+            <Pressable
+              style={[styles.sendBtn, isSending ? styles.disabledBtn : null]}
+              disabled={isSending}
+              onPress={handleAddComment}
+            >
               <Ionicons name="send" size={20} color="#050505" />
             </Pressable>
           </View>
@@ -278,6 +351,35 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#050505",
   },
+  selectedImageRow: {
+    alignItems: "center",
+    backgroundColor: "#101312",
+    borderColor: "#263026",
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    padding: 8,
+  },
+  selectedImageRowError: {
+    borderColor: "#dc2626",
+  },
+  selectedImageText: {
+    color: "#F8FAFC",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  removeImageText: {
+    color: "#FCA5A5",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  errorText: {
+    color: "#FCA5A5",
+    fontSize: 13,
+    marginBottom: 8,
+  },
   input: {
     backgroundColor: "#101312",
     minHeight: 40,
@@ -308,5 +410,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#39FF14",
     padding: 10,
     borderRadius: 50,
+  },
+  disabledBtn: {
+    opacity: 0.65,
   },
 });

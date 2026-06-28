@@ -43,13 +43,13 @@ Goal: Build the main product loop from request creation to partner decision.
 Goal: Make product images and product links reliable across both partners' devices.
 
 - [x] Fix request image upload to save the Cloudinary `imageUrl` instead of local device URI.
-- [ ] Validate image size before upload.
-- [ ] Show image upload progress or loading state.
-- [ ] Add fallback UI when image upload fails.
-- [ ] Validate product links before saving.
-- [ ] Make product links tappable from request details.
-- [ ] Show source label for links such as Amazon, Flipkart, Meesho, or Other.
-- [ ] Allow multiple product links on one request.
+- [x] Validate image size before upload.
+- [x] Show image upload progress or loading state.
+- [x] Add fallback UI when image upload fails.
+- [x] Validate product links before saving.
+- [x] Make product links tappable from request details.
+- [x] Show source label for links such as Amazon, Flipkart, Meesho, or Other.
+- [x] Allow multiple product links on one request.
 
 ## Phase 4: Partner And Household Model
 
