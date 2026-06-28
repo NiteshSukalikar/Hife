@@ -7,8 +7,10 @@ const USER_KEY = "HIFE_DEVICE_USER_ID";
 export async function getDeviceUserId() {
   try {
     return await getCurrentUserId();
-  } catch (error) {
-    console.warn("Falling back to local device user id", error);
+  } catch {
+    if (__DEV__) {
+      console.warn("Falling back to local device user id");
+    }
   }
 
   let userId = await AsyncStorage.getItem(USER_KEY);

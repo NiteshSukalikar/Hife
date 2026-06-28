@@ -17,6 +17,7 @@ import {
   subscribeToPurchaseRequests,
 } from "@/services/purchaseRequests";
 import { uploadImage } from "@/services/uploadImage";
+import { logError } from "@/utils/safeLogger";
 import {
   buildBudgetSummary,
   DEFAULT_BUDGET_SETTINGS,
@@ -80,7 +81,7 @@ export default function CreateRequestScreen() {
           setBudgetSettings(settings);
         })
         .catch((error) => {
-          console.error("Failed to load budget context", error);
+          logError("Failed to load budget context", error);
         });
     }, [])
   );
@@ -92,7 +93,7 @@ export default function CreateRequestScreen() {
     subscribeToPurchaseRequests(
       (data: PurchaseRequest[]) => setRequests(data),
       (error: unknown) => {
-        console.error("Failed to listen for budget context", error);
+        logError("Failed to listen for budget context", error);
       }
     ).then((stop) => {
       if (cancelled) {
@@ -216,7 +217,7 @@ export default function CreateRequestScreen() {
         "success"
       );
     } catch (error: any) {
-      console.error(error);
+      logError("AI recommendation failed", error);
       const message =
         error?.code === "ai/monthly-limit-reached"
           ? error.message
@@ -276,7 +277,7 @@ export default function CreateRequestScreen() {
           setUploadingImage(true);
           imageUrl = await uploadImage(image);
         } catch (error) {
-          console.error(error);
+          logError("Image upload failed", error);
           setImageError(
             "Image upload failed. Check your connection and try again."
           );
@@ -301,7 +302,7 @@ export default function CreateRequestScreen() {
       toast.show("Request created successfully", "success");
       resetForm();
     } catch (error) {
-      console.error(error);
+      logError("Failed to create request", error);
       toast.show("Failed to create request", "error");
     } finally {
       setUploadingImage(false);

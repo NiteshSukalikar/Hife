@@ -1,5 +1,6 @@
 import { db } from "@/services/firebase";
 import { getCurrentMember, requireActiveHousehold } from "@/services/households";
+import { recordUsage } from "@/services/usageMonitoring";
 import { getDeviceUserId } from "@/utils/deviceUser";
 import {
   addDoc,
@@ -35,6 +36,7 @@ function mapCommentDoc(docSnapshot) {
 async function verifyHouseholdRequest(taskId) {
   const household = await requireActiveHousehold();
   const requestSnapshot = await getDoc(doc(db, "tasks", taskId));
+  await recordUsage("comments.requestGuardRead", { reads: 1 });
 
   if (
     !requestSnapshot.exists() ||
@@ -54,6 +56,7 @@ export async function getComments(taskId) {
   );
 
   const snapshot = await getDocs(q);
+  await recordUsage("comments.list", { reads: snapshot.size });
 
   return snapshot.docs.map(mapCommentDoc);
 }
@@ -69,6 +72,7 @@ export async function subscribeToComments(taskId, onNext, onError) {
     q,
     (snapshot) => {
       onNext(snapshot.docs.map(mapCommentDoc), snapshot);
+      recordUsage("comments.listenSnapshot", { reads: snapshot.size });
     },
     onError
   );
@@ -90,6 +94,7 @@ export async function addComment(taskId, comment) {
     authorRoleLabel: member?.roleLabel || "Partner",
     createdAt: serverTimestamp(),
   });
+  await recordUsage("comments.create", { writes: 1 });
 
   await updateDoc(doc(db, "tasks", taskId), {
     commentCount: increment(1),
@@ -99,4 +104,5 @@ export async function addComment(taskId, comment) {
     lastActivityType: "comment",
     updatedAt: serverTimestamp(),
   });
+  await recordUsage("comments.aggregateUpdate", { writes: 1 });
 }

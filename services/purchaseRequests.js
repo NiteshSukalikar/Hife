@@ -1,5 +1,6 @@
 import { db } from "@/services/firebase";
 import { getCurrentMember, requireActiveHousehold } from "@/services/households";
+import { recordUsage } from "@/services/usageMonitoring";
 import { getDeviceUserId } from "@/utils/deviceUser";
 import {
   addDoc,
@@ -86,7 +87,7 @@ export async function createPurchaseRequest({
   const cleanProductName = productName.trim();
   const cleanReason = reason.trim();
 
-  return await addDoc(collection(db, "tasks"), {
+  const docRef = await addDoc(collection(db, "tasks"), {
     householdId: household.id,
     title: cleanProductName,
     productName: cleanProductName,
@@ -109,6 +110,8 @@ export async function createPurchaseRequest({
     commentCount: 0,
     image,
   });
+  await recordUsage("requests.create", { writes: 1 });
+  return docRef;
 }
 
 export async function getPurchaseRequests() {
@@ -119,12 +122,14 @@ export async function getPurchaseRequests() {
     orderBy("createdAt", "desc")
   );
   const snapshot = await getDocs(q);
+  await recordUsage("requests.list", { reads: snapshot.size });
   return snapshot.docs.map(mapRequestDoc);
 }
 
 export async function getPurchaseRequest(requestId) {
   const household = await requireActiveHousehold();
   const snapshot = await getDoc(doc(db, "tasks", requestId));
+  await recordUsage("requests.read", { reads: 1 });
 
   if (!snapshot.exists()) {
     throw new Error("Purchase request not found");
@@ -151,6 +156,7 @@ export async function subscribeToPurchaseRequests(onNext, onError) {
     q,
     (snapshot) => {
       onNext(snapshot.docs.map(mapRequestDoc), snapshot);
+      recordUsage("requests.listenSnapshot", { reads: snapshot.size });
     },
     onError
   );
@@ -162,6 +168,7 @@ export async function subscribeToPurchaseRequest(requestId, onNext, onError) {
   return onSnapshot(
     doc(db, "tasks", requestId),
     (snapshot) => {
+      recordUsage("requests.listenOne", { reads: snapshot.exists() ? 1 : 0 });
       if (!snapshot.exists()) {
         onNext(null);
         return;
@@ -186,6 +193,7 @@ export async function updatePurchaseRequestStatus(
   const userId = await getDeviceUserId();
   const household = await requireActiveHousehold();
   const snapshot = await getDoc(doc(db, "tasks", requestId));
+  await recordUsage("requests.statusGuardRead", { reads: 1 });
 
   if (!snapshot.exists() || snapshot.data().householdId !== household.id) {
     throw new Error("Purchase request is outside this household");
@@ -200,4 +208,5 @@ export async function updatePurchaseRequestStatus(
     lastActivityAt: serverTimestamp(),
     lastActivityType: status,
   });
+  await recordUsage("requests.statusUpdate", { writes: 1 });
 }

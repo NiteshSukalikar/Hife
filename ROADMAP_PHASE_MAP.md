@@ -138,17 +138,17 @@ Goal: Make the app feel clean, calm, and purpose-built for repeated daily use.
 
 Goal: Keep the app safe and affordable before real users use it.
 
-- [ ] Add Firebase security rules for households.
-- [ ] Add Firebase security rules for requests.
-- [ ] Add Firebase security rules for comments.
-- [ ] Validate user membership before write operations.
-- [ ] Restrict Cloudinary unsigned upload preset.
-- [ ] Restrict allowed image formats.
-- [ ] Restrict maximum upload size.
-- [ ] Avoid logging sensitive data.
-- [ ] Add basic abuse protection for AI calls.
-- [ ] Add read/write usage monitoring.
-- [ ] Document free-tier limits.
+- [x] Add Firebase security rules for households.
+- [x] Add Firebase security rules for requests.
+- [x] Add Firebase security rules for comments.
+- [x] Validate user membership before write operations.
+- [x] Restrict Cloudinary unsigned upload preset.
+- [x] Restrict allowed image formats.
+- [x] Restrict maximum upload size.
+- [x] Avoid logging sensitive data.
+- [x] Add basic abuse protection for AI calls.
+- [x] Add read/write usage monitoring.
+- [x] Document free-tier limits.
 
 ## Phase 10: Testing And Release Readiness
 

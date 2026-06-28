@@ -1,14 +1,17 @@
 import { db } from "@/services/firebase";
 import { requireActiveHousehold } from "@/services/households";
+import { recordUsage } from "@/services/usageMonitoring";
 import { getMonthKey } from "@/utils/budget";
 import {
   doc,
   getDoc,
+  runTransaction,
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
 
 const MONTHLY_AI_USAGE_LIMIT = 10;
+const MONTHLY_AI_WRITE_LIMIT = 20;
 const AI_ENDPOINT = process.env.EXPO_PUBLIC_HIFE_AI_ENDPOINT;
 
 const VALID_PRIORITIES = new Set(["P0", "P1", "P2", "P3"]);
@@ -169,18 +172,36 @@ async function getConfiguredAiDecision(payload) {
 
 async function assertUsageAvailable(householdId, monthKey) {
   const usageRef = doc(db, "households", householdId, "aiUsage", monthKey);
-  const usageSnapshot = await getDoc(usageRef);
-  const currentCount = Number(usageSnapshot.data()?.count || 0);
 
-  if (currentCount >= MONTHLY_AI_USAGE_LIMIT) {
-    const error = new Error(
-      `Monthly AI limit reached (${MONTHLY_AI_USAGE_LIMIT} recommendations).`
+  await runTransaction(db, async (transaction) => {
+    const usageSnapshot = await transaction.get(usageRef);
+    const currentCount = Number(usageSnapshot.data()?.count || 0);
+    const currentWriteCount = Number(usageSnapshot.data()?.writeCount || 0);
+
+    if (
+      currentCount >= MONTHLY_AI_USAGE_LIMIT ||
+      currentWriteCount >= MONTHLY_AI_WRITE_LIMIT
+    ) {
+      const error = new Error(
+        `Monthly AI limit reached (${MONTHLY_AI_USAGE_LIMIT} recommendations).`
+      );
+      error.code = "ai/monthly-limit-reached";
+      throw error;
+    }
+
+    transaction.set(
+      usageRef,
+      {
+        count: currentCount + 1,
+        writeCount: currentWriteCount + 1,
+        limit: MONTHLY_AI_USAGE_LIMIT,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
     );
-    error.code = "ai/monthly-limit-reached";
-    throw error;
-  }
+  });
 
-  return { usageRef, nextCount: currentCount + 1 };
+  await recordUsage("ai.usageTransaction", { reads: 1, writes: 1 });
 }
 
 export async function getAiDecisionForDraft(input) {
@@ -190,6 +211,7 @@ export async function getAiDecisionForDraft(input) {
   const cacheKey = makeCacheKey(payload);
   const cacheRef = doc(db, "households", household.id, "aiDecisionCache", cacheKey);
   const cachedSnapshot = await getDoc(cacheRef);
+  await recordUsage("ai.cacheRead", { reads: 1 });
 
   if (cachedSnapshot.exists()) {
     return {
@@ -199,10 +221,7 @@ export async function getAiDecisionForDraft(input) {
     };
   }
 
-  const { usageRef, nextCount } = await assertUsageAvailable(
-    household.id,
-    monthKey
-  );
+  await assertUsageAvailable(household.id, monthKey);
   const decision =
     (await getConfiguredAiDecision(payload)) || buildLocalDecision(payload);
 
@@ -214,16 +233,7 @@ export async function getAiDecisionForDraft(input) {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-
-  await setDoc(
-    usageRef,
-    {
-      count: nextCount,
-      limit: MONTHLY_AI_USAGE_LIMIT,
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
+  await recordUsage("ai.cacheWrite", { writes: 1 });
 
   return {
     ...decision,

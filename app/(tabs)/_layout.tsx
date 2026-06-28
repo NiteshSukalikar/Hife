@@ -7,6 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getActiveHousehold } from '@/services/households';
+import { logError } from '@/utils/safeLogger';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -21,7 +22,7 @@ export default function TabLayout() {
         if (isMounted) setHasHousehold(!!household);
       })
       .catch((error) => {
-        console.error("Failed to check household", error);
+        logError("Failed to check household", error);
         if (isMounted) setHasHousehold(false);
       })
       .finally(() => {

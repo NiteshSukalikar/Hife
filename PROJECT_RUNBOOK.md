@@ -48,6 +48,12 @@ Start Expo:
 npm.cmd start
 ```
 
+Deploy Firestore security rules and indexes after Firebase CLI setup:
+
+```powershell
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
 Start web version:
 
 ```powershell
@@ -155,3 +161,5 @@ Before finishing a change:
 - Confirm INR formatting is consistent.
 - Confirm images work across devices by using remote URLs.
 - Confirm Firebase writes match the expected request/comment shape.
+- Confirm Firestore rules are updated when request/comment/household shapes change.
+- Confirm Cloudinary unsigned upload preset is restricted to JPG, PNG, WebP, and 1 MB.

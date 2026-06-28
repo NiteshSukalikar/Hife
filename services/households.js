@@ -3,7 +3,6 @@ import { nanoid } from "nanoid/non-secure";
 import { getCurrentUser } from "@/services/auth";
 import { db } from "@/services/firebase";
 import {
-  addDoc,
   arrayUnion,
   collection,
   doc,
@@ -12,9 +11,12 @@ import {
   limit,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
+import { recordUsage } from "@/services/usageMonitoring";
 
 const ACTIVE_HOUSEHOLD_KEY = "HIFE_ACTIVE_HOUSEHOLD_ID";
 
@@ -58,8 +60,9 @@ export async function createHousehold({
 }) {
   const user = await getCurrentUser();
   const inviteCode = makeInviteCode();
-
-  const householdRef = await addDoc(collection(db, "households"), {
+  const householdRef = doc(collection(db, "households"));
+  const inviteRef = doc(db, "inviteCodes", inviteCode);
+  const householdData = {
     name: name.trim() || "Hife Household",
     inviteCode,
     createdBy: user.uid,
@@ -71,7 +74,17 @@ export async function createHousehold({
     categoryBudgets: {},
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+  };
+  const batch = writeBatch(db);
+
+  batch.set(householdRef, householdData);
+  batch.set(inviteRef, {
+    householdId: householdRef.id,
+    createdBy: user.uid,
+    createdAt: serverTimestamp(),
   });
+  await batch.commit();
+  await recordUsage("households.create", { writes: 2 });
 
   await rememberHousehold(householdRef.id);
 
@@ -99,6 +112,26 @@ export async function joinHouseholdByInviteCode({
 }) {
   const user = await getCurrentUser();
   const normalizedCode = inviteCode.trim().toUpperCase();
+  const inviteSnapshot = await getDoc(doc(db, "inviteCodes", normalizedCode));
+  await recordUsage("inviteCodes.read", { reads: 1 });
+
+  if (inviteSnapshot.exists()) {
+    const householdId = inviteSnapshot.data().householdId;
+
+    await updateDoc(doc(db, "households", householdId), {
+      memberIds: arrayUnion(user.uid),
+      [`members.${user.uid}`]: memberData(displayName, roleLabel),
+      lastJoinInviteCode: normalizedCode,
+      updatedAt: serverTimestamp(),
+    });
+    await recordUsage("households.join", { writes: 1 });
+
+    await rememberHousehold(householdId);
+
+    const updatedSnapshot = await getDoc(doc(db, "households", householdId));
+    await recordUsage("households.read", { reads: 1 });
+    return mapHouseholdDoc(updatedSnapshot);
+  }
 
   const householdQuery = query(
     collection(db, "households"),
@@ -106,6 +139,9 @@ export async function joinHouseholdByInviteCode({
     limit(1)
   );
   const snapshot = await getDocs(householdQuery);
+  await recordUsage("households.inviteLookupFallback", {
+    reads: snapshot.size,
+  });
 
   if (snapshot.empty) {
     throw new Error("No household found for that invite code");
@@ -117,12 +153,20 @@ export async function joinHouseholdByInviteCode({
   await updateDoc(doc(db, "households", householdDoc.id), {
     memberIds: arrayUnion(user.uid),
     [memberPath]: memberData(displayName, roleLabel),
+    lastJoinInviteCode: normalizedCode,
     updatedAt: serverTimestamp(),
   });
+  await setDoc(doc(db, "inviteCodes", normalizedCode), {
+    householdId: householdDoc.id,
+    createdBy: householdDoc.data().createdBy,
+    createdAt: serverTimestamp(),
+  });
+  await recordUsage("households.joinFallback", { writes: 2 });
 
   await rememberHousehold(householdDoc.id);
 
   const updatedSnapshot = await getDoc(doc(db, "households", householdDoc.id));
+  await recordUsage("households.read", { reads: 1 });
   return mapHouseholdDoc(updatedSnapshot);
 }
 
@@ -132,6 +176,7 @@ export async function getActiveHousehold() {
 
   if (rememberedId) {
     const snapshot = await getDoc(doc(db, "households", rememberedId));
+    await recordUsage("households.read", { reads: 1 });
 
     if (snapshot.exists()) {
       const household = mapHouseholdDoc(snapshot);
@@ -148,6 +193,7 @@ export async function getActiveHousehold() {
     limit(1)
   );
   const snapshot = await getDocs(membershipQuery);
+  await recordUsage("households.membershipLookup", { reads: snapshot.size });
 
   if (snapshot.empty) return null;
 

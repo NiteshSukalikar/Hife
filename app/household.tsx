@@ -5,6 +5,7 @@ import {
   getActiveHousehold,
   joinHouseholdByInviteCode,
 } from "@/services/households";
+import { logError } from "@/utils/safeLogger";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -39,7 +40,7 @@ export default function HouseholdScreen() {
         }
       })
       .catch((error) => {
-        console.error("Failed to load household", error);
+        logError("Failed to load household", error);
       });
   }, []);
 
@@ -78,7 +79,7 @@ export default function HouseholdScreen() {
       );
       router.replace("/(tabs)");
     } catch (error) {
-      console.error(error);
+      logError("Household setup failed", error);
       show(
         error instanceof Error ? error.message : "Household setup failed",
         "error"

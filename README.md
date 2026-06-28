@@ -48,3 +48,10 @@ The current product loop supports:
 
 Create purchase request -> discuss -> approve/decline/buy later/ask for more
 info -> mark purchased.
+
+## Security And Free-Tier
+
+- Firestore rules: `firestore.rules`
+- Firestore deploy config: `firebase.json`
+- Firestore index config: `firestore.indexes.json`
+- Security/free-tier operating notes: `SECURITY_FREE_TIER.md`

@@ -18,6 +18,7 @@ import {
   getRequestAmount,
   PRIORITY_EXPLANATIONS,
 } from "@/utils/budget";
+import { logError } from "@/utils/safeLogger";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -89,7 +90,7 @@ export default function RequestDetailsScreen() {
       ]);
       setBudgetSettings(settings);
     } catch (error) {
-      console.error(error);
+      logError("Failed to load request", error);
       show("Failed to load request", "error");
     } finally {
       setLoading(false);
@@ -111,7 +112,7 @@ export default function RequestDetailsScreen() {
         setLoading(false);
       },
       (error: unknown) => {
-        console.error(error);
+        logError("Failed to listen for request updates", error);
         show("Failed to listen for request updates", "error");
         setLoading(false);
       }
@@ -126,7 +127,7 @@ export default function RequestDetailsScreen() {
     subscribeToPurchaseRequests(
       (data: PurchaseRequest[]) => setHouseholdRequests(data),
       (error: unknown) => {
-        console.error(error);
+        logError("Failed to listen for request list", error);
       }
     ).then((stop) => {
       if (cancelled) {
@@ -159,7 +160,7 @@ export default function RequestDetailsScreen() {
       await updatePurchaseRequestStatus(request.id, status, decisionReason);
       show(`Request marked ${STATUS_LABELS[status].toLowerCase()}`, "success");
     } catch (error) {
-      console.error(error);
+      logError("Failed to update request", error);
       show("Failed to update request", "error");
     } finally {
       setSavingStatus(null);

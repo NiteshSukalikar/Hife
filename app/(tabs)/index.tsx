@@ -35,6 +35,7 @@ import {
   formatInr,
   REQUEST_CATEGORIES,
 } from "@/utils/budget";
+import { logError } from "@/utils/safeLogger";
 
 type FilterValue = "all" | RequestStatus;
 
@@ -141,7 +142,7 @@ export default function HomeScreen() {
         )
       );
     } catch (e) {
-      console.error("Failed to fetch requests", e);
+      logError("Failed to fetch requests", e);
       setError("Could not load purchase requests. Pull to try again.");
     } finally {
       setLoading(false);
@@ -226,7 +227,7 @@ export default function HomeScreen() {
         });
       },
       (listenerError: unknown) => {
-        console.error("Realtime request listener failed", listenerError);
+        logError("Realtime request listener failed", listenerError);
         setError("Could not listen for purchase requests. Pull to try again.");
         setLoading(false);
       }
@@ -309,7 +310,7 @@ export default function HomeScreen() {
       setShowBudgetSettings(false);
       toast.show("Budget settings saved", "success");
     } catch (saveError) {
-      console.error(saveError);
+      logError("Failed to save budget settings", saveError);
       toast.show("Failed to save budget settings", "error");
     } finally {
       setSavingBudget(false);

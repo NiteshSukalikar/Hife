@@ -9,6 +9,7 @@ import { uploadImage } from "@/services/uploadImage";
 import { getDeviceUserId } from "@/utils/deviceUser";
 import { validateImageAsset } from "@/utils/productMedia";
 import { validateProductUrl } from "@/utils/productLinks";
+import { logError } from "@/utils/safeLogger";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useNavigation } from "expo-router";
@@ -119,7 +120,7 @@ export default function CommentsScreen() {
         });
       },
       (e: unknown) => {
-        console.error(e);
+        logError("Failed to listen for discussion", e);
         show("Failed to listen for discussion", "error");
         setLoading(false);
       }
@@ -194,7 +195,7 @@ export default function CommentsScreen() {
           setUploadingImage(true);
           imageUrl = await uploadImage(image);
         } catch (e) {
-          console.error(e);
+          logError("Comment image upload failed", e);
           setImageError(
             "Image upload failed. Check your connection and try again."
           );
@@ -219,7 +220,7 @@ export default function CommentsScreen() {
       setImageError("");
 
     } catch (e) {
-      console.error(e);
+      logError("Failed to add comment", e);
       show("Failed to add comment", "error");
     } finally {
       setUploadingImage(false);

@@ -1,5 +1,6 @@
 import { db } from "@/services/firebase";
 import { requireActiveHousehold } from "@/services/households";
+import { recordUsage } from "@/services/usageMonitoring";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 
 const DEFAULT_CATEGORIES = [
@@ -36,6 +37,7 @@ export async function updateBudgetSettings({ monthlyBudget, categoryBudgets }) {
     categoryBudgets: cleanCategoryBudgets,
     updatedAt: serverTimestamp(),
   });
+  await recordUsage("budgets.update", { writes: 1 });
 
   return {
     monthlyBudget: Number(monthlyBudget || 0),
