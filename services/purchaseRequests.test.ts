@@ -21,7 +21,11 @@ vi.mock("firebase/firestore", () => ({
   where: vi.fn(),
 }));
 
-import { mapRequestDoc, normalizeStatus } from "@/services/purchaseRequests";
+import {
+  mapRequestDoc,
+  normalizeStatus,
+  sortRequestsByCreatedAtDesc,
+} from "@/services/purchaseRequests";
 
 function docSnapshot(data: Record<string, unknown>) {
   return {
@@ -89,5 +93,21 @@ describe("purchase request helpers", () => {
       status: "buy_later",
       commentCount: 2,
     });
+  });
+
+  it("sorts mapped requests newest first without a composite Firestore index", () => {
+    const older = {
+      id: "older",
+      createdAt: { toMillis: () => 1000 },
+    };
+    const newer = {
+      id: "newer",
+      createdAt: { toMillis: () => 2000 },
+    };
+
+    expect(sortRequestsByCreatedAtDesc([older, newer])).toEqual([
+      newer,
+      older,
+    ]);
   });
 });

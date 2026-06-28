@@ -9,7 +9,6 @@ import {
   getDoc,
   getDocs,
   onSnapshot,
-  orderBy,
   query,
   serverTimestamp,
   updateDoc,
@@ -70,6 +69,20 @@ export function mapRequestDoc(docSnapshot) {
   };
 }
 
+function getTimestampMillis(value) {
+  if (!value) return 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (typeof value.toDate === "function") return value.toDate().getTime();
+  if (typeof value.seconds === "number") return value.seconds * 1000;
+  return 0;
+}
+
+export function sortRequestsByCreatedAtDesc(requests) {
+  return [...requests].sort(
+    (a, b) => getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt)
+  );
+}
+
 export async function createPurchaseRequest({
   productName,
   reason,
@@ -118,12 +131,11 @@ export async function getPurchaseRequests() {
   const household = await requireActiveHousehold();
   const q = query(
     collection(db, "tasks"),
-    where("householdId", "==", household.id),
-    orderBy("createdAt", "desc")
+    where("householdId", "==", household.id)
   );
   const snapshot = await getDocs(q);
   await recordUsage("requests.list", { reads: snapshot.size });
-  return snapshot.docs.map(mapRequestDoc);
+  return sortRequestsByCreatedAtDesc(snapshot.docs.map(mapRequestDoc));
 }
 
 export async function getPurchaseRequest(requestId) {
@@ -148,14 +160,13 @@ export async function subscribeToPurchaseRequests(onNext, onError) {
   const household = await requireActiveHousehold();
   const q = query(
     collection(db, "tasks"),
-    where("householdId", "==", household.id),
-    orderBy("createdAt", "desc")
+    where("householdId", "==", household.id)
   );
 
   return onSnapshot(
     q,
     (snapshot) => {
-      onNext(snapshot.docs.map(mapRequestDoc), snapshot);
+      onNext(sortRequestsByCreatedAtDesc(snapshot.docs.map(mapRequestDoc)), snapshot);
       recordUsage("requests.listenSnapshot", { reads: snapshot.size });
     },
     onError
