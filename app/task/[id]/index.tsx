@@ -174,6 +174,15 @@ export default function RequestDetailsScreen() {
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Decision context</Text>
+              {request.createdByDisplayName || request.createdByRoleLabel ? (
+                <Text style={styles.creatorText}>
+                  Requested by{" "}
+                  {request.createdByDisplayName || request.createdByRoleLabel}
+                  {request.createdByRoleLabel
+                    ? ` (${request.createdByRoleLabel})`
+                    : ""}
+                </Text>
+              ) : null}
               <Text style={styles.bodyText}>{request.reason || "No reason added."}</Text>
             </View>
 
@@ -384,6 +393,12 @@ const styles = StyleSheet.create({
     color: "#F8FAFC",
     fontSize: 15,
     lineHeight: 22,
+  },
+  creatorText: {
+    color: "#A1A1AA",
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 8,
   },
   mutedText: {
     color: "#A1A1AA",

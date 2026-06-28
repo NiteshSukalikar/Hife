@@ -1,13 +1,49 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Redirect, Tabs } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getActiveHousehold } from '@/services/households';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const [checkingHousehold, setCheckingHousehold] = useState(true);
+  const [hasHousehold, setHasHousehold] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getActiveHousehold()
+      .then((household) => {
+        if (isMounted) setHasHousehold(!!household);
+      })
+      .catch((error) => {
+        console.error("Failed to check household", error);
+        if (isMounted) setHasHousehold(false);
+      })
+      .finally(() => {
+        if (isMounted) setCheckingHousehold(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (checkingHousehold) {
+    return (
+      <View style={{ alignItems: 'center', backgroundColor: '#050505', flex: 1, justifyContent: 'center' }}>
+        <ActivityIndicator color="#39FF14" />
+      </View>
+    );
+  }
+
+  if (!hasHousehold) {
+    return <Redirect href="/household" />;
+  }
 
   return (
     <Tabs

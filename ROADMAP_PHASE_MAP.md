@@ -55,16 +55,16 @@ Goal: Make product images and product links reliable across both partners' devic
 
 Goal: Move from anonymous shared data to a real couple/household structure.
 
-- [ ] Add Firebase anonymous authentication.
-- [ ] Create a household collection.
-- [ ] Add household invite code generation.
-- [ ] Add join household by invite code.
-- [ ] Store household members.
-- [ ] Store each member's display name.
-- [ ] Add role labels such as Partner A and Partner B, or custom names.
-- [ ] Scope requests to the current household.
-- [ ] Scope comments to the current household.
-- [ ] Prevent users outside the household from reading or writing household data.
+- [x] Add Firebase anonymous authentication.
+- [x] Create a household collection.
+- [x] Add household invite code generation.
+- [x] Add join household by invite code.
+- [x] Store household members.
+- [x] Store each member's display name.
+- [x] Add role labels such as Partner A and Partner B, or custom names.
+- [x] Scope requests to the current household.
+- [x] Scope comments to the current household.
+- [x] Prevent users outside the household from reading or writing household data.
 
 ## Phase 5: Budget And Decision Intelligence
 

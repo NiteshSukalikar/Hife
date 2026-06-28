@@ -31,6 +31,8 @@ type Comment = {
   image?: string | null;
   link?: string | null;
   authorId: string;
+  authorDisplayName?: string;
+  authorRoleLabel?: string;
   createdAt: string;
 };
 
@@ -214,7 +216,10 @@ export default function CommentsScreen() {
                   )}
 
                   <Text style={styles.time}>
-                    {isMe ? "You" : "Partner"} - {item.createdAt}
+                    {isMe
+                      ? `You${item.authorRoleLabel ? ` (${item.authorRoleLabel})` : ""}`
+                      : item.authorDisplayName || item.authorRoleLabel || "Partner"}{" "}
+                    - {item.createdAt}
                   </Text>
                 </View>
               );

@@ -31,7 +31,10 @@ export type PurchaseRequest = {
   decisionBy?: string | null;
   decisionAt?: any;
   image?: string | null;
+  householdId?: string | null;
   createdBy?: string | null;
+  createdByDisplayName?: string;
+  createdByRoleLabel?: string;
   createdAt?: any;
   updatedAt?: any;
 };
