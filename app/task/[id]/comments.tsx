@@ -1,5 +1,10 @@
 import useToast from "@/components/toast/useToast";
-import { addComment, getComments } from "@/services/comments";
+import { addComment, subscribeToComments } from "@/services/comments";
+import {
+  getNotificationSettings,
+  markCommentsRead,
+  scheduleLocalNotification,
+} from "@/services/notifications";
 import { uploadImage } from "@/services/uploadImage";
 import { getDeviceUserId } from "@/utils/deviceUser";
 import { validateImageAsset } from "@/utils/productMedia";
@@ -7,7 +12,7 @@ import { validateProductUrl } from "@/utils/productLinks";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -52,19 +57,8 @@ export default function CommentsScreen() {
   const [isSending, setIsSending] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState("");
-
-  const loadComments = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await getComments(taskId as string);
-      setComments(data);
-    } catch (e) {
-      console.error(e);
-      show("Failed to load discussion", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [show, taskId]);
+  const initialSnapshotSeen = useRef(false);
+  const myUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     navigation.setOptions({
@@ -72,9 +66,76 @@ export default function CommentsScreen() {
       headerTitleAlign: "center",
     });
 
-    getDeviceUserId().then(setMyUserId);
-    loadComments();
-  }, [loadComments, navigation, title]);
+    getDeviceUserId().then((userId) => {
+      setMyUserId(userId);
+      myUserIdRef.current = userId;
+    });
+  }, [navigation, title]);
+
+  useEffect(() => {
+    myUserIdRef.current = myUserId;
+  }, [myUserId]);
+
+  useEffect(() => {
+    let unsubscribe: undefined | (() => void);
+    let cancelled = false;
+
+    setLoading(true);
+
+    subscribeToComments(
+      taskId as string,
+      async (data: Comment[], snapshot: any) => {
+        setComments(data);
+        setLoading(false);
+        await markCommentsRead(taskId as string, data.length);
+
+        if (!initialSnapshotSeen.current) {
+          initialSnapshotSeen.current = true;
+          return;
+        }
+
+        const settings = await getNotificationSettings();
+
+        if (!settings.enabled || !settings.comments) return;
+
+        snapshot.docChanges().forEach((change: any) => {
+          const item = data.find(
+            (comment: Comment) => comment.id === change.doc.id
+          );
+          const currentUserId = myUserIdRef.current;
+
+          if (
+            change.type === "added" &&
+            item &&
+            currentUserId &&
+            item.authorId !== currentUserId
+          ) {
+            scheduleLocalNotification({
+              title: "New comment",
+              body: item.text,
+              data: { requestId: taskId },
+            });
+          }
+        });
+      },
+      (e: unknown) => {
+        console.error(e);
+        show("Failed to listen for discussion", "error");
+        setLoading(false);
+      }
+    ).then((stop) => {
+      if (cancelled) {
+        stop();
+      } else {
+        unsubscribe = stop;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [show, taskId]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -157,7 +218,6 @@ export default function CommentsScreen() {
       setImage(null);
       setImageError("");
 
-      loadComments();
     } catch (e) {
       console.error(e);
       show("Failed to add comment", "error");

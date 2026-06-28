@@ -3,8 +3,9 @@ import { BudgetSettings, PurchaseRequest, RequestStatus } from "@/constants/type
 import { getBudgetSettings, updateBudgetSettings } from "@/services/budgets";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Switch,
   FlatList,
   Image,
   Pressable,
@@ -14,8 +15,20 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { getPurchaseRequests } from "@/services/purchaseRequests";
+import {
+  getPurchaseRequests,
+  subscribeToPurchaseRequests,
+} from "@/services/purchaseRequests";
 import useToast from "@/components/toast/useToast";
+import {
+  DEFAULT_NOTIFICATION_SETTINGS,
+  getNotificationSettings,
+  getReadCommentCounts,
+  requestNotificationPermission,
+  scheduleLocalNotification,
+  updateNotificationSettings,
+} from "@/services/notifications";
+import { getDeviceUserId } from "@/utils/deviceUser";
 import {
   buildBudgetSummary,
   DEFAULT_BUDGET_SETTINGS,
@@ -56,6 +69,8 @@ const STATUS_COLORS: Record<RequestStatus, { bg: string; text: string }> = {
 
 const DEFAULT_STATUS_COLOR = STATUS_COLORS.pending;
 
+type NotificationSettings = typeof DEFAULT_NOTIFICATION_SETTINGS;
+
 function getStatusLabel(status: RequestStatus) {
   return STATUS_LABELS[status] || STATUS_LABELS.pending;
 }
@@ -80,17 +95,37 @@ export default function HomeScreen() {
   const [savingBudget, setSavingBudget] = useState(false);
   const [showBudgetSettings, setShowBudgetSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [readCommentCounts, setReadCommentCounts] = useState<
+    Record<string, number>
+  >({});
+  const [notificationSettings, setNotificationSettings] =
+    useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
+  const initialSnapshotSeen = useRef(false);
+  const myUserIdRef = useRef<string | null>(null);
+  const notificationSettingsRef = useRef<NotificationSettings>(
+    DEFAULT_NOTIFICATION_SETTINGS
+  );
 
   const loadRequests = useCallback(async () => {
     try {
       setError(null);
-      const [data, settings] = await Promise.all([
+      const [data, settings, readCounts, savedNotificationSettings, userId] =
+        await Promise.all([
         getPurchaseRequests(),
         getBudgetSettings(),
+        getReadCommentCounts(),
+        getNotificationSettings(),
+        getDeviceUserId(),
       ]);
       const nextSettings = settings as BudgetSettings;
       setRequests(data);
       setBudgetSettings(nextSettings);
+      setReadCommentCounts(readCounts);
+      setNotificationSettings(savedNotificationSettings);
+      setMyUserId(userId);
+      myUserIdRef.current = userId;
+      notificationSettingsRef.current = savedNotificationSettings;
       setMonthlyBudgetInput(
         nextSettings.monthlyBudget ? String(nextSettings.monthlyBudget) : ""
       );
@@ -113,6 +148,102 @@ export default function HomeScreen() {
     }
   }, []);
 
+  useEffect(() => {
+    myUserIdRef.current = myUserId;
+  }, [myUserId]);
+
+  useEffect(() => {
+    notificationSettingsRef.current = notificationSettings;
+  }, [notificationSettings]);
+
+  useEffect(() => {
+    let unsubscribe: undefined | (() => void);
+    let cancelled = false;
+
+    getDeviceUserId().then((userId) => {
+      if (!cancelled) setMyUserId(userId);
+    });
+
+    subscribeToPurchaseRequests(
+      (data: PurchaseRequest[], snapshot: any) => {
+        setRequests(data);
+        setError(null);
+        setLoading(false);
+
+        if (!initialSnapshotSeen.current) {
+          initialSnapshotSeen.current = true;
+          return;
+        }
+
+        snapshot.docChanges().forEach((change: any) => {
+          const item = data.find(
+            (request: PurchaseRequest) => request.id === change.doc.id
+          );
+          const currentUserId = myUserIdRef.current;
+          const settings = notificationSettingsRef.current;
+          if (!item || !currentUserId) return;
+
+          if (
+            change.type === "added" &&
+            item.createdBy !== currentUserId &&
+            settings.enabled &&
+            settings.newRequests
+          ) {
+            scheduleLocalNotification({
+              title: "New purchase request",
+              body: item.productName,
+              data: { requestId: item.id },
+            });
+          }
+
+          if (
+            change.type === "modified" &&
+            ["approved", "declined"].includes(item.lastActivityType || "") &&
+            item.decisionBy !== currentUserId &&
+            settings.enabled &&
+            settings.statusChanges
+          ) {
+            scheduleLocalNotification({
+              title: `Request ${getStatusLabel(item.status).toLowerCase()}`,
+              body: item.productName,
+              data: { requestId: item.id },
+            });
+          }
+
+          if (
+            change.type === "modified" &&
+            item.lastActivityType === "comment" &&
+            item.lastCommentBy !== currentUserId &&
+            settings.enabled &&
+            settings.comments
+          ) {
+            scheduleLocalNotification({
+              title: `New comment on ${item.productName}`,
+              body: item.lastCommentText || "Open Hife to read the discussion.",
+              data: { requestId: item.id },
+            });
+          }
+        });
+      },
+      (listenerError: unknown) => {
+        console.error("Realtime request listener failed", listenerError);
+        setError("Could not listen for purchase requests. Pull to try again.");
+        setLoading(false);
+      }
+    ).then((stop) => {
+      if (cancelled) {
+        stop();
+      } else {
+        unsubscribe = stop;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, []);
+
   const budgetSummary = useMemo(
     () => buildBudgetSummary(requests, budgetSettings),
     [budgetSettings, requests]
@@ -123,6 +254,35 @@ export default function HomeScreen() {
       loadRequests();
     }, [loadRequests])
   );
+
+  const enableNotifications = async () => {
+    const result = await requestNotificationPermission();
+    setNotificationSettings(result.settings);
+    notificationSettingsRef.current = result.settings;
+    toast.show(
+      result.granted
+        ? "Notifications enabled"
+        : "Notification permission was not granted",
+      result.granted ? "success" : "error"
+    );
+  };
+
+  const toggleNotificationSetting = async (
+    key: keyof NotificationSettings,
+    value: boolean
+  ) => {
+    const settings = await updateNotificationSettings({
+      ...notificationSettings,
+      [key]: value,
+    });
+    setNotificationSettings(settings);
+    notificationSettingsRef.current = settings;
+  };
+
+  const formatActivity = (value: any) => {
+    const date = value?.toDate?.();
+    return date ? date.toLocaleString() : "No activity yet";
+  };
 
   const filteredRequests = useMemo(() => {
     if (activeFilter === "all") return requests;
@@ -243,6 +403,50 @@ export default function HomeScreen() {
               {savingBudget ? "Saving..." : "Save Budget"}
             </Text>
           </Pressable>
+
+          <View style={styles.notificationPanel}>
+            <View style={styles.notificationHeader}>
+              <View style={styles.notificationHeaderText}>
+                <Text style={styles.inputLabel}>Notifications</Text>
+                <Text style={styles.notificationHint}>
+                  Get local alerts for partner updates on this device.
+                </Text>
+              </View>
+              <Switch
+                value={notificationSettings.enabled}
+                onValueChange={(value) =>
+                  value
+                    ? enableNotifications()
+                    : toggleNotificationSetting("enabled", false)
+                }
+                trackColor={{ false: "#263026", true: "#39FF14" }}
+                thumbColor="#F8FAFC"
+              />
+            </View>
+
+            {(["newRequests", "statusChanges", "comments"] as const).map(
+              (key) => (
+                <View key={key} style={styles.notificationRow}>
+                  <Text style={styles.notificationLabel}>
+                    {key === "newRequests"
+                      ? "New requests"
+                      : key === "statusChanges"
+                        ? "Approvals and declines"
+                        : "New comments"}
+                  </Text>
+                  <Switch
+                    value={notificationSettings[key]}
+                    disabled={!notificationSettings.enabled}
+                    onValueChange={(value) =>
+                      toggleNotificationSetting(key, value)
+                    }
+                    trackColor={{ false: "#263026", true: "#39FF14" }}
+                    thumbColor="#F8FAFC"
+                  />
+                </View>
+              )
+            )}
+          </View>
         </View>
       ) : null}
 
@@ -373,10 +577,14 @@ export default function HomeScreen() {
                 <Text style={styles.budget}>
                   {formatInr(item.expectedPrice)} expected / {formatInr(item.maxBudget)} max
                 </Text>
+                <Text style={styles.activityText} numberOfLines={1}>
+                  Last activity: {formatActivity(item.lastActivityAt)}
+                </Text>
               </View>
 
               <View style={styles.actions}>
                 <Pressable
+                  style={styles.chatButton}
                   hitSlop={10}
                   onPress={() =>
                     router.push({
@@ -390,6 +598,21 @@ export default function HomeScreen() {
                     size={22}
                     color="#2563eb"
                   />
+                  {Math.max(
+                    Number(item.commentCount || 0) -
+                      Number(readCommentCounts[item.id] || 0),
+                    0
+                  ) > 0 ? (
+                    <View style={styles.unreadBadge}>
+                      <Text style={styles.unreadText}>
+                        {Math.max(
+                          Number(item.commentCount || 0) -
+                            Number(readCommentCounts[item.id] || 0),
+                          0
+                        )}
+                      </Text>
+                    </View>
+                  ) : null}
                 </Pressable>
 
                 <Ionicons
@@ -629,6 +852,9 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     height: 58,
   },
+  chatButton: {
+    position: "relative",
+  },
   info: {
     flex: 1,
     justifyContent: "center",
@@ -663,6 +889,60 @@ const styles = StyleSheet.create({
     color: "#39FF14",
     fontSize: 13,
     fontWeight: "600",
+  },
+  activityText: {
+    color: "#71717A",
+    fontSize: 11,
+    marginTop: 3,
+  },
+  unreadBadge: {
+    alignItems: "center",
+    backgroundColor: "#39FF14",
+    borderRadius: 999,
+    justifyContent: "center",
+    minWidth: 18,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    position: "absolute",
+    right: -8,
+    top: -8,
+  },
+  unreadText: {
+    color: "#050505",
+    fontSize: 10,
+    fontWeight: "900",
+  },
+  notificationPanel: {
+    borderTopColor: "#263026",
+    borderTopWidth: 1,
+    marginTop: 14,
+    paddingTop: 10,
+  },
+  notificationHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  notificationHeaderText: {
+    flex: 1,
+  },
+  notificationHint: {
+    color: "#A1A1AA",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: -2,
+  },
+  notificationRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+  },
+  notificationLabel: {
+    color: "#F8FAFC",
+    fontSize: 13,
+    fontWeight: "700",
   },
   imagePlaceholder: {
     backgroundColor: "#171A18",

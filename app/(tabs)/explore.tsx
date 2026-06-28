@@ -12,7 +12,10 @@ import {
   MONTHLY_AI_USAGE_LIMIT,
 } from "@/services/aiDecisionAssistant";
 import { getBudgetSettings } from "@/services/budgets";
-import { createPurchaseRequest, getPurchaseRequests } from "@/services/purchaseRequests";
+import {
+  createPurchaseRequest,
+  subscribeToPurchaseRequests,
+} from "@/services/purchaseRequests";
 import { uploadImage } from "@/services/uploadImage";
 import {
   buildBudgetSummary,
@@ -72,16 +75,38 @@ export default function CreateRequestScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      Promise.all([getBudgetSettings(), getPurchaseRequests()])
-        .then(([settings, data]) => {
+      getBudgetSettings()
+        .then((settings) => {
           setBudgetSettings(settings);
-          setRequests(data);
         })
         .catch((error) => {
           console.error("Failed to load budget context", error);
         });
     }, [])
   );
+
+  useEffect(() => {
+    let unsubscribe: undefined | (() => void);
+    let cancelled = false;
+
+    subscribeToPurchaseRequests(
+      (data: PurchaseRequest[]) => setRequests(data),
+      (error: unknown) => {
+        console.error("Failed to listen for budget context", error);
+      }
+    ).then((stop) => {
+      if (cancelled) {
+        stop();
+      } else {
+        unsubscribe = stop;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, []);
 
   const budgetSummary = useMemo(
     () => buildBudgetSummary(requests, budgetSettings),

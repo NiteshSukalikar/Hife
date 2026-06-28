@@ -7,6 +7,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -60,6 +61,11 @@ function mapRequestDoc(docSnapshot) {
     createdByRoleLabel: data.createdByRoleLabel || "",
     createdAt: data.createdAt || null,
     updatedAt: data.updatedAt || null,
+    lastActivityAt: data.lastActivityAt || data.updatedAt || data.createdAt || null,
+    lastActivityType: data.lastActivityType || "created",
+    commentCount: Number(data.commentCount || 0),
+    lastCommentBy: data.lastCommentBy || null,
+    lastCommentText: data.lastCommentText || "",
   };
 }
 
@@ -98,6 +104,9 @@ export async function createPurchaseRequest({
     createdByRoleLabel: member?.roleLabel || "Partner",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+    lastActivityAt: serverTimestamp(),
+    lastActivityType: "created",
+    commentCount: 0,
     image,
   });
 }
@@ -130,6 +139,45 @@ export async function getPurchaseRequest(requestId) {
   return mapRequestDoc(snapshot);
 }
 
+export async function subscribeToPurchaseRequests(onNext, onError) {
+  const household = await requireActiveHousehold();
+  const q = query(
+    collection(db, "tasks"),
+    where("householdId", "==", household.id),
+    orderBy("createdAt", "desc")
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      onNext(snapshot.docs.map(mapRequestDoc), snapshot);
+    },
+    onError
+  );
+}
+
+export async function subscribeToPurchaseRequest(requestId, onNext, onError) {
+  const household = await requireActiveHousehold();
+
+  return onSnapshot(
+    doc(db, "tasks", requestId),
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        onNext(null);
+        return;
+      }
+
+      if (snapshot.data().householdId !== household.id) {
+        onError?.(new Error("Purchase request is outside this household"));
+        return;
+      }
+
+      onNext(mapRequestDoc(snapshot));
+    },
+    onError
+  );
+}
+
 export async function updatePurchaseRequestStatus(
   requestId,
   status,
@@ -149,5 +197,7 @@ export async function updatePurchaseRequestStatus(
     decisionBy: userId,
     decisionAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+    lastActivityAt: serverTimestamp(),
+    lastActivityType: status,
   });
 }

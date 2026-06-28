@@ -102,15 +102,15 @@ Goal: Add useful AI features that support household purchase decisions without i
 
 Goal: Make the app feel shared and responsive between both partners.
 
-- [ ] Replace one-time Firestore reads with real-time listeners for requests.
-- [ ] Replace one-time Firestore reads with real-time listeners for comments.
-- [ ] Add unread comment count.
-- [ ] Add last activity timestamp.
-- [ ] Add local notification permission flow.
-- [ ] Add push notification when a new request is created.
-- [ ] Add push notification when a request is approved or declined.
-- [ ] Add push notification when a comment is added.
-- [ ] Add notification settings.
+- [x] Replace one-time Firestore reads with real-time listeners for requests.
+- [x] Replace one-time Firestore reads with real-time listeners for comments.
+- [x] Add unread comment count.
+- [x] Add last activity timestamp.
+- [x] Add local notification permission flow.
+- [x] Add push notification when a new request is created.
+- [x] Add push notification when a request is approved or declined.
+- [x] Add push notification when a comment is added.
+- [x] Add notification settings.
 
 ## Phase 8: UI And UX Polish
 

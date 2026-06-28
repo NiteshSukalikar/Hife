@@ -7,10 +7,30 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
+
+function mapCommentDoc(docSnapshot) {
+  const data = docSnapshot.data();
+
+  return {
+    id: docSnapshot.id,
+    text: data.text,
+    image: data.image || null,
+    link: data.link || null,
+    householdId: data.householdId || null,
+    authorId: data.authorId,
+    authorDisplayName: data.authorDisplayName || "",
+    authorRoleLabel: data.authorRoleLabel || "",
+    createdAt: data.createdAt?.toDate?.().toLocaleString() || "",
+    createdAtRaw: data.createdAt || null,
+  };
+}
 
 async function verifyHouseholdRequest(taskId) {
   const household = await requireActiveHousehold();
@@ -35,20 +55,23 @@ export async function getComments(taskId) {
 
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      text: data.text,
-      image: data.image || null,
-      link: data.link || null,
-      householdId: data.householdId || null,
-      authorId: data.authorId,
-      authorDisplayName: data.authorDisplayName || "",
-      authorRoleLabel: data.authorRoleLabel || "",
-      createdAt: data.createdAt?.toDate?.().toLocaleString() || "",
-    };
-  });
+  return snapshot.docs.map(mapCommentDoc);
+}
+
+export async function subscribeToComments(taskId, onNext, onError) {
+  await verifyHouseholdRequest(taskId);
+  const q = query(
+    collection(db, "tasks", taskId, "comments"),
+    orderBy("createdAt", "asc")
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      onNext(snapshot.docs.map(mapCommentDoc), snapshot);
+    },
+    onError
+  );
 }
 
 export async function addComment(taskId, comment) {
@@ -66,5 +89,14 @@ export async function addComment(taskId, comment) {
     authorDisplayName: member?.displayName || "Partner",
     authorRoleLabel: member?.roleLabel || "Partner",
     createdAt: serverTimestamp(),
+  });
+
+  await updateDoc(doc(db, "tasks", taskId), {
+    commentCount: increment(1),
+    lastCommentBy: userId,
+    lastCommentText: comment.text,
+    lastActivityAt: serverTimestamp(),
+    lastActivityType: "comment",
+    updatedAt: serverTimestamp(),
   });
 }

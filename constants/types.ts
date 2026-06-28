@@ -60,4 +60,9 @@ export type PurchaseRequest = {
   createdByRoleLabel?: string;
   createdAt?: any;
   updatedAt?: any;
+  lastActivityAt?: any;
+  lastActivityType?: string;
+  commentCount?: number;
+  lastCommentBy?: string | null;
+  lastCommentText?: string;
 };

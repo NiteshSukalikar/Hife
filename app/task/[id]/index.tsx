@@ -1,6 +1,6 @@
 import {
-  getPurchaseRequest,
-  getPurchaseRequests,
+  subscribeToPurchaseRequest,
+  subscribeToPurchaseRequests,
   updatePurchaseRequestStatus,
 } from "@/services/purchaseRequests";
 import useToast from "@/components/toast/useToast";
@@ -81,29 +81,67 @@ export default function RequestDetailsScreen() {
 
   const requestId = id as string;
 
-  const loadRequest = useCallback(async () => {
+  const loadRequestContext = useCallback(async () => {
     try {
       setLoading(true);
-      const [data, settings, requests] = await Promise.all([
-        getPurchaseRequest(requestId),
+      const [settings] = await Promise.all([
         getBudgetSettings(),
-        getPurchaseRequests(),
       ]);
-      setRequest(data);
       setBudgetSettings(settings);
-      setHouseholdRequests(requests);
-      setDecisionReason(data.decisionReason || "");
     } catch (error) {
       console.error(error);
       show("Failed to load request", "error");
     } finally {
       setLoading(false);
     }
-  }, [requestId, show]);
+  }, [show]);
 
   useEffect(() => {
-    loadRequest();
-  }, [loadRequest]);
+    let requestUnsubscribe: undefined | (() => void);
+    let listUnsubscribe: undefined | (() => void);
+    let cancelled = false;
+
+    loadRequestContext();
+
+    subscribeToPurchaseRequest(
+      requestId,
+      (data: PurchaseRequest | null) => {
+        setRequest(data);
+        setDecisionReason(data?.decisionReason || "");
+        setLoading(false);
+      },
+      (error: unknown) => {
+        console.error(error);
+        show("Failed to listen for request updates", "error");
+        setLoading(false);
+      }
+    ).then((stop) => {
+      if (cancelled) {
+        stop();
+      } else {
+        requestUnsubscribe = stop;
+      }
+    });
+
+    subscribeToPurchaseRequests(
+      (data: PurchaseRequest[]) => setHouseholdRequests(data),
+      (error: unknown) => {
+        console.error(error);
+      }
+    ).then((stop) => {
+      if (cancelled) {
+        stop();
+      } else {
+        listUnsubscribe = stop;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      requestUnsubscribe?.();
+      listUnsubscribe?.();
+    };
+  }, [loadRequestContext, requestId, show]);
 
   const handleStatusChange = async (status: RequestStatus) => {
     if (!request) return;
@@ -120,7 +158,6 @@ export default function RequestDetailsScreen() {
       setSavingStatus(status);
       await updatePurchaseRequestStatus(request.id, status, decisionReason);
       show(`Request marked ${STATUS_LABELS[status].toLowerCase()}`, "success");
-      await loadRequest();
     } catch (error) {
       console.error(error);
       show("Failed to update request", "error");
