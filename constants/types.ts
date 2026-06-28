@@ -14,6 +14,13 @@ export type ProductLink = {
   source: string;
 };
 
+export type CategoryBudgetMap = Record<string, number>;
+
+export type BudgetSettings = {
+  monthlyBudget: number;
+  categoryBudgets: CategoryBudgetMap;
+};
+
 export type PurchaseRequest = {
   id: string;
   title: string;

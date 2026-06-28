@@ -37,6 +37,8 @@ function mapHouseholdDoc(snapshot) {
     id: snapshot.id,
     name: data.name || "Hife Household",
     inviteCode: data.inviteCode,
+    monthlyBudget: Number(data.monthlyBudget || 0),
+    categoryBudgets: data.categoryBudgets || {},
     createdBy: data.createdBy,
     memberIds: Array.isArray(data.memberIds) ? data.memberIds : [],
     members: data.members || {},
@@ -65,6 +67,8 @@ export async function createHousehold({
     members: {
       [user.uid]: memberData(displayName, roleLabel),
     },
+    monthlyBudget: 0,
+    categoryBudgets: {},
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -75,6 +79,8 @@ export async function createHousehold({
     id: householdRef.id,
     name: name.trim() || "Hife Household",
     inviteCode,
+    monthlyBudget: 0,
+    categoryBudgets: {},
     createdBy: user.uid,
     memberIds: [user.uid],
     members: {

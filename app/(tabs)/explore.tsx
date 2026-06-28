@@ -1,12 +1,22 @@
 import Header from "@/components/header";
 import useToast from "@/components/toast/useToast";
-import { createPurchaseRequest } from "@/services/purchaseRequests";
+import { BudgetSettings, PurchaseRequest, RequestPriority } from "@/constants/types";
+import { getBudgetSettings } from "@/services/budgets";
+import { createPurchaseRequest, getPurchaseRequests } from "@/services/purchaseRequests";
 import { uploadImage } from "@/services/uploadImage";
+import {
+  buildBudgetSummary,
+  DEFAULT_BUDGET_SETTINGS,
+  formatInr,
+  PRIORITY_EXPLANATIONS,
+  REQUEST_CATEGORIES,
+} from "@/utils/budget";
 import { validateImageAsset } from "@/utils/productMedia";
 import { parseProductLinks } from "@/utils/productLinks";
 import { Picker } from "@react-native-picker/picker";
+import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -21,20 +31,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const CATEGORIES = [
-  "Household",
-  "Kitchen",
-  "Electronics",
-  "Personal",
-  "Health",
-  "Other",
-];
-
 export default function CreateRequestScreen() {
   const [image, setImage] = useState<string | null>(null);
   const [productName, setProductName] = useState("");
   const [reason, setReason] = useState("");
-  const [priority, setPriority] = useState("P1");
+  const [priority, setPriority] = useState<RequestPriority>("P1");
   const [expectedPrice, setExpectedPrice] = useState("");
   const [maxBudget, setMaxBudget] = useState("");
   const [category, setCategory] = useState("Household");
@@ -42,8 +43,40 @@ export default function CreateRequestScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState("");
+  const [budgetSettings, setBudgetSettings] = useState<BudgetSettings>(
+    DEFAULT_BUDGET_SETTINGS
+  );
+  const [requests, setRequests] = useState<PurchaseRequest[]>([]);
 
   const toast = useToast();
+
+  useFocusEffect(
+    useCallback(() => {
+      Promise.all([getBudgetSettings(), getPurchaseRequests()])
+        .then(([settings, data]) => {
+          setBudgetSettings(settings);
+          setRequests(data);
+        })
+        .catch((error) => {
+          console.error("Failed to load budget context", error);
+        });
+    }, [])
+  );
+
+  const budgetSummary = useMemo(
+    () => buildBudgetSummary(requests, budgetSettings),
+    [budgetSettings, requests]
+  );
+
+  const expectedAmount = Number(expectedPrice || 0);
+  const categorySummary = budgetSummary.categorySummaries.find(
+    (item) => item.category === category
+  );
+  const exceedsMonthlyBudget =
+    budgetSummary.monthlyBudget > 0 &&
+    expectedAmount > budgetSummary.remainingBudget;
+  const exceedsCategoryBudget =
+    !!categorySummary?.budget && expectedAmount > categorySummary.remaining;
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -223,7 +256,7 @@ export default function CreateRequestScreen() {
                 onValueChange={setCategory}
                 style={styles.picker}
               >
-                {CATEGORIES.map((item) => (
+                {REQUEST_CATEGORIES.map((item) => (
                   <Picker.Item key={item} label={item} value={item} />
                 ))}
               </Picker>
@@ -233,7 +266,7 @@ export default function CreateRequestScreen() {
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={priority}
-                onValueChange={setPriority}
+                onValueChange={(value) => setPriority(value)}
                 style={styles.picker}
               >
                 <Picker.Item label="P0 - Immediate (12 hrs)" value="P0" />
@@ -267,6 +300,37 @@ export default function CreateRequestScreen() {
                   placeholderTextColor="#71717A"
                 />
               </View>
+            </View>
+
+            <View
+              style={[
+                styles.budgetImpact,
+                exceedsMonthlyBudget || exceedsCategoryBudget
+                  ? styles.budgetImpactWarning
+                  : null,
+              ]}
+            >
+              <Text style={styles.budgetImpactTitle}>Budget impact</Text>
+              <Text style={styles.budgetImpactText}>
+                Monthly remaining: {formatInr(budgetSummary.remainingBudget)}
+              </Text>
+              <Text style={styles.budgetImpactText}>
+                {category} remaining:{" "}
+                {formatInr(categorySummary?.remaining || 0)}
+              </Text>
+              <Text style={styles.budgetImpactText}>
+                Priority: {priority} - {PRIORITY_EXPLANATIONS[priority]}
+              </Text>
+              {expectedAmount > 0 && exceedsMonthlyBudget ? (
+                <Text style={styles.warningText}>
+                  This request exceeds the available monthly budget.
+                </Text>
+              ) : null}
+              {expectedAmount > 0 && exceedsCategoryBudget ? (
+                <Text style={styles.warningText}>
+                  This request exceeds the remaining {category} category budget.
+                </Text>
+              ) : null}
             </View>
 
             <Text style={styles.label}>Product links</Text>
@@ -391,6 +455,34 @@ const styles = StyleSheet.create({
   },
   priceField: {
     flex: 1,
+  },
+  budgetImpact: {
+    backgroundColor: "#101312",
+    borderColor: "#263026",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 16,
+    padding: 12,
+  },
+  budgetImpactWarning: {
+    borderColor: "#f59e0b",
+  },
+  budgetImpactTitle: {
+    color: "#39FF14",
+    fontSize: 14,
+    fontWeight: "800",
+    marginBottom: 6,
+  },
+  budgetImpactText: {
+    color: "#A1A1AA",
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  warningText: {
+    color: "#FBBF24",
+    fontSize: 13,
+    fontWeight: "800",
+    marginTop: 6,
   },
   linksInput: {
     minHeight: 72,

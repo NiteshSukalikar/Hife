@@ -1,5 +1,6 @@
 import Header from "@/components/header";
-import { PurchaseRequest, RequestStatus } from "@/constants/types";
+import { BudgetSettings, PurchaseRequest, RequestStatus } from "@/constants/types";
+import { getBudgetSettings, updateBudgetSettings } from "@/services/budgets";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
@@ -10,9 +11,17 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { getPurchaseRequests } from "@/services/purchaseRequests";
+import useToast from "@/components/toast/useToast";
+import {
+  buildBudgetSummary,
+  DEFAULT_BUDGET_SETTINGS,
+  formatInr,
+  REQUEST_CATEGORIES,
+} from "@/utils/budget";
 
 type FilterValue = "all" | RequestStatus;
 
@@ -57,16 +66,45 @@ function getStatusColor(status: RequestStatus) {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const toast = useToast();
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
+  const [budgetSettings, setBudgetSettings] = useState<BudgetSettings>(
+    DEFAULT_BUDGET_SETTINGS
+  );
+  const [monthlyBudgetInput, setMonthlyBudgetInput] = useState("");
+  const [categoryBudgetInputs, setCategoryBudgetInputs] = useState<
+    Record<string, string>
+  >({});
   const [activeFilter, setActiveFilter] = useState<FilterValue>("all");
   const [loading, setLoading] = useState(true);
+  const [savingBudget, setSavingBudget] = useState(false);
+  const [showBudgetSettings, setShowBudgetSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadRequests = useCallback(async () => {
     try {
       setError(null);
-      const data = await getPurchaseRequests();
+      const [data, settings] = await Promise.all([
+        getPurchaseRequests(),
+        getBudgetSettings(),
+      ]);
+      const nextSettings = settings as BudgetSettings;
       setRequests(data);
+      setBudgetSettings(nextSettings);
+      setMonthlyBudgetInput(
+        nextSettings.monthlyBudget ? String(nextSettings.monthlyBudget) : ""
+      );
+      setCategoryBudgetInputs(
+        REQUEST_CATEGORIES.reduce(
+          (inputs, category) => ({
+            ...inputs,
+            [category]: nextSettings.categoryBudgets[category]
+              ? String(nextSettings.categoryBudgets[category])
+              : "",
+          }),
+          {} as Record<string, string>
+        )
+      );
     } catch (e) {
       console.error("Failed to fetch requests", e);
       setError("Could not load purchase requests. Pull to try again.");
@@ -74,6 +112,11 @@ export default function HomeScreen() {
       setLoading(false);
     }
   }, []);
+
+  const budgetSummary = useMemo(
+    () => buildBudgetSummary(requests, budgetSettings),
+    [budgetSettings, requests]
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -85,6 +128,152 @@ export default function HomeScreen() {
     if (activeFilter === "all") return requests;
     return requests.filter((item) => item.status === activeFilter);
   }, [activeFilter, requests]);
+
+  const saveBudgetSettings = async () => {
+    if (savingBudget) return;
+
+    try {
+      setSavingBudget(true);
+      const settings = await updateBudgetSettings({
+        monthlyBudget: Number(monthlyBudgetInput || 0),
+        categoryBudgets: REQUEST_CATEGORIES.reduce(
+          (budgets, category) => ({
+            ...budgets,
+            [category]: Number(categoryBudgetInputs[category] || 0),
+          }),
+          {} as Record<string, number>
+        ),
+      });
+
+      setBudgetSettings(settings);
+      setShowBudgetSettings(false);
+      toast.show("Budget settings saved", "success");
+    } catch (saveError) {
+      console.error(saveError);
+      toast.show("Failed to save budget settings", "error");
+    } finally {
+      setSavingBudget(false);
+    }
+  };
+
+  const ListHeader = (
+    <View style={styles.budgetPanel}>
+      <View style={styles.budgetHeader}>
+        <View>
+          <Text style={styles.budgetEyebrow}>Current month</Text>
+          <Text style={styles.budgetTitle}>Budget overview</Text>
+        </View>
+        <Pressable
+          style={styles.settingsButton}
+          onPress={() => setShowBudgetSettings((value) => !value)}
+        >
+          <Text style={styles.settingsButtonText}>
+            {showBudgetSettings ? "Close" : "Edit"}
+          </Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.budgetStats}>
+        <View style={styles.budgetStat}>
+          <Text style={styles.statLabel}>Monthly budget</Text>
+          <Text style={styles.statValue}>
+            {formatInr(budgetSummary.monthlyBudget)}
+          </Text>
+        </View>
+        <View style={styles.budgetStat}>
+          <Text style={styles.statLabel}>Approved</Text>
+          <Text style={styles.statValue}>
+            {formatInr(budgetSummary.approvedTotal)}
+          </Text>
+        </View>
+        <View style={styles.budgetStat}>
+          <Text style={styles.statLabel}>Pending</Text>
+          <Text style={styles.statValue}>
+            {formatInr(budgetSummary.pendingTotal)}
+          </Text>
+        </View>
+        <View style={styles.budgetStat}>
+          <Text style={styles.statLabel}>Remaining</Text>
+          <Text style={styles.statValue}>
+            {formatInr(budgetSummary.remainingBudget)}
+          </Text>
+        </View>
+      </View>
+
+      {showBudgetSettings ? (
+        <View style={styles.settingsPanel}>
+          <Text style={styles.inputLabel}>Monthly household budget</Text>
+          <TextInput
+            style={styles.budgetInput}
+            value={monthlyBudgetInput}
+            keyboardType="numeric"
+            onChangeText={(text) =>
+              setMonthlyBudgetInput(text.replace(/[^0-9]/g, ""))
+            }
+            placeholder="INR"
+            placeholderTextColor="#71717A"
+          />
+
+          <Text style={styles.inputLabel}>Category budgets</Text>
+          {REQUEST_CATEGORIES.map((category) => (
+            <View key={category} style={styles.categoryInputRow}>
+              <Text style={styles.categoryInputLabel}>{category}</Text>
+              <TextInput
+                style={styles.categoryInput}
+                value={categoryBudgetInputs[category] || ""}
+                keyboardType="numeric"
+                onChangeText={(text) =>
+                  setCategoryBudgetInputs((inputs) => ({
+                    ...inputs,
+                    [category]: text.replace(/[^0-9]/g, ""),
+                  }))
+                }
+                placeholder="INR"
+                placeholderTextColor="#71717A"
+              />
+            </View>
+          ))}
+
+          <Pressable
+            style={[styles.saveBudgetButton, savingBudget && styles.disabledButton]}
+            disabled={savingBudget}
+            onPress={saveBudgetSettings}
+          >
+            <Text style={styles.saveBudgetText}>
+              {savingBudget ? "Saving..." : "Save Budget"}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      <Text style={styles.sectionHeading}>Category summary</Text>
+      {budgetSummary.categorySummaries.map((item) => (
+        <View key={item.category} style={styles.summaryRow}>
+          <Text style={styles.summaryCategory}>{item.category}</Text>
+          <Text style={styles.summaryText}>
+            {formatInr(item.approvedTotal)} approved / {formatInr(item.pendingTotal)} pending
+          </Text>
+          <Text style={styles.summaryText}>
+            {formatInr(item.remaining)} left of {formatInr(item.budget)}
+          </Text>
+        </View>
+      ))}
+
+      <Text style={styles.sectionHeading}>Spending history</Text>
+      {budgetSummary.monthlyHistory.length === 0 ? (
+        <Text style={styles.historyEmpty}>No approved or pending requests yet.</Text>
+      ) : (
+        budgetSummary.monthlyHistory.slice(0, 4).map((item) => (
+          <View key={item.monthKey} style={styles.historyRow}>
+            <Text style={styles.historyMonth}>{item.label}</Text>
+            <Text style={styles.historyText}>
+              {formatInr(item.approvedTotal)} approved, {formatInr(item.pendingTotal)} pending
+            </Text>
+          </View>
+        ))
+      )}
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -123,6 +312,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.listContent}
         data={filteredRequests}
         keyExtractor={(item) => item.id}
+        ListHeaderComponent={ListHeader}
         refreshing={loading}
         onRefresh={loadRequests}
         ListEmptyComponent={
@@ -181,7 +371,7 @@ export default function HomeScreen() {
                   {item.category} - {item.priority}
                 </Text>
                 <Text style={styles.budget}>
-                  INR {item.expectedPrice} expected / INR {item.maxBudget} max
+                  {formatInr(item.expectedPrice)} expected / {formatInr(item.maxBudget)} max
                 </Text>
               </View>
 
@@ -251,6 +441,171 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 12,
+  },
+  budgetPanel: {
+    backgroundColor: "#101312",
+    borderColor: "#263026",
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 14,
+    padding: 12,
+  },
+  budgetHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  budgetEyebrow: {
+    color: "#B8FFB0",
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  budgetTitle: {
+    color: "#F8FAFC",
+    fontSize: 18,
+    fontWeight: "800",
+    marginTop: 2,
+  },
+  settingsButton: {
+    borderColor: "#39FF14",
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  settingsButtonText: {
+    color: "#39FF14",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  budgetStats: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  budgetStat: {
+    backgroundColor: "#171A18",
+    borderColor: "#263026",
+    borderRadius: 8,
+    borderWidth: 1,
+    flexBasis: "48%",
+    flexGrow: 1,
+    padding: 10,
+  },
+  statLabel: {
+    color: "#A1A1AA",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  statValue: {
+    color: "#F8FAFC",
+    fontSize: 15,
+    fontWeight: "800",
+    marginTop: 3,
+  },
+  settingsPanel: {
+    borderTopColor: "#263026",
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 12,
+  },
+  inputLabel: {
+    color: "#F8FAFC",
+    fontSize: 13,
+    fontWeight: "800",
+    marginBottom: 6,
+    marginTop: 8,
+  },
+  budgetInput: {
+    backgroundColor: "#050505",
+    borderColor: "#263026",
+    borderRadius: 8,
+    borderWidth: 1,
+    color: "#F8FAFC",
+    fontSize: 14,
+    padding: 10,
+  },
+  categoryInputRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 8,
+  },
+  categoryInputLabel: {
+    color: "#A1A1AA",
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  categoryInput: {
+    backgroundColor: "#050505",
+    borderColor: "#263026",
+    borderRadius: 8,
+    borderWidth: 1,
+    color: "#F8FAFC",
+    fontSize: 14,
+    padding: 9,
+    width: 120,
+  },
+  saveBudgetButton: {
+    alignItems: "center",
+    backgroundColor: "#39FF14",
+    borderRadius: 8,
+    marginTop: 8,
+    paddingVertical: 12,
+  },
+  saveBudgetText: {
+    color: "#050505",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  disabledButton: {
+    opacity: 0.65,
+  },
+  sectionHeading: {
+    color: "#39FF14",
+    fontSize: 14,
+    fontWeight: "800",
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  summaryRow: {
+    borderTopColor: "#263026",
+    borderTopWidth: 1,
+    paddingVertical: 8,
+  },
+  summaryCategory: {
+    color: "#F8FAFC",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  summaryText: {
+    color: "#A1A1AA",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  historyRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingVertical: 6,
+  },
+  historyMonth: {
+    color: "#F8FAFC",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  historyText: {
+    color: "#A1A1AA",
+    flex: 1,
+    fontSize: 12,
+    textAlign: "right",
+  },
+  historyEmpty: {
+    color: "#A1A1AA",
+    fontSize: 13,
   },
   card: {
     flexDirection: "row",

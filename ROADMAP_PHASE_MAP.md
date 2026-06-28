@@ -70,16 +70,16 @@ Goal: Move from anonymous shared data to a real couple/household structure.
 
 Goal: Help users make decisions based on money, priority, and monthly spending.
 
-- [ ] Add monthly household budget setting.
-- [ ] Add category-level budget setting.
-- [ ] Show current month approved total.
-- [ ] Show current month pending total.
-- [ ] Show remaining monthly budget.
-- [ ] Warn when a request exceeds available monthly budget.
-- [ ] Show simple budget impact on request details.
-- [ ] Add priority explanation text for P0, P1, P2, and P3.
-- [ ] Add spending history by month.
-- [ ] Add category summary such as Household, Electronics, Kitchen, Personal, Health, and Other.
+- [x] Add monthly household budget setting.
+- [x] Add category-level budget setting.
+- [x] Show current month approved total.
+- [x] Show current month pending total.
+- [x] Show remaining monthly budget.
+- [x] Warn when a request exceeds available monthly budget.
+- [x] Show simple budget impact on request details.
+- [x] Add priority explanation text for P0, P1, P2, and P3.
+- [x] Add spending history by month.
+- [x] Add category summary such as Household, Electronics, Kitchen, Personal, Health, and Other.
 
 ## Phase 6: AI Decision Assistant
 

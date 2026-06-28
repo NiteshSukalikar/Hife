@@ -1,11 +1,25 @@
 import {
   getPurchaseRequest,
+  getPurchaseRequests,
   updatePurchaseRequestStatus,
 } from "@/services/purchaseRequests";
 import useToast from "@/components/toast/useToast";
-import { ProductLink, PurchaseRequest, RequestStatus } from "@/constants/types";
+import {
+  BudgetSettings,
+  ProductLink,
+  PurchaseRequest,
+  RequestStatus,
+} from "@/constants/types";
+import { getBudgetSettings } from "@/services/budgets";
+import {
+  buildBudgetSummary,
+  DEFAULT_BUDGET_SETTINGS,
+  formatInr,
+  getRequestAmount,
+  PRIORITY_EXPLANATIONS,
+} from "@/utils/budget";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Image,
   Linking,
@@ -57,6 +71,10 @@ export default function RequestDetailsScreen() {
   const { show } = useToast();
 
   const [request, setRequest] = useState<PurchaseRequest | null>(null);
+  const [householdRequests, setHouseholdRequests] = useState<PurchaseRequest[]>([]);
+  const [budgetSettings, setBudgetSettings] = useState<BudgetSettings>(
+    DEFAULT_BUDGET_SETTINGS
+  );
   const [decisionReason, setDecisionReason] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingStatus, setSavingStatus] = useState<RequestStatus | null>(null);
@@ -66,8 +84,14 @@ export default function RequestDetailsScreen() {
   const loadRequest = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getPurchaseRequest(requestId);
+      const [data, settings, requests] = await Promise.all([
+        getPurchaseRequest(requestId),
+        getBudgetSettings(),
+        getPurchaseRequests(),
+      ]);
       setRequest(data);
+      setBudgetSettings(settings);
+      setHouseholdRequests(requests);
       setDecisionReason(data.decisionReason || "");
     } catch (error) {
       console.error(error);
@@ -117,6 +141,31 @@ export default function RequestDetailsScreen() {
   };
 
   const statusColor = request ? getStatusColor(request.status) : null;
+  const budgetSummary = useMemo(
+    () => buildBudgetSummary(householdRequests, budgetSettings),
+    [budgetSettings, householdRequests]
+  );
+  const categorySummary = request
+    ? budgetSummary.categorySummaries.find(
+        (item) => item.category === request.category
+      )
+    : null;
+  const requestAmount = request ? getRequestAmount(request) : 0;
+  const remainingAfterApproval = Math.max(
+    0,
+    budgetSummary.remainingBudget -
+      (request?.status === "pending" ? requestAmount : 0)
+  );
+  const wouldExceedMonthlyBudget =
+    !!request &&
+    budgetSummary.monthlyBudget > 0 &&
+    request.status === "pending" &&
+    requestAmount > budgetSummary.remainingBudget;
+  const wouldExceedCategoryBudget =
+    !!request &&
+    !!categorySummary?.budget &&
+    request.status === "pending" &&
+    requestAmount > categorySummary.remaining;
 
   return (
     <>
@@ -190,6 +239,9 @@ export default function RequestDetailsScreen() {
               <View style={styles.metaItem}>
                 <Text style={styles.metaLabel}>Priority</Text>
                 <Text style={styles.metaValue}>{request.priority}</Text>
+                <Text style={styles.metaHint}>
+                  {PRIORITY_EXPLANATIONS[request.priority]}
+                </Text>
               </View>
               <View style={styles.metaItem}>
                 <Text style={styles.metaLabel}>Expected</Text>
@@ -199,6 +251,48 @@ export default function RequestDetailsScreen() {
                 <Text style={styles.metaLabel}>Max budget</Text>
                 <Text style={styles.metaValue}>INR {request.maxBudget}</Text>
               </View>
+            </View>
+
+            <View
+              style={[
+                styles.section,
+                styles.budgetImpact,
+                wouldExceedMonthlyBudget || wouldExceedCategoryBudget
+                  ? styles.budgetImpactWarning
+                  : null,
+              ]}
+            >
+              <Text style={styles.sectionTitle}>Budget impact</Text>
+              <Text style={styles.budgetImpactText}>
+                Current approved this month:{" "}
+                {formatInr(budgetSummary.approvedTotal)}
+              </Text>
+              <Text style={styles.budgetImpactText}>
+                Current pending this month: {formatInr(budgetSummary.pendingTotal)}
+              </Text>
+              <Text style={styles.budgetImpactText}>
+                Monthly remaining now: {formatInr(budgetSummary.remainingBudget)}
+              </Text>
+              <Text style={styles.budgetImpactText}>
+                Remaining after approval: {formatInr(remainingAfterApproval)}
+              </Text>
+              {categorySummary ? (
+                <Text style={styles.budgetImpactText}>
+                  {request.category} remaining:{" "}
+                  {formatInr(categorySummary.remaining)} of{" "}
+                  {formatInr(categorySummary.budget)}
+                </Text>
+              ) : null}
+              {wouldExceedMonthlyBudget ? (
+                <Text style={styles.warningText}>
+                  Approval would exceed the available monthly budget.
+                </Text>
+              ) : null}
+              {wouldExceedCategoryBudget ? (
+                <Text style={styles.warningText}>
+                  Approval would exceed the remaining {request.category} budget.
+                </Text>
+              ) : null}
             </View>
 
             <View style={styles.section}>
@@ -427,6 +521,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "800",
     marginTop: 4,
+  },
+  metaHint: {
+    color: "#A1A1AA",
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 4,
+  },
+  budgetImpact: {
+    backgroundColor: "#101312",
+    borderColor: "#263026",
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 12,
+  },
+  budgetImpactWarning: {
+    borderColor: "#f59e0b",
+  },
+  budgetImpactText: {
+    color: "#F8FAFC",
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  warningText: {
+    color: "#FBBF24",
+    fontSize: 13,
+    fontWeight: "800",
+    marginTop: 6,
   },
   linkRow: {
     backgroundColor: "#101312",
