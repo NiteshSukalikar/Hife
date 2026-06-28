@@ -34,7 +34,7 @@ npm.cmd run web
 
 ## Current Direction
 
-The next product goal is to complete the core loop:
+The current product loop supports:
 
-Create purchase request -> discuss -> approve/decline/buy later -> mark
-purchased.
+Create purchase request -> discuss -> approve/decline/buy later/ask for more
+info -> mark purchased.

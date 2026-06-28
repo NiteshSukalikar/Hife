@@ -1,49 +1,318 @@
+import {
+  getPurchaseRequest,
+  updatePurchaseRequestStatus,
+} from "@/services/purchaseRequests";
+import useToast from "@/components/toast/useToast";
+import { ProductLink, PurchaseRequest, RequestStatus } from "@/constants/types";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Image,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+
+const STATUS_LABELS: Record<RequestStatus, string> = {
+  pending: "Pending",
+  approved: "Approved",
+  declined: "Declined",
+  needs_more_info: "Needs more info",
+  buy_later: "Buy later",
+  purchased: "Purchased",
+  cancelled: "Cancelled",
+};
+
+const STATUS_COLORS: Record<RequestStatus, { bg: string; text: string }> = {
+  pending: { bg: "#fef3c7", text: "#92400e" },
+  approved: { bg: "#dcfce7", text: "#166534" },
+  declined: { bg: "#fee2e2", text: "#991b1b" },
+  needs_more_info: { bg: "#dbeafe", text: "#1e40af" },
+  buy_later: { bg: "#ede9fe", text: "#5b21b6" },
+  purchased: { bg: "#ccfbf1", text: "#115e59" },
+  cancelled: { bg: "#e5e7eb", text: "#374151" },
+};
+
+function canMarkPurchased(status: RequestStatus) {
+  return status === "approved";
+}
 
 export default function RequestDetailsScreen() {
   const router = useRouter();
-  const { title, image, info, priority, budget } = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
+  const { show } = useToast();
+
+  const [request, setRequest] = useState<PurchaseRequest | null>(null);
+  const [decisionReason, setDecisionReason] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [savingStatus, setSavingStatus] = useState<RequestStatus | null>(null);
+
+  const requestId = id as string;
+
+  const loadRequest = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getPurchaseRequest(requestId);
+      setRequest(data);
+      setDecisionReason(data.decisionReason || "");
+    } catch (error) {
+      console.error(error);
+      show("Failed to load request", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [requestId, show]);
+
+  useEffect(() => {
+    loadRequest();
+  }, [loadRequest]);
+
+  const handleStatusChange = async (status: RequestStatus) => {
+    if (!request) return;
+
+    if (
+      ["declined", "needs_more_info", "buy_later"].includes(status) &&
+      !decisionReason.trim()
+    ) {
+      show("Add a decision reason first", "error");
+      return;
+    }
+
+    try {
+      setSavingStatus(status);
+      await updatePurchaseRequestStatus(request.id, status, decisionReason);
+      show(`Request marked ${STATUS_LABELS[status].toLowerCase()}`, "success");
+      await loadRequest();
+    } catch (error) {
+      console.error(error);
+      show("Failed to update request", "error");
+    } finally {
+      setSavingStatus(null);
+    }
+  };
+
+  const openLink = async (link: ProductLink) => {
+    const canOpen = await Linking.canOpenURL(link.url);
+
+    if (!canOpen) {
+      show("Could not open this link", "error");
+      return;
+    }
+
+    Linking.openURL(link.url);
+  };
+
+  const statusColor = request ? STATUS_COLORS[request.status] : null;
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: title as string,
+          title: request?.productName || "Request details",
           headerTitleAlign: "center",
         }}
       />
-      <View style={styles.container}>
-        {image ? (
-          <Image source={{ uri: image as string }} style={styles.image} />
-        ) : (
-          <View style={[styles.image, styles.imagePlaceholder]}>
-            <Text style={styles.imagePlaceholderText}>No image added</Text>
+
+      <ScrollView contentContainerStyle={styles.container}>
+        {loading && !request ? (
+          <View style={styles.centerState}>
+            <Text style={styles.centerText}>Loading request...</Text>
           </View>
-        )}
+        ) : null}
 
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.info}>{info}</Text>
+        {!loading && !request ? (
+          <View style={styles.centerState}>
+            <Text style={styles.centerTitle}>Request unavailable</Text>
+            <Text style={styles.centerText}>
+              Go back and try opening the request again.
+            </Text>
+          </View>
+        ) : null}
 
-        <View style={styles.meta}>
-          <Text style={styles.metaText}>Priority: {priority}</Text>
-          <Text style={styles.metaText}>Budget: INR {budget}</Text>
-        </View>
+        {request ? (
+          <>
+            {request.image ? (
+              <Image source={{ uri: request.image }} style={styles.image} />
+            ) : (
+              <View style={[styles.image, styles.imagePlaceholder]}>
+                <Text style={styles.imagePlaceholderText}>No image added</Text>
+              </View>
+            )}
 
-        <Pressable style={styles.cancelBtn} onPress={() => router.back()}>
-          <Text style={styles.cancelText}>Back</Text>
-        </Pressable>
-      </View>
+            <View style={styles.headerRow}>
+              <View style={styles.headerText}>
+                <Text style={styles.title}>{request.productName}</Text>
+                <Text style={styles.category}>{request.category}</Text>
+              </View>
+              {statusColor ? (
+                <View
+                  style={[
+                    styles.statusChip,
+                    { backgroundColor: statusColor.bg },
+                  ]}
+                >
+                  <Text style={[styles.statusText, { color: statusColor.text }]}>
+                    {STATUS_LABELS[request.status]}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Decision context</Text>
+              <Text style={styles.bodyText}>{request.reason || "No reason added."}</Text>
+            </View>
+
+            <View style={styles.metaGrid}>
+              <View style={styles.metaItem}>
+                <Text style={styles.metaLabel}>Priority</Text>
+                <Text style={styles.metaValue}>{request.priority}</Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Text style={styles.metaLabel}>Expected</Text>
+                <Text style={styles.metaValue}>INR {request.expectedPrice}</Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Text style={styles.metaLabel}>Max budget</Text>
+                <Text style={styles.metaValue}>INR {request.maxBudget}</Text>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Product links</Text>
+              {request.links.length === 0 ? (
+                <Text style={styles.mutedText}>No product links added.</Text>
+              ) : (
+                request.links.map((link, index) => (
+                  <Pressable
+                    key={`${link.url}-${index}`}
+                    style={styles.linkRow}
+                    onPress={() => openLink(link)}
+                  >
+                    <Text style={styles.linkSource}>{link.source}</Text>
+                    <Text style={styles.linkUrl} numberOfLines={1}>
+                      {link.url}
+                    </Text>
+                  </Pressable>
+                ))
+              )}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Decision reason</Text>
+              <TextInput
+                style={[styles.input, styles.reasonInput]}
+                value={decisionReason}
+                onChangeText={setDecisionReason}
+                placeholder="Add why this is approved, declined, postponed, or needs more info"
+                multiline
+                maxLength={300}
+              />
+            </View>
+
+            <View style={styles.actionGrid}>
+              <Pressable
+                style={[styles.actionButton, styles.approveButton]}
+                disabled={!!savingStatus}
+                onPress={() => handleStatusChange("approved")}
+              >
+                <Text style={styles.actionText}>
+                  {savingStatus === "approved" ? "Saving..." : "Approve"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.actionButton, styles.declineButton]}
+                disabled={!!savingStatus}
+                onPress={() => handleStatusChange("declined")}
+              >
+                <Text style={styles.actionText}>
+                  {savingStatus === "declined" ? "Saving..." : "Decline"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.actionButton, styles.secondaryButton]}
+                disabled={!!savingStatus}
+                onPress={() => handleStatusChange("buy_later")}
+              >
+                <Text style={styles.secondaryActionText}>
+                  {savingStatus === "buy_later" ? "Saving..." : "Buy Later"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.actionButton, styles.secondaryButton]}
+                disabled={!!savingStatus}
+                onPress={() => handleStatusChange("needs_more_info")}
+              >
+                <Text style={styles.secondaryActionText}>
+                  {savingStatus === "needs_more_info" ? "Saving..." : "Need Info"}
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.footerActions}>
+              {canMarkPurchased(request.status) ? (
+                <Pressable
+                  style={styles.purchaseButton}
+                  disabled={!!savingStatus}
+                  onPress={() => handleStatusChange("purchased")}
+                >
+                  <Text style={styles.purchaseText}>
+                    {savingStatus === "purchased"
+                      ? "Saving..."
+                      : "Mark as Purchased"}
+                  </Text>
+                </Pressable>
+              ) : null}
+
+              <Pressable
+                style={styles.cancelButton}
+                disabled={!!savingStatus}
+                onPress={() => handleStatusChange("cancelled")}
+              >
+                <Text style={styles.cancelText}>
+                  {savingStatus === "cancelled" ? "Saving..." : "Cancel Request"}
+                </Text>
+              </Pressable>
+
+              <Pressable style={styles.backButton} onPress={() => router.back()}>
+                <Text style={styles.backText}>Back</Text>
+              </Pressable>
+            </View>
+          </>
+        ) : null}
+      </ScrollView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: "#fff",
+    flexGrow: 1,
     padding: 16,
+  },
+  centerState: {
     alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+    paddingVertical: 80,
+  },
+  centerTitle: {
+    color: "#0f172a",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  centerText: {
+    color: "#64748b",
+    marginTop: 8,
+    textAlign: "center",
   },
   image: {
     width: "100%",
@@ -61,36 +330,171 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  info: {
-    fontSize: 14,
-    color: "#475569",
+  headerRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 12,
     marginBottom: 16,
-    textAlign: "center",
   },
-  meta: {
-    width: "100%",
-    marginBottom: 24,
+  headerText: {
+    flex: 1,
   },
-  metaText: {
-    fontSize: 16,
-    marginBottom: 6,
+  title: {
+    color: "#0f172a",
+    fontSize: 24,
+    fontWeight: "800",
   },
-  cancelBtn: {
-    marginTop: "auto",
-    backgroundColor: "#0f172a",
-    paddingVertical: 12,
-    paddingHorizontal: 32,
+  category: {
+    color: "#64748b",
+    fontSize: 14,
+    marginTop: 3,
+  },
+  statusChip: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  section: {
+    marginBottom: 18,
+  },
+  sectionTitle: {
+    color: "#0f172a",
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 8,
+  },
+  bodyText: {
+    color: "#334155",
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  mutedText: {
+    color: "#64748b",
+    fontSize: 14,
+  },
+  metaGrid: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 18,
+  },
+  metaItem: {
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    borderRadius: 10,
+    borderWidth: 1,
+    flex: 1,
+    padding: 10,
+  },
+  metaLabel: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  metaValue: {
+    color: "#0f172a",
+    fontSize: 14,
+    fontWeight: "800",
+    marginTop: 4,
+  },
+  linkRow: {
+    backgroundColor: "#eff6ff",
     borderRadius: 8,
+    marginBottom: 8,
+    padding: 10,
+  },
+  linkSource: {
+    color: "#1d4ed8",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  linkUrl: {
+    color: "#2563eb",
+    fontSize: 13,
+    marginTop: 3,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+  },
+  reasonInput: {
+    minHeight: 88,
+    textAlignVertical: "top",
+  },
+  actionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  actionButton: {
+    alignItems: "center",
+    borderRadius: 8,
+    flexBasis: "48%",
+    flexGrow: 1,
+    paddingVertical: 12,
+  },
+  approveButton: {
+    backgroundColor: "#16a34a",
+  },
+  declineButton: {
+    backgroundColor: "#dc2626",
+  },
+  secondaryButton: {
+    backgroundColor: "#f8fafc",
+    borderColor: "#cbd5e1",
+    borderWidth: 1,
+  },
+  actionText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  secondaryActionText: {
+    color: "#0f172a",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  footerActions: {
+    gap: 10,
+    marginTop: 14,
+  },
+  purchaseButton: {
+    alignItems: "center",
+    backgroundColor: "#0f766e",
+    borderRadius: 8,
+    paddingVertical: 12,
+  },
+  purchaseText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  cancelButton: {
+    alignItems: "center",
+    backgroundColor: "#f8fafc",
+    borderColor: "#fecaca",
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingVertical: 12,
   },
   cancelText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+    color: "#b91c1c",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  backButton: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  backText: {
+    color: "#475569",
+    fontSize: 15,
+    fontWeight: "700",
   },
 });

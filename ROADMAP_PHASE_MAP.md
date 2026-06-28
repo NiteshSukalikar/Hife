@@ -25,18 +25,18 @@ Goal: Make the app clearly feel like a household purchase approval app instead o
 
 Goal: Build the main product loop from request creation to partner decision.
 
-- [ ] Update the request model to include product name, reason, expected price, max budget, category, and links.
-- [ ] Add structured product links instead of keeping links only inside comments.
-- [ ] Add request statuses: `pending`, `approved`, `declined`, `needs_more_info`, `buy_later`, `purchased`, and `cancelled`.
-- [ ] Add approve action.
-- [ ] Add decline action.
-- [ ] Add buy-later action.
-- [ ] Add ask-for-more-info action.
-- [ ] Add decision reason input.
-- [ ] Show request status clearly on the home screen.
-- [ ] Add status filters such as Pending, Approved, Declined, Buy Later, and Purchased.
-- [ ] Add a request detail screen that shows all purchase information clearly.
-- [ ] Add a mark-as-purchased action for approved requests.
+- [x] Update the request model to include product name, reason, expected price, max budget, category, and links.
+- [x] Add structured product links instead of keeping links only inside comments.
+- [x] Add request statuses: `pending`, `approved`, `declined`, `needs_more_info`, `buy_later`, `purchased`, and `cancelled`.
+- [x] Add approve action.
+- [x] Add decline action.
+- [x] Add buy-later action.
+- [x] Add ask-for-more-info action.
+- [x] Add decision reason input.
+- [x] Show request status clearly on the home screen.
+- [x] Add status filters such as Pending, Approved, Declined, Buy Later, and Purchased.
+- [x] Add a request detail screen that shows all purchase information clearly.
+- [x] Add a mark-as-purchased action for approved requests.
 
 ## Phase 3: Image And Link Reliability
 

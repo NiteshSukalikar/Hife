@@ -1,6 +1,6 @@
-import { addComment, getComments } from "@/app/api/comments";
-import { uploadImage } from "@/app/api/uploadImage";
 import useToast from "@/components/toast/useToast";
+import { addComment, getComments } from "@/services/comments";
+import { uploadImage } from "@/services/uploadImage";
 import { getDeviceUserId } from "@/utils/deviceUser";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";

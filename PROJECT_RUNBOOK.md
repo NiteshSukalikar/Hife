@@ -112,10 +112,10 @@ npm.cmd run lint
 
 ## Current API Helpers
 
-- `app/api/tickets.js`: Creates and reads requests from Firestore.
-- `app/api/comments.js`: Creates and reads comments for a request.
-- `app/api/uploadImage.js`: Uploads images to Cloudinary.
-- `app/lib/firebase.js`: Firebase initialization.
+- `services/purchaseRequests.js`: Creates, reads, and updates requests in Firestore.
+- `services/comments.js`: Creates and reads comments for a request.
+- `services/uploadImage.js`: Uploads images to Cloudinary.
+- `services/firebase.js`: Firebase initialization.
 - `utils/deviceUser.js`: Creates a local device-based user ID.
 
 ## Useful Review Notes

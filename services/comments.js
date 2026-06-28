@@ -1,4 +1,4 @@
-import { db } from "@/app/lib/firebase";
+import { db } from "@/services/firebase";
 import { getDeviceUserId } from "@/utils/deviceUser";
 import {
   addDoc,
@@ -9,9 +9,6 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-/**
- * Get comments for a task
- */
 export async function getComments(taskId) {
   const q = query(
     collection(db, "tasks", taskId, "comments"),
@@ -33,9 +30,6 @@ export async function getComments(taskId) {
   });
 }
 
-/**
- * Add comment to a task
- */
 export async function addComment(taskId, comment) {
   const userId = await getDeviceUserId();
   await addDoc(collection(db, "tasks", taskId, "comments"), {

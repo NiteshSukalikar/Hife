@@ -8,8 +8,9 @@ const firebaseConfig = {
   storageBucket: "hife-36fbe.firebasestorage.app",
   messagingSenderId: "735584930256",
   appId: "1:735584930256:web:8368079284ad6ae70ed1d5",
-  measurementId: "G-EPBKEQQQ5R"
+  measurementId: "G-EPBKEQQQ5R",
 };
+
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
