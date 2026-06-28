@@ -25,6 +25,7 @@ execution policy.
 ```powershell
 npm.cmd install
 npm.cmd run lint
+npm.cmd test
 npm.cmd start
 ```
 
@@ -55,3 +56,21 @@ info -> mark purchased.
 - Firestore deploy config: `firebase.json`
 - Firestore index config: `firestore.indexes.json`
 - Security/free-tier operating notes: `SECURITY_FREE_TIER.md`
+
+## Release Readiness
+
+Before sharing Hife with another household, complete the checklist in
+`RELEASE_CHECKLIST.md`.
+
+Minimum verification for a private release:
+
+- `npm.cmd run lint`
+- `npm.cmd test`
+- Start Expo with `npm.cmd start`
+- Verify create request, decision actions, image upload, comments, and household
+  invite/join on the target devices
+- Deploy Firestore rules and indexes after Firebase CLI setup:
+
+```powershell
+firebase deploy --only firestore:rules,firestore:indexes
+```

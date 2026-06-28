@@ -27,6 +27,7 @@ import {
 } from "@/utils/budget";
 import { validateImageAsset } from "@/utils/productMedia";
 import { parseProductLinks } from "@/utils/productLinks";
+import { validateRequestDraft } from "@/utils/requestValidation";
 import { Picker } from "@react-native-picker/picker";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -232,40 +233,20 @@ export default function CreateRequestScreen() {
   const onSave = async () => {
     if (isSaving) return;
 
-    if (!productName.trim()) {
-      Alert.alert("Validation", "Product name is required");
-      return;
-    }
-    if (productName.length > 40) {
-      Alert.alert("Validation", "Product name can be max 40 characters");
-      return;
-    }
-    if (!reason.trim()) {
-      Alert.alert("Validation", "Reason is required");
-      return;
-    }
-    if (reason.length > 500) {
-      Alert.alert("Validation", "Reason can be max 500 characters");
-      return;
-    }
-    if (!expectedPrice) {
-      Alert.alert("Validation", "Expected price is required");
-      return;
-    }
-    if (!maxBudget) {
-      Alert.alert("Validation", "Maximum budget is required");
+    const validation = validateRequestDraft({
+      productName,
+      reason,
+      expectedPrice,
+      maxBudget,
+      linksText,
+    });
+
+    if (!validation.isValid) {
+      Alert.alert("Validation", validation.message);
       return;
     }
 
-    const { links, invalidLinks } = parseProductLinks(linksText);
-
-    if (invalidLinks.length > 0) {
-      Alert.alert(
-        "Validation",
-        `Check product link: ${invalidLinks[0]}`
-      );
-      return;
-    }
+    const { links } = parseProductLinks(linksText);
 
     try {
       setIsSaving(true);

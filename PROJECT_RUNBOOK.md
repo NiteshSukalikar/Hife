@@ -42,6 +42,12 @@ Run lint:
 npm.cmd run lint
 ```
 
+Run tests:
+
+```powershell
+npm.cmd test
+```
+
 Start Expo:
 
 ```powershell
@@ -92,7 +98,13 @@ git status --short
 npm.cmd run lint
 ```
 
-4. Start Expo:
+4. Run tests:
+
+```powershell
+npm.cmd test
+```
+
+5. Start Expo:
 
 ```powershell
 npm.cmd start

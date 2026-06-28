@@ -28,7 +28,7 @@ export default function Notification({
         useNativeDriver: true,
       }).start();
     }
-  }, [visible]);
+  }, [slideAnim, visible]);
 
   if (!visible) return null;
 

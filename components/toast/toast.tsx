@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
-    Animated,
-    PanResponder,
-    StyleSheet,
-    Text,
+  Animated,
+  PanResponder,
+  StyleSheet,
+  Text,
 } from "react-native";
 
 type Props = {
@@ -17,6 +17,21 @@ export default function Toast({ message, type, onHide }: Props) {
   const opacity = useRef(new Animated.Value(0)).current;
 
   const pan = useRef(new Animated.ValueXY()).current;
+
+  const hide = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: -80,
+        duration: 250,
+        useNativeDriver: false,
+      }),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: false,
+      }),
+    ]).start(onHide);
+  }, [onHide, opacity, translateY]);
 
   useEffect(() => {
     Animated.parallel([
@@ -34,22 +49,7 @@ export default function Toast({ message, type, onHide }: Props) {
 
     const timer = setTimeout(hide, 3000);
     return () => clearTimeout(timer);
-  }, []);
-
-  const hide = () => {
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: -80,
-        duration: 250,
-        useNativeDriver: false,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: false,
-      }),
-    ]).start(onHide);
-  };
+  }, [hide, opacity, translateY]);
 
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,

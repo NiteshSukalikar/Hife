@@ -154,20 +154,20 @@ Goal: Keep the app safe and affordable before real users use it.
 
 Goal: Make the app stable enough for personal or small private usage.
 
-- [ ] Add basic unit tests for request helpers.
-- [ ] Add basic unit tests for comment helpers.
-- [ ] Add form validation tests.
-- [ ] Test create request flow.
-- [ ] Test approve and decline flow.
-- [ ] Test image upload flow.
-- [ ] Test comments flow.
-- [ ] Test household invite flow.
-- [ ] Test Android layout.
-- [ ] Test iOS layout if available.
-- [ ] Test web layout if web support is needed.
+- [x] Add basic unit tests for request helpers.
+- [x] Add basic unit tests for comment helpers.
+- [x] Add form validation tests.
+- [x] Test create request flow.
+- [x] Test approve and decline flow.
+- [x] Test image upload flow.
+- [x] Test comments flow.
+- [x] Test household invite flow.
+- [x] Test Android layout.
+- [x] Test iOS layout if available.
+- [x] Test web layout if web support is needed.
 - [x] Update app icon and splash screen.
-- [ ] Update production README.
-- [ ] Create release checklist.
+- [x] Update production README.
+- [x] Create release checklist.
 
 ## Suggested Build Order
 

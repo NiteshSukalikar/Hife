@@ -16,7 +16,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-function mapCommentDoc(docSnapshot) {
+export function mapCommentDoc(docSnapshot) {
   const data = docSnapshot.data();
 
   return {

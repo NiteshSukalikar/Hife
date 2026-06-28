@@ -16,7 +16,7 @@ import {
   where,
 } from "firebase/firestore";
 
-function normalizeStatus(status) {
+export function normalizeStatus(status) {
   if (!status || status === "open") return "pending";
 
   const validStatuses = new Set([
@@ -32,7 +32,7 @@ function normalizeStatus(status) {
   return validStatuses.has(status) ? status : "pending";
 }
 
-function mapRequestDoc(docSnapshot) {
+export function mapRequestDoc(docSnapshot) {
   const data = docSnapshot.data();
   const title = data.title || data.productName || "";
   const reason = data.reason || data.info || "";
