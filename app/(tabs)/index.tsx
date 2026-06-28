@@ -1,5 +1,10 @@
 import Header from "@/components/header";
-import { BudgetSettings, PurchaseRequest, RequestStatus } from "@/constants/types";
+import {
+  BudgetSettings,
+  PurchaseRequest,
+  RequestPriority,
+  RequestStatus,
+} from "@/constants/types";
 import { getBudgetSettings, updateBudgetSettings } from "@/services/budgets";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -35,6 +40,11 @@ import {
   formatInr,
   REQUEST_CATEGORIES,
 } from "@/utils/budget";
+import {
+  getPriorityChipColor,
+  getStatusChipColor,
+  getStatusLabel,
+} from "@/utils/requestPresentation";
 import { logError } from "@/utils/safeLogger";
 
 type FilterValue = "all" | RequestStatus;
@@ -48,37 +58,7 @@ const FILTERS: { label: string; value: FilterValue }[] = [
   { label: "Purchased", value: "purchased" },
 ];
 
-const STATUS_LABELS: Record<RequestStatus, string> = {
-  pending: "Pending",
-  approved: "Approved",
-  declined: "Declined",
-  needs_more_info: "Needs Info",
-  buy_later: "Buy Later",
-  purchased: "Purchased",
-  cancelled: "Cancelled",
-};
-
-const STATUS_COLORS: Record<RequestStatus, { bg: string; text: string }> = {
-  pending: { bg: "#fef3c7", text: "#92400e" },
-  approved: { bg: "#dcfce7", text: "#166534" },
-  declined: { bg: "#fee2e2", text: "#991b1b" },
-  needs_more_info: { bg: "#dbeafe", text: "#1e40af" },
-  buy_later: { bg: "#ede9fe", text: "#5b21b6" },
-  purchased: { bg: "#ccfbf1", text: "#115e59" },
-  cancelled: { bg: "#e5e7eb", text: "#374151" },
-};
-
-const DEFAULT_STATUS_COLOR = STATUS_COLORS.pending;
-
 type NotificationSettings = typeof DEFAULT_NOTIFICATION_SETTINGS;
-
-function getStatusLabel(status: RequestStatus) {
-  return STATUS_LABELS[status] || STATUS_LABELS.pending;
-}
-
-function getStatusColor(status: RequestStatus) {
-  return STATUS_COLORS[status] || DEFAULT_STATUS_COLOR;
-}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -535,7 +515,10 @@ export default function HomeScreen() {
           ) : null
         }
         renderItem={({ item }) => {
-          const statusColor = getStatusColor(item.status);
+          const statusColor = getStatusChipColor(item.status);
+          const priorityColor = getPriorityChipColor(
+            item.priority as RequestPriority
+          );
 
           return (
             <Pressable
@@ -554,14 +537,21 @@ export default function HomeScreen() {
               )}
 
               <View style={styles.info}>
-                <View style={styles.titleRow}>
+                <View style={styles.cardTopRow}>
                   <Text style={styles.title} numberOfLines={1}>
                     {item.productName}
                   </Text>
+                  <Text style={styles.priceText}>
+                    {formatInr(item.expectedPrice)}
+                  </Text>
+                </View>
+
+                <View style={styles.chipRow}>
                   <View
                     style={[
                       styles.statusChip,
                       { backgroundColor: statusColor.bg },
+                      { borderColor: statusColor.border },
                     ]}
                   >
                     <Text
@@ -570,13 +560,29 @@ export default function HomeScreen() {
                       {getStatusLabel(item.status)}
                     </Text>
                   </View>
+                  <View
+                    style={[
+                      styles.priorityChip,
+                      { backgroundColor: priorityColor.bg },
+                      { borderColor: priorityColor.border },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.priorityText,
+                        { color: priorityColor.text },
+                      ]}
+                    >
+                      {item.priority}
+                    </Text>
+                  </View>
                 </View>
 
                 <Text style={styles.metaText} numberOfLines={1}>
-                  {item.category} - {item.priority}
+                  {item.category}
                 </Text>
                 <Text style={styles.budget}>
-                  {formatInr(item.expectedPrice)} expected / {formatInr(item.maxBudget)} max
+                  Max budget {formatInr(item.maxBudget)}
                 </Text>
                 <Text style={styles.activityText} numberOfLines={1}>
                   Last activity: {formatActivity(item.lastActivityAt)}
@@ -645,9 +651,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   filterChip: {
+    alignItems: "center",
     borderWidth: 1,
     borderColor: "#263026",
     borderRadius: 999,
+    justifyContent: "center",
+    minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -693,9 +702,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   settingsButton: {
+    alignItems: "center",
     borderColor: "#39FF14",
     borderRadius: 8,
     borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -777,7 +789,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#39FF14",
     borderRadius: 8,
+    justifyContent: "center",
     marginTop: 8,
+    minHeight: 48,
     paddingVertical: 12,
   },
   saveBudgetText: {
@@ -832,14 +846,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   card: {
-    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#101312",
     borderColor: "#263026",
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
+    flexDirection: "row",
     marginBottom: 12,
     padding: 12,
-    alignItems: "center",
   },
   image: {
     width: 72,
@@ -854,13 +868,17 @@ const styles = StyleSheet.create({
     height: 58,
   },
   chatButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 44,
     position: "relative",
   },
   info: {
     flex: 1,
     justifyContent: "center",
   },
-  titleRow: {
+  cardTopRow: {
     alignItems: "center",
     flexDirection: "row",
     gap: 8,
@@ -871,14 +889,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  priceText: {
+    color: "#39FF14",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  chipRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
+  },
   statusChip: {
+    borderWidth: 1,
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   statusText: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  priorityChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  priorityText: {
+    fontSize: 11,
+    fontWeight: "900",
   },
   metaText: {
     color: "#A1A1AA",

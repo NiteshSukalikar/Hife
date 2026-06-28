@@ -18,12 +18,21 @@ import {
   getRequestAmount,
   PRIORITY_EXPLANATIONS,
 } from "@/utils/budget";
+import {
+  getPriorityChipColor,
+  getStatusChipColor,
+  getStatusLabel,
+  STATUS_LABELS,
+} from "@/utils/requestPresentation";
 import { logError } from "@/utils/safeLogger";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Image,
+  KeyboardAvoidingView,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -31,36 +40,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-
-const STATUS_LABELS: Record<RequestStatus, string> = {
-  pending: "Pending",
-  approved: "Approved",
-  declined: "Declined",
-  needs_more_info: "Needs more info",
-  buy_later: "Buy later",
-  purchased: "Purchased",
-  cancelled: "Cancelled",
-};
-
-const STATUS_COLORS: Record<RequestStatus, { bg: string; text: string }> = {
-  pending: { bg: "#fef3c7", text: "#92400e" },
-  approved: { bg: "#dcfce7", text: "#166534" },
-  declined: { bg: "#fee2e2", text: "#991b1b" },
-  needs_more_info: { bg: "#dbeafe", text: "#1e40af" },
-  buy_later: { bg: "#ede9fe", text: "#5b21b6" },
-  purchased: { bg: "#ccfbf1", text: "#115e59" },
-  cancelled: { bg: "#e5e7eb", text: "#374151" },
-};
-
-const DEFAULT_STATUS_COLOR = STATUS_COLORS.pending;
-
-function getStatusLabel(status: RequestStatus) {
-  return STATUS_LABELS[status] || STATUS_LABELS.pending;
-}
-
-function getStatusColor(status: RequestStatus) {
-  return STATUS_COLORS[status] || DEFAULT_STATUS_COLOR;
-}
 
 function canMarkPurchased(status: RequestStatus) {
   return status === "approved";
@@ -167,6 +146,29 @@ export default function RequestDetailsScreen() {
     }
   };
 
+  const confirmStatusChange = (status: RequestStatus) => {
+    if (!request) return;
+
+    if (!["declined", "cancelled"].includes(status)) {
+      handleStatusChange(status);
+      return;
+    }
+
+    const label = STATUS_LABELS[status].toLowerCase();
+    Alert.alert(
+      `${STATUS_LABELS[status]} request?`,
+      `This will mark "${request.productName}" as ${label}.`,
+      [
+        { text: "Keep reviewing", style: "cancel" },
+        {
+          text: STATUS_LABELS[status],
+          style: "destructive",
+          onPress: () => handleStatusChange(status),
+        },
+      ]
+    );
+  };
+
   const openLink = async (link: ProductLink) => {
     const canOpen = await Linking.canOpenURL(link.url);
 
@@ -178,7 +180,8 @@ export default function RequestDetailsScreen() {
     Linking.openURL(link.url);
   };
 
-  const statusColor = request ? getStatusColor(request.status) : null;
+  const statusColor = request ? getStatusChipColor(request.status) : null;
+  const priorityColor = request ? getPriorityChipColor(request.priority) : null;
   const budgetSummary = useMemo(
     () => buildBudgetSummary(householdRequests, budgetSettings),
     [budgetSettings, householdRequests]
@@ -214,7 +217,15 @@ export default function RequestDetailsScreen() {
         }}
       />
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 60}
+      >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         {loading && !request ? (
           <View style={styles.centerState}>
             <Text style={styles.centerText}>Loading request...</Text>
@@ -245,11 +256,31 @@ export default function RequestDetailsScreen() {
                 <Text style={styles.title}>{request.productName}</Text>
                 <Text style={styles.category}>{request.category}</Text>
               </View>
+              <View style={styles.headerChips}>
+              {priorityColor ? (
+                <View
+                  style={[
+                    styles.priorityChip,
+                    { backgroundColor: priorityColor.bg },
+                    { borderColor: priorityColor.border },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.priorityText,
+                      { color: priorityColor.text },
+                    ]}
+                  >
+                    {request.priority}
+                  </Text>
+                </View>
+              ) : null}
               {statusColor ? (
                 <View
                   style={[
                     styles.statusChip,
                     { backgroundColor: statusColor.bg },
+                    { borderColor: statusColor.border },
                   ]}
                 >
                   <Text style={[styles.statusText, { color: statusColor.text }]}>
@@ -257,6 +288,7 @@ export default function RequestDetailsScreen() {
                   </Text>
                 </View>
               ) : null}
+              </View>
             </View>
 
             <View style={styles.section}>
@@ -370,7 +402,7 @@ export default function RequestDetailsScreen() {
               <Pressable
                 style={[styles.actionButton, styles.approveButton]}
                 disabled={!!savingStatus}
-                onPress={() => handleStatusChange("approved")}
+                onPress={() => confirmStatusChange("approved")}
               >
                 <Text style={styles.actionText}>
                   {savingStatus === "approved" ? "Saving..." : "Approve"}
@@ -380,7 +412,7 @@ export default function RequestDetailsScreen() {
               <Pressable
                 style={[styles.actionButton, styles.declineButton]}
                 disabled={!!savingStatus}
-                onPress={() => handleStatusChange("declined")}
+                onPress={() => confirmStatusChange("declined")}
               >
                 <Text style={styles.declineActionText}>
                   {savingStatus === "declined" ? "Saving..." : "Decline"}
@@ -390,7 +422,7 @@ export default function RequestDetailsScreen() {
               <Pressable
                 style={[styles.actionButton, styles.secondaryButton]}
                 disabled={!!savingStatus}
-                onPress={() => handleStatusChange("buy_later")}
+                onPress={() => confirmStatusChange("buy_later")}
               >
                 <Text style={styles.secondaryActionText}>
                   {savingStatus === "buy_later" ? "Saving..." : "Buy Later"}
@@ -400,7 +432,7 @@ export default function RequestDetailsScreen() {
               <Pressable
                 style={[styles.actionButton, styles.secondaryButton]}
                 disabled={!!savingStatus}
-                onPress={() => handleStatusChange("needs_more_info")}
+                onPress={() => confirmStatusChange("needs_more_info")}
               >
                 <Text style={styles.secondaryActionText}>
                   {savingStatus === "needs_more_info" ? "Saving..." : "Need Info"}
@@ -413,7 +445,7 @@ export default function RequestDetailsScreen() {
                 <Pressable
                   style={styles.purchaseButton}
                   disabled={!!savingStatus}
-                  onPress={() => handleStatusChange("purchased")}
+                  onPress={() => confirmStatusChange("purchased")}
                 >
                   <Text style={styles.purchaseText}>
                     {savingStatus === "purchased"
@@ -426,7 +458,7 @@ export default function RequestDetailsScreen() {
               <Pressable
                 style={styles.cancelButton}
                 disabled={!!savingStatus}
-                onPress={() => handleStatusChange("cancelled")}
+                onPress={() => confirmStatusChange("cancelled")}
               >
                 <Text style={styles.cancelText}>
                   {savingStatus === "cancelled" ? "Saving..." : "Cancel Request"}
@@ -440,11 +472,16 @@ export default function RequestDetailsScreen() {
           </>
         ) : null}
       </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#050505",
+  },
   container: {
     backgroundColor: "#050505",
     flexGrow: 1,
@@ -493,6 +530,10 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
   },
+  headerChips: {
+    alignItems: "flex-end",
+    gap: 6,
+  },
   title: {
     color: "#F8FAFC",
     fontSize: 24,
@@ -505,12 +546,24 @@ const styles = StyleSheet.create({
   },
   statusChip: {
     borderRadius: 999,
+    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   statusText: {
     fontSize: 12,
     fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  priorityChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  priorityText: {
+    fontSize: 12,
+    fontWeight: "900",
   },
   section: {
     marginBottom: 18,
@@ -588,6 +641,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   linkRow: {
+    minHeight: 48,
     backgroundColor: "#101312",
     borderColor: "#263026",
     borderWidth: 1,
@@ -628,6 +682,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     flexBasis: "48%",
     flexGrow: 1,
+    justifyContent: "center",
+    minHeight: 48,
     paddingVertical: 12,
   },
   approveButton: {
@@ -664,6 +720,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#39FF14",
     borderRadius: 8,
+    justifyContent: "center",
+    minHeight: 48,
     paddingVertical: 12,
   },
   purchaseText: {
@@ -677,6 +735,8 @@ const styles = StyleSheet.create({
     borderColor: "#fecaca",
     borderRadius: 8,
     borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 48,
     paddingVertical: 12,
   },
   cancelText: {
@@ -686,6 +746,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
     paddingVertical: 12,
   },
   backText: {

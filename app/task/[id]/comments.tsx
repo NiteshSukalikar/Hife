@@ -260,6 +260,18 @@ export default function CommentsScreen() {
                     isMe ? styles.myComment : styles.otherComment,
                   ]}
                 >
+                  <View style={styles.commentMetaRow}>
+                    <Text style={styles.authorText} numberOfLines={1}>
+                      {isMe
+                        ? "You"
+                        : item.authorDisplayName ||
+                          item.authorRoleLabel ||
+                          "Partner"}
+                    </Text>
+                    {item.authorRoleLabel ? (
+                      <Text style={styles.rolePill}>{item.authorRoleLabel}</Text>
+                    ) : null}
+                  </View>
                   <Text style={styles.commentText}>{item.text}</Text>
 
                   {item.image && (
@@ -271,17 +283,15 @@ export default function CommentsScreen() {
                   )}
 
                   {item.link && (
-                    <Pressable onPress={() => openLink(item.link || "")}>
+                    <Pressable
+                      style={styles.commentLinkButton}
+                      onPress={() => openLink(item.link || "")}
+                    >
                       <Text style={styles.commentLink}>{item.link}</Text>
                     </Pressable>
                   )}
 
-                  <Text style={styles.time}>
-                    {isMe
-                      ? `You${item.authorRoleLabel ? ` (${item.authorRoleLabel})` : ""}`
-                      : item.authorDisplayName || item.authorRoleLabel || "Partner"}{" "}
-                    - {item.createdAt}
-                  </Text>
+                  <Text style={styles.time}>{item.createdAt}</Text>
                 </View>
               );
             })}
@@ -304,7 +314,11 @@ export default function CommentsScreen() {
               <Text style={styles.selectedImageText}>
                 {uploadingImage ? "Uploading image..." : "Image attached"}
               </Text>
-              <Pressable disabled={isSending} onPress={() => setImage(null)}>
+              <Pressable
+                style={styles.removeImageButton}
+                disabled={isSending}
+                onPress={() => setImage(null)}
+              >
                 <Text style={styles.removeImageText}>Remove</Text>
               </Pressable>
             </View>
@@ -321,10 +335,16 @@ export default function CommentsScreen() {
             value={text}
             onChangeText={setText}
             multiline
+            maxLength={500}
           />
+          <Text style={styles.counterText}>{text.length}/500</Text>
 
           <View style={styles.actions}>
-            <Pressable disabled={isSending} onPress={pickImage}>
+            <Pressable
+              style={styles.iconButton}
+              disabled={isSending}
+              onPress={pickImage}
+            >
               <Ionicons name="image-outline" size={22} color="#39FF14" />
             </Pressable>
 
@@ -378,28 +398,60 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   commentCard: {
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
     marginBottom: 12,
     maxWidth: "85%",
+    padding: 12,
   },
   myComment: {
     backgroundColor: "#173314",
+    borderColor: "#39FF14",
     alignSelf: "flex-end",
   },
   otherComment: {
     backgroundColor: "#101312",
+    borderColor: "#263026",
     alignSelf: "flex-start",
+  },
+  commentMetaRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6,
+    marginBottom: 6,
+  },
+  authorText: {
+    color: "#B8FFB0",
+    flexShrink: 1,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  rolePill: {
+    backgroundColor: "#050505",
+    borderColor: "#263026",
+    borderRadius: 999,
+    borderWidth: 1,
+    color: "#A1A1AA",
+    fontSize: 10,
+    fontWeight: "800",
+    overflow: "hidden",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   commentText: {
     color: "#F8FAFC",
     fontSize: 15,
+    lineHeight: 21,
     marginBottom: 6,
   },
   commentImage: {
     height: 140,
     borderRadius: 8,
     marginVertical: 6,
+  },
+  commentLinkButton: {
+    minHeight: 44,
+    justifyContent: "center",
   },
   commentLink: {
     color: "#39FF14",
@@ -426,6 +478,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
+    minHeight: 44,
     padding: 8,
   },
   selectedImageRowError: {
@@ -441,6 +494,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
   },
+  removeImageButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 8,
+  },
   errorText: {
     color: "#FCA5A5",
     fontSize: 13,
@@ -448,7 +507,7 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: "#101312",
-    minHeight: 40,
+    minHeight: 44,
     maxHeight: 80,
     borderWidth: 1,
     borderColor: "#263026",
@@ -456,6 +515,13 @@ const styles = StyleSheet.create({
     padding: 8,
     marginBottom: 8,
     color: "#F8FAFC",
+  },
+  counterText: {
+    color: "#A1A1AA",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 8,
+    textAlign: "right",
   },
   actions: {
     flexDirection: "row",
@@ -468,14 +534,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#263026",
     borderRadius: 8,
+    minHeight: 44,
     padding: 6,
     fontSize: 13,
     color: "#F8FAFC",
   },
   sendBtn: {
+    alignItems: "center",
     backgroundColor: "#39FF14",
-    padding: 10,
     borderRadius: 50,
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 44,
+    padding: 10,
+  },
+  iconButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 44,
   },
   disabledBtn: {
     opacity: 0.65,

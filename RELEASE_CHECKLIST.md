@@ -42,6 +42,10 @@ Use this checklist before a personal or small private release.
   and household screens.
 - [ ] iOS: verify the same screens if an iOS device or simulator is available.
 - [ ] Web: verify the same screens if web support is needed for the release.
+- [ ] Confirm request cards show readable status and priority chips.
+- [ ] Confirm create request counters and grouped fields fit without clipping.
+- [ ] Confirm decline and cancel actions show confirmation dialogs.
+- [ ] Confirm comments are readable for both current-user and partner bubbles.
 - [ ] Confirm forms avoid keyboard overlap on mobile.
 - [ ] Confirm buttons and tab controls have comfortable touch targets.
 

@@ -327,7 +327,10 @@ export default function CreateRequestScreen() {
               <Text style={styles.errorText}>{imageError}</Text>
             ) : null}
 
-            <Text style={styles.label}>Product name (max 40 chars)</Text>
+            <View style={styles.fieldHeader}>
+              <Text style={styles.label}>Product name</Text>
+              <Text style={styles.counterText}>{productName.length}/40</Text>
+            </View>
             <TextInput
               style={styles.input}
               value={productName}
@@ -337,7 +340,10 @@ export default function CreateRequestScreen() {
               placeholderTextColor="#71717A"
             />
 
-            <Text style={styles.label}>Reason (max 500 chars)</Text>
+            <View style={styles.fieldHeader}>
+              <Text style={styles.label}>Reason</Text>
+              <Text style={styles.counterText}>{reason.length}/500</Text>
+            </View>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={reason}
@@ -348,6 +354,7 @@ export default function CreateRequestScreen() {
               maxLength={500}
             />
 
+            <View style={styles.formSection}>
             <Text style={styles.label}>Category</Text>
             <View style={styles.pickerWrapper}>
               <Picker
@@ -373,6 +380,7 @@ export default function CreateRequestScreen() {
                 <Picker.Item label="P2 - Within 48 hrs" value="P2" />
                 <Picker.Item label="P3 - Within 72 hrs" value="P3" />
               </Picker>
+            </View>
             </View>
 
             <View style={styles.priceRow}>
@@ -503,7 +511,10 @@ export default function CreateRequestScreen() {
               ) : null}
             </View>
 
-            <Text style={styles.label}>Product links</Text>
+            <View style={styles.fieldHeader}>
+              <Text style={styles.label}>Product links</Text>
+              <Text style={styles.counterText}>Optional</Text>
+            </View>
             <TextInput
               style={[styles.input, styles.linksInput]}
               value={linksText}
@@ -546,6 +557,7 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     padding: 16,
+    paddingBottom: 28,
   },
   imagePicker: {
     height: 160,
@@ -597,12 +609,32 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 12,
   },
+  fieldHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  counterText: {
+    color: "#A1A1AA",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 12,
+  },
+  formSection: {
+    backgroundColor: "#101312",
+    borderColor: "#263026",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 16,
+    padding: 12,
+  },
   input: {
     backgroundColor: "#101312",
     borderWidth: 1,
     borderColor: "#263026",
     borderRadius: 8,
     color: "#F8FAFC",
+    minHeight: 44,
     padding: 10,
     fontSize: 14,
   },
@@ -611,10 +643,11 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   pickerWrapper: {
-    backgroundColor: "#101312",
+    backgroundColor: "#050505",
     borderWidth: 1,
     borderColor: "#263026",
     borderRadius: 8,
+    minHeight: 44,
   },
   picker: {
     color: "#F8FAFC",
@@ -682,8 +715,11 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   askAiButton: {
+    alignItems: "center",
     backgroundColor: "#39FF14",
     borderRadius: 8,
+    justifyContent: "center",
+    minHeight: 44,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -728,10 +764,13 @@ const styles = StyleSheet.create({
   },
   applyPriorityButton: {
     alignSelf: "flex-start",
+    alignItems: "center",
     borderColor: "#39FF14",
     borderRadius: 8,
     borderWidth: 1,
+    justifyContent: "center",
     marginTop: 10,
+    minHeight: 44,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
@@ -772,11 +811,13 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   saveBtn: {
-    marginTop: 24,
-    backgroundColor: "#39FF14",
-    paddingVertical: 14,
-    borderRadius: 8,
     alignItems: "center",
+    backgroundColor: "#39FF14",
+    borderRadius: 8,
+    justifyContent: "center",
+    marginTop: 24,
+    minHeight: 52,
+    paddingVertical: 14,
   },
   disabledBtn: {
     opacity: 0.65,

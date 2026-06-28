@@ -122,17 +122,17 @@ Goal: Make the app feel clean, calm, and purpose-built for repeated daily use.
 - [x] Create app thumbnail/favicon logo asset.
 - [x] Create startup splash logo asset.
 - [x] Apply black and neon green theme to primary app screens.
-- [ ] Create priority chips with clear colors.
-- [ ] Create status chips with clear colors.
-- [ ] Improve request card layout.
-- [ ] Improve create request form spacing and hierarchy.
-- [ ] Add character counters where useful.
-- [ ] Add better keyboard handling on mobile.
-- [ ] Add clear primary and secondary buttons.
-- [ ] Add confirmation dialogs for decline, cancel, and delete actions.
-- [ ] Improve comment bubble design.
-- [ ] Add accessible touch target sizes.
-- [ ] Add dark mode polish or lock the app to light mode until dark mode is ready.
+- [x] Create priority chips with clear colors.
+- [x] Create status chips with clear colors.
+- [x] Improve request card layout.
+- [x] Improve create request form spacing and hierarchy.
+- [x] Add character counters where useful.
+- [x] Add better keyboard handling on mobile.
+- [x] Add clear primary and secondary buttons.
+- [x] Add confirmation dialogs for decline, cancel, and delete actions.
+- [x] Improve comment bubble design.
+- [x] Add accessible touch target sizes.
+- [x] Add dark mode polish or lock the app to light mode until dark mode is ready.
 
 ## Phase 9: Security, Rules, And Free-Tier Protection
 
