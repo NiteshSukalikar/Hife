@@ -15,6 +15,17 @@ S:\Other\Hife
 - Firebase Firestore
 - Cloudinary image upload
 
+## Brand Assets
+
+- `BRAND_THEME.md`: Black and neon green brand/theme guide.
+- `assets/brand/hife-logo.svg`: Source logo artwork.
+- `assets/images/icon.png`: Main app icon and thumbnail mark.
+- `assets/images/favicon.png`: Web favicon.
+- `assets/images/splash-icon.png`: Startup splash logo.
+- `assets/images/android-icon-foreground.png`: Android adaptive icon foreground.
+- `assets/images/android-icon-background.png`: Android adaptive icon background.
+- `assets/images/android-icon-monochrome.png`: Android monochrome icon.
+
 ## Important Commands
 
 Use `npm.cmd` on Windows PowerShell because `npm.ps1` may be blocked by the system execution policy.

@@ -6,6 +6,8 @@ Hife is a shared household purchase decision app for couples. The main idea is s
 
 The app is currently an early prototype. It already supports creating requests, adding priority and budget, attaching images, listing requests, viewing request details, and discussing requests through comments. The long-term product direction should move from a generic task/ticket app toward a clear purchase approval workflow.
 
+The visual identity is black and neon green. The theme is documented in `BRAND_THEME.md`, with logo assets stored under `assets/brand` and `assets/images`.
+
 ## Target Users
 
 - Husband and wife managing household purchases together.

@@ -1,7 +1,6 @@
 import { ToastProvider } from "@/components/toast/toastProvider";
 import {
   DarkTheme,
-  DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
@@ -9,18 +8,27 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
+const HifeNavigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: "#39FF14",
+    background: "#050505",
+    card: "#050505",
+    text: "#F8FAFC",
+    border: "#263026",
+    notification: "#39FF14",
+  },
+};
 
 export const unstable_settings = {
   anchor: "(tabs)",
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={HifeNavigationTheme}>
         <ToastProvider>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

@@ -173,6 +173,7 @@ export default function CreateRequestScreen() {
               maxLength={40}
               onChangeText={setProductName}
               placeholder="Example: Air fryer"
+              placeholderTextColor="#71717A"
             />
 
             <Text style={styles.label}>Reason (max 500 chars)</Text>
@@ -181,13 +182,18 @@ export default function CreateRequestScreen() {
               value={reason}
               onChangeText={setReason}
               placeholder="Why should this be purchased?"
+              placeholderTextColor="#71717A"
               multiline
               maxLength={500}
             />
 
             <Text style={styles.label}>Category</Text>
             <View style={styles.pickerWrapper}>
-              <Picker selectedValue={category} onValueChange={setCategory}>
+              <Picker
+                selectedValue={category}
+                onValueChange={setCategory}
+                style={styles.picker}
+              >
                 {CATEGORIES.map((item) => (
                   <Picker.Item key={item} label={item} value={item} />
                 ))}
@@ -196,7 +202,11 @@ export default function CreateRequestScreen() {
 
             <Text style={styles.label}>Priority</Text>
             <View style={styles.pickerWrapper}>
-              <Picker selectedValue={priority} onValueChange={setPriority}>
+              <Picker
+                selectedValue={priority}
+                onValueChange={setPriority}
+                style={styles.picker}
+              >
                 <Picker.Item label="P0 - Immediate (12 hrs)" value="P0" />
                 <Picker.Item label="P1 - Within 24 hrs" value="P1" />
                 <Picker.Item label="P2 - Within 48 hrs" value="P2" />
@@ -213,6 +223,7 @@ export default function CreateRequestScreen() {
                   keyboardType="numeric"
                   onChangeText={(t) => setExpectedPrice(t.replace(/[^0-9]/g, ""))}
                   placeholder="INR"
+                  placeholderTextColor="#71717A"
                 />
               </View>
 
@@ -224,6 +235,7 @@ export default function CreateRequestScreen() {
                   keyboardType="numeric"
                   onChangeText={(t) => setMaxBudget(t.replace(/[^0-9]/g, ""))}
                   placeholder="INR"
+                  placeholderTextColor="#71717A"
                 />
               </View>
             </View>
@@ -234,6 +246,7 @@ export default function CreateRequestScreen() {
               value={linksText}
               onChangeText={setLinksText}
               placeholder="Paste Amazon, Flipkart, or other links"
+              placeholderTextColor="#71717A"
               multiline
               autoCapitalize="none"
               keyboardType="url"
@@ -252,7 +265,7 @@ export default function CreateRequestScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#050505",
   },
   flex: {
     flex: 1,
@@ -264,7 +277,9 @@ const styles = StyleSheet.create({
   imagePicker: {
     height: 160,
     borderRadius: 10,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: "#101312",
+    borderColor: "#263026",
+    borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
@@ -276,18 +291,21 @@ const styles = StyleSheet.create({
   },
   imageText: {
     fontSize: 16,
-    color: "#374151",
+    color: "#39FF14",
   },
   label: {
+    color: "#F8FAFC",
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 6,
     marginTop: 12,
   },
   input: {
+    backgroundColor: "#101312",
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#263026",
     borderRadius: 8,
+    color: "#F8FAFC",
     padding: 10,
     fontSize: 14,
   },
@@ -296,9 +314,13 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   pickerWrapper: {
+    backgroundColor: "#101312",
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#263026",
     borderRadius: 8,
+  },
+  picker: {
+    color: "#F8FAFC",
   },
   priceRow: {
     flexDirection: "row",
@@ -313,13 +335,13 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     marginTop: 24,
-    backgroundColor: "#0f172a",
+    backgroundColor: "#39FF14",
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
   },
   saveText: {
-    color: "#fff",
+    color: "#050505",
     fontSize: 16,
     fontWeight: "600",
   },

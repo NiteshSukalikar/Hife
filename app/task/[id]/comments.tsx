@@ -183,6 +183,7 @@ export default function CommentsScreen() {
         >
           <TextInput
             placeholder="Write a comment..."
+            placeholderTextColor="#71717A"
             style={styles.input}
             value={text}
             onChangeText={setText}
@@ -191,18 +192,19 @@ export default function CommentsScreen() {
 
           <View style={styles.actions}>
             <Pressable onPress={pickImage}>
-              <Ionicons name="image-outline" size={22} color="#2563eb" />
+              <Ionicons name="image-outline" size={22} color="#39FF14" />
             </Pressable>
 
             <TextInput
               placeholder="Add link (optional)"
+              placeholderTextColor="#71717A"
               style={styles.linkInput}
               value={link}
               onChangeText={setLink}
             />
 
             <Pressable style={styles.sendBtn} onPress={handleAddComment}>
-              <Ionicons name="send" size={20} color="#fff" />
+              <Ionicons name="send" size={20} color="#050505" />
             </Pressable>
           </View>
         </View>
@@ -212,7 +214,7 @@ export default function CommentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#050505" },
   flex: { flex: 1 },
   scroll: { flexGrow: 1 },
   commentsContent: {
@@ -224,13 +226,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   emptyTitle: {
-    color: "#0f172a",
+    color: "#F8FAFC",
     fontSize: 17,
     fontWeight: "700",
     textAlign: "center",
   },
   emptyText: {
-    color: "#64748b",
+    color: "#A1A1AA",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
@@ -243,14 +245,15 @@ const styles = StyleSheet.create({
     maxWidth: "85%",
   },
   myComment: {
-    backgroundColor: "#dcfce7",
+    backgroundColor: "#173314",
     alignSelf: "flex-end",
   },
   otherComment: {
-    backgroundColor: "#f1f5f9",
+    backgroundColor: "#101312",
     alignSelf: "flex-start",
   },
   commentText: {
+    color: "#F8FAFC",
     fontSize: 15,
     marginBottom: 6,
   },
@@ -260,29 +263,31 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   commentLink: {
-    color: "#2563eb",
+    color: "#39FF14",
     fontSize: 13,
     marginBottom: 4,
   },
   time: {
     fontSize: 12,
-    color: "#64748b",
+    color: "#A1A1AA",
     alignSelf: "flex-end",
   },
   inputArea: {
     borderTopWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#263026",
     padding: 10,
-    backgroundColor: "#fff",
+    backgroundColor: "#050505",
   },
   input: {
+    backgroundColor: "#101312",
     minHeight: 40,
     maxHeight: 80,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#263026",
     borderRadius: 8,
     padding: 8,
     marginBottom: 8,
+    color: "#F8FAFC",
   },
   actions: {
     flexDirection: "row",
@@ -291,14 +296,16 @@ const styles = StyleSheet.create({
   },
   linkInput: {
     flex: 1,
+    backgroundColor: "#101312",
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#263026",
     borderRadius: 8,
     padding: 6,
     fontSize: 13,
+    color: "#F8FAFC",
   },
   sendBtn: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "#39FF14",
     padding: 10,
     borderRadius: 50,
   },

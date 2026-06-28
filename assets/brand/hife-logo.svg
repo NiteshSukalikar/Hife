@@ -1,0 +1,10 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" rx="224" fill="#050505"/>
+  <circle cx="512" cy="512" r="352" fill="#101312" stroke="#39FF14" stroke-width="28"/>
+  <path d="M326 326V698" stroke="#39FF14" stroke-width="72" stroke-linecap="round"/>
+  <path d="M698 326V698" stroke="#39FF14" stroke-width="72" stroke-linecap="round"/>
+  <path d="M326 512H698" stroke="#39FF14" stroke-width="72" stroke-linecap="round"/>
+  <path d="M404 404C445 365 579 365 620 404" stroke="#B8FFB0" stroke-width="34" stroke-linecap="round"/>
+  <path d="M404 620C445 659 579 659 620 620" stroke="#B8FFB0" stroke-width="34" stroke-linecap="round"/>
+  <text x="512" y="815" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="112" font-weight="800" fill="#39FF14" letter-spacing="0">Hife</text>
+</svg>

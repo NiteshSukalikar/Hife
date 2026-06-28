@@ -8,6 +8,15 @@ as purchased.
 The app is currently an Expo/React Native prototype using Firebase Firestore for
 data and Cloudinary for image uploads.
 
+## Brand Theme
+
+Hife uses a black and neon green identity:
+
+- App black: `#050505`
+- Neon green: `#39FF14`
+- Theme guide: `BRAND_THEME.md`
+- Logo source: `assets/brand/hife-logo.svg`
+
 ## Run The Project
 
 Use `npm.cmd` on Windows PowerShell because `npm.ps1` may be blocked by
@@ -31,6 +40,7 @@ npm.cmd run web
 - `app/(tabs)/explore.tsx`: Create request.
 - `app/task/[id]/index.tsx`: Request details.
 - `app/task/[id]/comments.tsx`: Request discussion.
+- `services/`: Firebase, request, comment, and image upload helpers.
 
 ## Current Direction
 

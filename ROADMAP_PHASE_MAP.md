@@ -116,7 +116,12 @@ Goal: Make the app feel shared and responsive between both partners.
 
 Goal: Make the app feel clean, calm, and purpose-built for repeated daily use.
 
-- [ ] Create a consistent color system.
+- [x] Create a consistent color system.
+- [x] Define black and neon green as the Hife brand theme.
+- [x] Create Hife logo source artwork.
+- [x] Create app thumbnail/favicon logo asset.
+- [x] Create startup splash logo asset.
+- [x] Apply black and neon green theme to primary app screens.
 - [ ] Create priority chips with clear colors.
 - [ ] Create status chips with clear colors.
 - [ ] Improve request card layout.
@@ -160,7 +165,7 @@ Goal: Make the app stable enough for personal or small private usage.
 - [ ] Test Android layout.
 - [ ] Test iOS layout if available.
 - [ ] Test web layout if web support is needed.
-- [ ] Update app icon and splash screen.
+- [x] Update app icon and splash screen.
 - [ ] Update production README.
 - [ ] Create release checklist.
 

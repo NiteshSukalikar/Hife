@@ -209,11 +209,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#050505",
   },
   filtersWrapper: {
     borderBottomWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#263026",
   },
   filters: {
     gap: 8,
@@ -222,30 +222,30 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: "#263026",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   filterChipActive: {
-    backgroundColor: "#0f172a",
-    borderColor: "#0f172a",
+    backgroundColor: "#39FF14",
+    borderColor: "#39FF14",
   },
   filterText: {
-    color: "#475569",
+    color: "#A1A1AA",
     fontSize: 13,
     fontWeight: "600",
   },
   filterTextActive: {
-    color: "#fff",
+    color: "#050505",
   },
   listContent: {
     padding: 12,
   },
   card: {
     flexDirection: "row",
-    backgroundColor: "#f8fafc",
-    borderColor: "#e2e8f0",
+    backgroundColor: "#101312",
+    borderColor: "#263026",
     borderRadius: 12,
     borderWidth: 1,
     marginBottom: 12,
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    color: "#0f172a",
+    color: "#F8FAFC",
     flex: 1,
     fontSize: 16,
     fontWeight: "700",
@@ -289,18 +289,18 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   metaText: {
-    color: "#64748b",
+    color: "#A1A1AA",
     fontSize: 13,
     marginTop: 5,
   },
   budget: {
     marginTop: 3,
-    color: "#059669",
+    color: "#39FF14",
     fontSize: 13,
     fontWeight: "600",
   },
   imagePlaceholder: {
-    backgroundColor: "#e5e7eb",
+    backgroundColor: "#171A18",
   },
   emptyState: {
     alignItems: "center",
@@ -308,13 +308,13 @@ const styles = StyleSheet.create({
     paddingVertical: 56,
   },
   emptyTitle: {
-    color: "#0f172a",
+    color: "#F8FAFC",
     fontSize: 18,
     fontWeight: "700",
     textAlign: "center",
   },
   emptyText: {
-    color: "#64748b",
+    color: "#A1A1AA",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,

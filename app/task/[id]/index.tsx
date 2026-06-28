@@ -209,6 +209,7 @@ export default function RequestDetailsScreen() {
                 value={decisionReason}
                 onChangeText={setDecisionReason}
                 placeholder="Add why this is approved, declined, postponed, or needs more info"
+                placeholderTextColor="#71717A"
                 multiline
                 maxLength={300}
               />
@@ -230,7 +231,7 @@ export default function RequestDetailsScreen() {
                 disabled={!!savingStatus}
                 onPress={() => handleStatusChange("declined")}
               >
-                <Text style={styles.actionText}>
+                <Text style={styles.declineActionText}>
                   {savingStatus === "declined" ? "Saving..." : "Decline"}
                 </Text>
               </Pressable>
@@ -294,7 +295,7 @@ export default function RequestDetailsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
+    backgroundColor: "#050505",
     flexGrow: 1,
     padding: 16,
   },
@@ -305,12 +306,12 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
   },
   centerTitle: {
-    color: "#0f172a",
+    color: "#F8FAFC",
     fontSize: 18,
     fontWeight: "700",
   },
   centerText: {
-    color: "#64748b",
+    color: "#A1A1AA",
     marginTop: 8,
     textAlign: "center",
   },
@@ -322,11 +323,13 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     alignItems: "center",
-    backgroundColor: "#e5e7eb",
+    backgroundColor: "#101312",
+    borderColor: "#263026",
+    borderWidth: 1,
     justifyContent: "center",
   },
   imagePlaceholderText: {
-    color: "#64748b",
+    color: "#A1A1AA",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -340,12 +343,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: "#0f172a",
+    color: "#F8FAFC",
     fontSize: 24,
     fontWeight: "800",
   },
   category: {
-    color: "#64748b",
+    color: "#A1A1AA",
     fontSize: 14,
     marginTop: 3,
   },
@@ -362,18 +365,18 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   sectionTitle: {
-    color: "#0f172a",
+    color: "#39FF14",
     fontSize: 15,
     fontWeight: "800",
     marginBottom: 8,
   },
   bodyText: {
-    color: "#334155",
+    color: "#F8FAFC",
     fontSize: 15,
     lineHeight: 22,
   },
   mutedText: {
-    color: "#64748b",
+    color: "#A1A1AA",
     fontSize: 14,
   },
   metaGrid: {
@@ -382,44 +385,48 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   metaItem: {
-    backgroundColor: "#f8fafc",
-    borderColor: "#e2e8f0",
+    backgroundColor: "#101312",
+    borderColor: "#263026",
     borderRadius: 10,
     borderWidth: 1,
     flex: 1,
     padding: 10,
   },
   metaLabel: {
-    color: "#64748b",
+    color: "#A1A1AA",
     fontSize: 12,
     fontWeight: "700",
   },
   metaValue: {
-    color: "#0f172a",
+    color: "#F8FAFC",
     fontSize: 14,
     fontWeight: "800",
     marginTop: 4,
   },
   linkRow: {
-    backgroundColor: "#eff6ff",
+    backgroundColor: "#101312",
+    borderColor: "#263026",
+    borderWidth: 1,
     borderRadius: 8,
     marginBottom: 8,
     padding: 10,
   },
   linkSource: {
-    color: "#1d4ed8",
+    color: "#39FF14",
     fontSize: 13,
     fontWeight: "800",
   },
   linkUrl: {
-    color: "#2563eb",
+    color: "#B8FFB0",
     fontSize: 13,
     marginTop: 3,
   },
   input: {
+    backgroundColor: "#101312",
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#263026",
     borderRadius: 8,
+    color: "#F8FAFC",
     padding: 10,
     fontSize: 14,
   },
@@ -440,23 +447,28 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   approveButton: {
-    backgroundColor: "#16a34a",
+    backgroundColor: "#39FF14",
   },
   declineButton: {
     backgroundColor: "#dc2626",
   },
   secondaryButton: {
-    backgroundColor: "#f8fafc",
-    borderColor: "#cbd5e1",
+    backgroundColor: "#101312",
+    borderColor: "#263026",
     borderWidth: 1,
   },
   actionText: {
+    color: "#050505",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  declineActionText: {
     color: "#fff",
     fontSize: 15,
     fontWeight: "800",
   },
   secondaryActionText: {
-    color: "#0f172a",
+    color: "#F8FAFC",
     fontSize: 15,
     fontWeight: "800",
   },
@@ -466,18 +478,18 @@ const styles = StyleSheet.create({
   },
   purchaseButton: {
     alignItems: "center",
-    backgroundColor: "#0f766e",
+    backgroundColor: "#39FF14",
     borderRadius: 8,
     paddingVertical: 12,
   },
   purchaseText: {
-    color: "#fff",
+    color: "#050505",
     fontSize: 15,
     fontWeight: "800",
   },
   cancelButton: {
     alignItems: "center",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#101312",
     borderColor: "#fecaca",
     borderRadius: 8,
     borderWidth: 1,
@@ -493,7 +505,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backText: {
-    color: "#475569",
+    color: "#A1A1AA",
     fontSize: 15,
     fontWeight: "700",
   },
