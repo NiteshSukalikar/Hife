@@ -138,6 +138,10 @@ export default function RequestDetailsScreen() {
       setSavingStatus(status);
       await updatePurchaseRequestStatus(request.id, status, decisionReason);
       show(`Request marked ${STATUS_LABELS[status].toLowerCase()}`, "success");
+      router.replace({
+        pathname: "/(tabs)",
+        params: { filter: status },
+      });
     } catch (error) {
       logError("Failed to update request", error);
       show("Failed to update request", "error");

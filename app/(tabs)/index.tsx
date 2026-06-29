@@ -7,7 +7,7 @@ import {
 } from "@/constants/types";
 import { getBudgetSettings, updateBudgetSettings } from "@/services/budgets";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Switch,
@@ -52,16 +52,20 @@ type FilterValue = "all" | RequestStatus;
 const FILTERS: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
   { label: "Pending", value: "pending" },
+  { label: "Need Info", value: "needs_more_info" },
   { label: "Approved", value: "approved" },
   { label: "Declined", value: "declined" },
   { label: "Buy Later", value: "buy_later" },
   { label: "Purchased", value: "purchased" },
 ];
 
+const FILTER_VALUES = new Set<FilterValue>(FILTERS.map((filter) => filter.value));
+
 type NotificationSettings = typeof DEFAULT_NOTIFICATION_SETTINGS;
 
 export default function HomeScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ filter?: string }>();
   const toast = useToast();
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [budgetSettings, setBudgetSettings] = useState<BudgetSettings>(
@@ -138,6 +142,16 @@ export default function HomeScreen() {
   useEffect(() => {
     notificationSettingsRef.current = notificationSettings;
   }, [notificationSettings]);
+
+  useEffect(() => {
+    const nextFilter = Array.isArray(params.filter)
+      ? params.filter[0]
+      : params.filter;
+
+    if (nextFilter && FILTER_VALUES.has(nextFilter as FilterValue)) {
+      setActiveFilter(nextFilter as FilterValue);
+    }
+  }, [params.filter]);
 
   useEffect(() => {
     let unsubscribe: undefined | (() => void);
