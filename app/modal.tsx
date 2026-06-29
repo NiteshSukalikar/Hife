@@ -9,7 +9,7 @@ export default function ModalScreen() {
     <ThemedView style={styles.container}>
       <ThemedText type="title">About Hife</ThemedText>
       <ThemedText style={styles.description}>
-        Hife helps partners discuss household purchases before making a
+        Hife helps teams or partners discuss room purchases before making a
         decision.
       </ThemedText>
       <Link href="/" dismissTo style={styles.link}>

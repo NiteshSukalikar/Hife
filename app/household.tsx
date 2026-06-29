@@ -27,9 +27,11 @@ export default function HouseholdScreen() {
   const [mode, setMode] = useState<Mode>("create");
   const [displayName, setDisplayName] = useState("");
   const [roleLabel, setRoleLabel] = useState("Partner A");
-  const [householdName, setHouseholdName] = useState("Hife Household");
+  const [householdName, setHouseholdName] = useState("Hife Room");
   const [inviteCode, setInviteCode] = useState("");
+  const [roomPassword, setRoomPassword] = useState("");
   const [currentInviteCode, setCurrentInviteCode] = useState("");
+  const [currentRoomPassword, setCurrentRoomPassword] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -53,7 +55,12 @@ export default function HouseholdScreen() {
     }
 
     if (mode === "join" && !inviteCode.trim()) {
-      show("Enter the household invite code", "error");
+      show("Enter the room invite code", "error");
+      return;
+    }
+
+    if (roomPassword.trim().length < 4) {
+      show("Room password must be at least 4 characters", "error");
       return;
     }
 
@@ -65,23 +72,37 @@ export default function HouseholdScreen() {
               displayName,
               roleLabel,
               name: householdName,
+              roomPassword,
             })
           : await joinHouseholdByInviteCode({
               inviteCode,
+              roomPassword,
               displayName,
               roleLabel: roleLabel || "Partner B",
             });
 
       setCurrentInviteCode(household.inviteCode);
+      setCurrentRoomPassword(mode === "create" ? roomPassword : "");
       show(
-        mode === "create" ? "Household created" : "Household joined",
+        mode === "create" ? "Room created" : "Room joined",
         "success"
       );
-      router.replace("/(tabs)");
+      if (mode === "join") {
+        router.replace("/(tabs)");
+      }
     } catch (error) {
-      logError("Household setup failed", error);
+      logError("Room setup failed", error);
+      const message =
+        mode === "join" &&
+        error instanceof Error &&
+        error.message.toLowerCase().includes("permission")
+          ? "Invite code or room password is incorrect"
+          : error instanceof Error
+            ? error.message
+            : "Room setup failed";
+
       show(
-        error instanceof Error ? error.message : "Household setup failed",
+        message,
         "error"
       );
     } finally {
@@ -99,20 +120,32 @@ export default function HouseholdScreen() {
       <Header />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.intro}>
-          <Text style={styles.title}>Set up your household</Text>
+          <Text style={styles.title}>Set up your room</Text>
           <Text style={styles.subtitle}>
-            Hife keeps requests and discussions inside one shared household.
-            Create a household, or join your partner with an invite code.
+            Hife keeps requests, budgets, and discussions inside one shared
+            room. Create a room, or join with an invite code and password.
           </Text>
         </View>
 
         {currentInviteCode ? (
           <View style={styles.inviteCard}>
-            <Text style={styles.inviteLabel}>Your invite code</Text>
+            <Text style={styles.inviteLabel}>Your room invite code</Text>
             <Text style={styles.inviteCode}>{currentInviteCode}</Text>
+            {currentRoomPassword ? (
+              <>
+                <Text style={styles.inviteLabel}>Room password</Text>
+                <Text style={styles.invitePassword}>{currentRoomPassword}</Text>
+              </>
+            ) : null}
             <Text style={styles.inviteHelp}>
-              Share this with your partner so they can join the same household.
+              Share the invite code and room password with trusted people only.
             </Text>
+            <Pressable
+              style={styles.continueButton}
+              onPress={() => router.replace("/(tabs)")}
+            >
+              <Text style={styles.continueText}>Continue to room</Text>
+            </Pressable>
           </View>
         ) : null}
 
@@ -147,12 +180,12 @@ export default function HouseholdScreen() {
 
         {mode === "create" ? (
           <>
-            <Text style={styles.label}>Household name</Text>
+            <Text style={styles.label}>Room name</Text>
             <TextInput
               style={styles.input}
               value={householdName}
               onChangeText={setHouseholdName}
-              placeholder="Example: Sharma home"
+              placeholder="Example: Family, event, office"
               placeholderTextColor="#71717A"
               maxLength={40}
             />
@@ -171,6 +204,21 @@ export default function HouseholdScreen() {
             />
           </>
         )}
+
+        <Text style={styles.label}>Room password</Text>
+        <TextInput
+          style={styles.input}
+          value={roomPassword}
+          onChangeText={setRoomPassword}
+          placeholder={
+            mode === "create"
+              ? "Create a password for this room"
+              : "Enter the room password"
+          }
+          placeholderTextColor="#71717A"
+          secureTextEntry
+          maxLength={40}
+        />
 
         <Text style={styles.label}>Your display name</Text>
         <TextInput
@@ -201,8 +249,8 @@ export default function HouseholdScreen() {
             {saving
               ? "Saving..."
               : mode === "create"
-                ? "Create Household"
-                : "Join Household"}
+                ? "Create Room"
+                : "Join Room"}
           </Text>
         </Pressable>
       </ScrollView>
@@ -254,11 +302,31 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginTop: 4,
   },
+  invitePassword: {
+    color: "#F8FAFC",
+    fontSize: 18,
+    fontWeight: "900",
+    marginBottom: 8,
+    marginTop: 4,
+  },
   inviteHelp: {
     color: "#B8FFB0",
     fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
+  },
+  continueButton: {
+    alignItems: "center",
+    backgroundColor: "#39FF14",
+    borderRadius: 8,
+    justifyContent: "center",
+    marginTop: 12,
+    minHeight: 46,
+  },
+  continueText: {
+    color: "#050505",
+    fontSize: 14,
+    fontWeight: "900",
   },
   segmented: {
     backgroundColor: "#101312",

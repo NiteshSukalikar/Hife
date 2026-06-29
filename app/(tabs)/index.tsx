@@ -38,7 +38,7 @@ import {
   buildBudgetSummary,
   DEFAULT_BUDGET_SETTINGS,
   formatInr,
-  REQUEST_CATEGORIES,
+  getBudgetCategories,
 } from "@/utils/budget";
 import {
   getPriorityChipColor,
@@ -75,6 +75,8 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [savingBudget, setSavingBudget] = useState(false);
   const [showBudgetSettings, setShowBudgetSettings] = useState(false);
+  const [showCategorySummary, setShowCategorySummary] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [readCommentCounts, setReadCommentCounts] = useState<
@@ -111,7 +113,7 @@ export default function HomeScreen() {
         nextSettings.monthlyBudget ? String(nextSettings.monthlyBudget) : ""
       );
       setCategoryBudgetInputs(
-        REQUEST_CATEGORIES.reduce(
+        getBudgetCategories(nextSettings).reduce(
           (inputs, category) => ({
             ...inputs,
             [category]: nextSettings.categoryBudgets[category]
@@ -229,6 +231,10 @@ export default function HomeScreen() {
     () => buildBudgetSummary(requests, budgetSettings),
     [budgetSettings, requests]
   );
+  const budgetCategories = useMemo(
+    () => getBudgetCategories(budgetSettings),
+    [budgetSettings]
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -277,11 +283,15 @@ export default function HomeScreen() {
       setSavingBudget(true);
       const settings = await updateBudgetSettings({
         monthlyBudget: Number(monthlyBudgetInput || 0),
-        categoryBudgets: REQUEST_CATEGORIES.reduce(
-          (budgets, category) => ({
-            ...budgets,
-            [category]: Number(categoryBudgetInputs[category] || 0),
-          }),
+        categoryBudgets: Object.entries(categoryBudgetInputs).reduce(
+          (budgets, [category, value]) => {
+            const cleanCategory = category.trim();
+            if (!cleanCategory) return budgets;
+            return {
+              ...budgets,
+              [cleanCategory]: Number(value || 0),
+            };
+          },
           {} as Record<string, number>
         ),
       });
@@ -295,6 +305,20 @@ export default function HomeScreen() {
     } finally {
       setSavingBudget(false);
     }
+  };
+
+  const addCategory = () => {
+    const cleanName = newCategoryName.trim();
+    if (!cleanName) {
+      toast.show("Add a category name", "error");
+      return;
+    }
+
+    setCategoryBudgetInputs((inputs) => ({
+      ...inputs,
+      [cleanName]: inputs[cleanName] || "",
+    }));
+    setNewCategoryName("");
   };
 
   const ListHeader = (
@@ -343,7 +367,7 @@ export default function HomeScreen() {
 
       {showBudgetSettings ? (
         <View style={styles.settingsPanel}>
-          <Text style={styles.inputLabel}>Monthly household budget</Text>
+          <Text style={styles.inputLabel}>Monthly room budget</Text>
           <TextInput
             style={styles.budgetInput}
             value={monthlyBudgetInput}
@@ -356,7 +380,7 @@ export default function HomeScreen() {
           />
 
           <Text style={styles.inputLabel}>Category budgets</Text>
-          {REQUEST_CATEGORIES.map((category) => (
+          {budgetCategories.map((category) => (
             <View key={category} style={styles.categoryInputRow}>
               <Text style={styles.categoryInputLabel}>{category}</Text>
               <TextInput
@@ -374,6 +398,19 @@ export default function HomeScreen() {
               />
             </View>
           ))}
+
+          <View style={styles.addCategoryRow}>
+            <TextInput
+              style={[styles.budgetInput, styles.addCategoryInput]}
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              placeholder="Add custom category"
+              placeholderTextColor="#71717A"
+            />
+            <Pressable style={styles.addCategoryButton} onPress={addCategory}>
+              <Text style={styles.addCategoryText}>Add</Text>
+            </Pressable>
+          </View>
 
           <Pressable
             style={[styles.saveBudgetButton, savingBudget && styles.disabledButton]}
@@ -431,18 +468,30 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.sectionHeading}>Category summary</Text>
-      {budgetSummary.categorySummaries.map((item) => (
-        <View key={item.category} style={styles.summaryRow}>
-          <Text style={styles.summaryCategory}>{item.category}</Text>
-          <Text style={styles.summaryText}>
-            {formatInr(item.approvedTotal)} approved / {formatInr(item.pendingTotal)} pending
-          </Text>
-          <Text style={styles.summaryText}>
-            {formatInr(item.remaining)} left of {formatInr(item.budget)}
-          </Text>
-        </View>
-      ))}
+      <Pressable
+        style={styles.summaryToggle}
+        onPress={() => setShowCategorySummary((value) => !value)}
+      >
+        <Text style={styles.sectionHeading}>Category summary</Text>
+        <Text style={styles.summaryToggleText}>
+          {showCategorySummary ? "Hide" : "Show"}
+        </Text>
+      </Pressable>
+
+      {showCategorySummary
+        ? budgetSummary.categorySummaries.map((item) => (
+            <View key={item.category} style={styles.summaryRow}>
+              <Text style={styles.summaryCategory}>{item.category}</Text>
+              <Text style={styles.summaryText}>
+                {formatInr(item.approvedTotal)} approved /{" "}
+                {formatInr(item.pendingTotal)} pending
+              </Text>
+              <Text style={styles.summaryText}>
+                {formatInr(item.remaining)} left of {formatInr(item.budget)}
+              </Text>
+            </View>
+          ))
+        : null}
 
       <Text style={styles.sectionHeading}>Spending history</Text>
       {budgetSummary.monthlyHistory.length === 0 ? (
@@ -785,6 +834,29 @@ const styles = StyleSheet.create({
     padding: 9,
     width: 120,
   },
+  addCategoryRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 4,
+  },
+  addCategoryInput: {
+    flex: 1,
+  },
+  addCategoryButton: {
+    alignItems: "center",
+    borderColor: "#39FF14",
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 14,
+  },
+  addCategoryText: {
+    color: "#39FF14",
+    fontSize: 13,
+    fontWeight: "900",
+  },
   saveBudgetButton: {
     alignItems: "center",
     backgroundColor: "#39FF14",
@@ -808,6 +880,20 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginTop: 14,
     marginBottom: 8,
+  },
+  summaryToggle: {
+    alignItems: "center",
+    borderTopColor: "#263026",
+    borderTopWidth: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 14,
+    minHeight: 48,
+  },
+  summaryToggleText: {
+    color: "#B8FFB0",
+    fontSize: 13,
+    fontWeight: "900",
   },
   summaryRow: {
     borderTopColor: "#263026",

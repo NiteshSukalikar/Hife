@@ -37,8 +37,9 @@ function mapHouseholdDoc(snapshot) {
 
   return {
     id: snapshot.id,
-    name: data.name || "Hife Household",
+    name: data.name || "Hife Room",
     inviteCode: data.inviteCode,
+    roomPassword: data.roomPassword || "",
     monthlyBudget: Number(data.monthlyBudget || 0),
     categoryBudgets: data.categoryBudgets || {},
     createdBy: data.createdBy,
@@ -56,15 +57,17 @@ async function rememberHousehold(householdId) {
 export async function createHousehold({
   displayName,
   roleLabel = "Partner A",
-  name = "Hife Household",
+  name = "Hife Room",
+  roomPassword = "",
 }) {
   const user = await getCurrentUser();
   const inviteCode = makeInviteCode();
   const householdRef = doc(collection(db, "households"));
   const inviteRef = doc(db, "inviteCodes", inviteCode);
   const householdData = {
-    name: name.trim() || "Hife Household",
+    name: name.trim() || "Hife Room",
     inviteCode,
+    roomPassword: roomPassword.trim(),
     createdBy: user.uid,
     memberIds: [user.uid],
     members: {
@@ -90,8 +93,9 @@ export async function createHousehold({
 
   return {
     id: householdRef.id,
-    name: name.trim() || "Hife Household",
+    name: name.trim() || "Hife Room",
     inviteCode,
+    roomPassword: roomPassword.trim(),
     monthlyBudget: 0,
     categoryBudgets: {},
     createdBy: user.uid,
@@ -107,6 +111,7 @@ export async function createHousehold({
 
 export async function joinHouseholdByInviteCode({
   inviteCode,
+  roomPassword,
   displayName,
   roleLabel = "Partner B",
 }) {
@@ -122,6 +127,7 @@ export async function joinHouseholdByInviteCode({
       memberIds: arrayUnion(user.uid),
       [`members.${user.uid}`]: memberData(displayName, roleLabel),
       lastJoinInviteCode: normalizedCode,
+      lastJoinRoomPassword: roomPassword.trim(),
       updatedAt: serverTimestamp(),
     });
     await recordUsage("households.join", { writes: 1 });
@@ -144,16 +150,21 @@ export async function joinHouseholdByInviteCode({
   });
 
   if (snapshot.empty) {
-    throw new Error("No household found for that invite code");
+    throw new Error("No room found for that invite code");
   }
 
   const householdDoc = snapshot.docs[0];
   const memberPath = `members.${user.uid}`;
 
+  if ((householdDoc.data().roomPassword || "") !== roomPassword.trim()) {
+    throw new Error("Room password is incorrect");
+  }
+
   await updateDoc(doc(db, "households", householdDoc.id), {
     memberIds: arrayUnion(user.uid),
     [memberPath]: memberData(displayName, roleLabel),
     lastJoinInviteCode: normalizedCode,
+    lastJoinRoomPassword: roomPassword.trim(),
     updatedAt: serverTimestamp(),
   });
   await setDoc(doc(db, "inviteCodes", normalizedCode), {
@@ -206,7 +217,7 @@ export async function requireActiveHousehold() {
   const household = await getActiveHousehold();
 
   if (!household) {
-    throw new Error("Create or join a household before using requests");
+    throw new Error("Create or join a room before using requests");
   }
 
   return household;

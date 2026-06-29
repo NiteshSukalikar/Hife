@@ -22,8 +22,8 @@ import {
   buildBudgetSummary,
   DEFAULT_BUDGET_SETTINGS,
   formatInr,
+  getBudgetCategories,
   PRIORITY_EXPLANATIONS,
-  REQUEST_CATEGORIES,
 } from "@/utils/budget";
 import { validateImageAsset } from "@/utils/productMedia";
 import { parseProductLinks } from "@/utils/productLinks";
@@ -59,8 +59,7 @@ export default function CreateRequestScreen() {
   const [reason, setReason] = useState("");
   const [priority, setPriority] = useState<RequestPriority>("P1");
   const [expectedPrice, setExpectedPrice] = useState("");
-  const [maxBudget, setMaxBudget] = useState("");
-  const [category, setCategory] = useState("Household");
+  const [category, setCategory] = useState("Room");
   const [linksText, setLinksText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -119,6 +118,15 @@ export default function CreateRequestScreen() {
   const categorySummary = budgetSummary.categorySummaries.find(
     (item) => item.category === category
   );
+  const budgetCategories = useMemo(
+    () => getBudgetCategories(budgetSettings),
+    [budgetSettings]
+  );
+  const categoryRemaining = Number(categorySummary?.remaining || 0);
+  const maxRequestBudget =
+    budgetSummary.monthlyBudget > 0
+      ? Math.min(categoryRemaining, budgetSummary.remainingBudget)
+      : categoryRemaining;
   const exceedsMonthlyBudget =
     budgetSummary.monthlyBudget > 0 &&
     expectedAmount > budgetSummary.remainingBudget;
@@ -128,7 +136,7 @@ export default function CreateRequestScreen() {
   useEffect(() => {
     setAiDecision(null);
     setAiError("");
-  }, [productName, reason, priority, expectedPrice, maxBudget, category]);
+  }, [productName, reason, priority, expectedPrice, maxRequestBudget, category]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -156,8 +164,7 @@ export default function CreateRequestScreen() {
     setReason("");
     setPriority("P1");
     setExpectedPrice("");
-    setMaxBudget("");
-    setCategory("Household");
+    setCategory("Room");
     setLinksText("");
     setImage(null);
     setImageError("");
@@ -178,8 +185,11 @@ export default function CreateRequestScreen() {
       Alert.alert("Validation", "Expected price is required before asking AI");
       return false;
     }
-    if (!maxBudget) {
-      Alert.alert("Validation", "Maximum budget is required before asking AI");
+    if (maxRequestBudget <= 0) {
+      Alert.alert(
+        "Validation",
+        "Set a budget for this category from the dashboard before asking AI"
+      );
       return false;
     }
 
@@ -196,7 +206,7 @@ export default function CreateRequestScreen() {
         title: productName,
         reason,
         price: Number(expectedPrice),
-        budget: Number(maxBudget),
+        budget: maxRequestBudget,
         priority,
         category,
         recentSpending: {
@@ -237,12 +247,20 @@ export default function CreateRequestScreen() {
       productName,
       reason,
       expectedPrice,
-      maxBudget,
+      maxBudget: maxRequestBudget,
       linksText,
     });
 
     if (!validation.isValid) {
       Alert.alert("Validation", validation.message);
+      return;
+    }
+
+    if (maxRequestBudget <= 0) {
+      Alert.alert(
+        "Validation",
+        "Set a category budget on the dashboard before creating this request"
+      );
       return;
     }
 
@@ -274,7 +292,7 @@ export default function CreateRequestScreen() {
         reason,
         priority,
         expectedPrice: Number(expectedPrice),
-        maxBudget: Number(maxBudget),
+        maxBudget: maxRequestBudget,
         category,
         links,
         image: imageUrl,
@@ -362,7 +380,7 @@ export default function CreateRequestScreen() {
                 onValueChange={setCategory}
                 style={styles.picker}
               >
-                {REQUEST_CATEGORIES.map((item) => (
+                {budgetCategories.map((item) => (
                   <Picker.Item key={item} label={item} value={item} />
                 ))}
               </Picker>
@@ -399,11 +417,9 @@ export default function CreateRequestScreen() {
               <View style={styles.priceField}>
                 <Text style={styles.label}>Max budget</Text>
                 <TextInput
-                  style={styles.input}
-                  value={maxBudget}
-                  keyboardType="numeric"
-                  onChangeText={(t) => setMaxBudget(t.replace(/[^0-9]/g, ""))}
-                  placeholder="INR"
+                  style={[styles.input, styles.disabledInput]}
+                  value={formatInr(maxRequestBudget)}
+                  editable={false}
                   placeholderTextColor="#71717A"
                 />
               </View>
@@ -637,6 +653,10 @@ const styles = StyleSheet.create({
     minHeight: 44,
     padding: 10,
     fontSize: 14,
+  },
+  disabledInput: {
+    color: "#A1A1AA",
+    opacity: 0.82,
   },
   textArea: {
     height: 120,

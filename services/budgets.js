@@ -4,16 +4,20 @@ import { recordUsage } from "@/services/usageMonitoring";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 
 const DEFAULT_CATEGORIES = [
-  "Household",
+  "Room",
+  "Event",
+  "Office",
   "Kitchen",
   "Electronics",
-  "Personal",
-  "Health",
   "Other",
 ];
 
 function normalizeCategoryBudgets(categoryBudgets = {}) {
-  return DEFAULT_CATEGORIES.reduce((budgets, category) => {
+  const categories = Array.from(
+    new Set([...DEFAULT_CATEGORIES, ...Object.keys(categoryBudgets || {})])
+  ).filter(Boolean);
+
+  return categories.reduce((budgets, category) => {
     budgets[category] = Number(categoryBudgets[category] || 0);
     return budgets;
   }, {});

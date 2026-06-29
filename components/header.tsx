@@ -1,8 +1,11 @@
 import { Image, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Header() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
       <Image
         source={require("@/assets/images/favicon.png")}
         style={styles.logo}
@@ -10,7 +13,7 @@ export default function Header() {
       />
       <View>
         <Text style={styles.title}>Hife</Text>
-        <Text style={styles.subtitle}>Household purchase requests</Text>
+        <Text style={styles.subtitle}>Room purchase requests</Text>
       </View>
     </View>
   );
@@ -24,7 +27,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: "row",
     gap: 10,
-    height: 68,
+    minHeight: 78,
+    paddingBottom: 12,
     paddingHorizontal: 16,
   },
   logo: {

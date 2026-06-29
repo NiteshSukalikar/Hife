@@ -1,11 +1,11 @@
 import { BudgetSettings, PurchaseRequest, RequestPriority } from "@/constants/types";
 
 export const REQUEST_CATEGORIES = [
-  "Household",
+  "Room",
+  "Event",
+  "Office",
   "Kitchen",
   "Electronics",
-  "Personal",
-  "Health",
   "Other",
 ];
 
@@ -21,6 +21,17 @@ export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
   monthlyBudget: 0,
   categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
 };
+
+export function getBudgetCategories(
+  settings: BudgetSettings = DEFAULT_BUDGET_SETTINGS
+) {
+  return Array.from(
+    new Set([
+      ...REQUEST_CATEGORIES,
+      ...Object.keys(settings.categoryBudgets || {}).filter(Boolean),
+    ])
+  );
+}
 
 export const PRIORITY_EXPLANATIONS: Record<RequestPriority, string> = {
   P0: "Emergency or must buy immediately.",
@@ -106,7 +117,9 @@ export function buildBudgetSummary(
   const categoryMap = new Map<string, CategorySummary>();
   const historyMap = new Map<string, MonthSummary>();
 
-  REQUEST_CATEGORIES.forEach((category) => {
+  const budgetCategories = getBudgetCategories(settings);
+
+  budgetCategories.forEach((category) => {
     categoryMap.set(category, {
       category,
       approvedTotal: 0,
@@ -139,7 +152,7 @@ export function buildBudgetSummary(
 
     if (!isCurrentMonth) return;
 
-    const category = REQUEST_CATEGORIES.includes(request.category)
+    const category = budgetCategories.includes(request.category)
       ? request.category
       : "Other";
     const summary = categoryMap.get(category);

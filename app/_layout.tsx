@@ -35,7 +35,7 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen
               name="household"
-              options={{ title: "Household setup", headerTitleAlign: "center" }}
+              options={{ title: "Room setup", headerTitleAlign: "center" }}
             />
             <Stack.Screen
               name="modal"
