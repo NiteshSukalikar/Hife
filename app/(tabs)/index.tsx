@@ -61,6 +61,32 @@ const FILTERS: { label: string; value: FilterValue }[] = [
 
 const FILTER_VALUES = new Set<FilterValue>(FILTERS.map((filter) => filter.value));
 
+function splitMonthlyBudgetAcrossCategories(
+  monthlyBudget: number,
+  categories: string[]
+) {
+  const cleanCategories = categories.map((item) => item.trim()).filter(Boolean);
+  const targetCategories = cleanCategories.length ? cleanCategories : ["Other"];
+  const total = Math.max(0, Math.round(monthlyBudget || 0));
+  const base = Math.floor(total / targetCategories.length);
+  const remainder = total % targetCategories.length;
+
+  return targetCategories.reduce((budgets, category, index) => {
+    budgets[category] = base + (index < remainder ? 1 : 0);
+    return budgets;
+  }, {} as Record<string, number>);
+}
+
+function budgetInputsFromSettings(settings: BudgetSettings) {
+  return Object.entries(settings.categoryBudgets || {}).reduce(
+    (inputs, [category, value]) => ({
+      ...inputs,
+      [category]: value ? String(value) : "0",
+    }),
+    {} as Record<string, string>
+  );
+}
+
 type NotificationSettings = typeof DEFAULT_NOTIFICATION_SETTINGS;
 
 export default function HomeScreen() {
@@ -117,17 +143,7 @@ export default function HomeScreen() {
       setMonthlyBudgetInput(
         nextSettings.monthlyBudget ? String(nextSettings.monthlyBudget) : ""
       );
-      setCategoryBudgetInputs(
-        getBudgetCategories(nextSettings).reduce(
-          (inputs, category) => ({
-            ...inputs,
-            [category]: nextSettings.categoryBudgets[category]
-              ? String(nextSettings.categoryBudgets[category])
-              : "",
-          }),
-          {} as Record<string, string>
-        )
-      );
+      setCategoryBudgetInputs(budgetInputsFromSettings(nextSettings));
     } catch (e) {
       logError("Failed to fetch requests", e);
       setError("Could not load purchase requests. Pull to try again.");
@@ -296,22 +312,17 @@ export default function HomeScreen() {
 
     try {
       setSavingBudget(true);
+      const categories = Object.keys(categoryBudgetInputs);
       const settings = await updateBudgetSettings({
         monthlyBudget: Number(monthlyBudgetInput || 0),
-        categoryBudgets: Object.entries(categoryBudgetInputs).reduce(
-          (budgets, [category, value]) => {
-            const cleanCategory = category.trim();
-            if (!cleanCategory) return budgets;
-            return {
-              ...budgets,
-              [cleanCategory]: Number(value || 0),
-            };
-          },
-          {} as Record<string, number>
+        categoryBudgets: splitMonthlyBudgetAcrossCategories(
+          Number(monthlyBudgetInput || 0),
+          categories
         ),
       });
 
       setBudgetSettings(settings);
+      setCategoryBudgetInputs(budgetInputsFromSettings(settings));
       setShowBudgetSettings(false);
       toast.show("Budget settings saved", "success");
     } catch (saveError) {
@@ -322,18 +333,92 @@ export default function HomeScreen() {
     }
   };
 
-  const addCategory = () => {
+  const updateMonthlyBudgetInput = (value: string) => {
+    const cleanValue = value.replace(/[^0-9]/g, "");
+    const categories = Object.keys(categoryBudgetInputs);
+
+    setMonthlyBudgetInput(cleanValue);
+    setCategoryBudgetInputs(
+      Object.entries(
+        splitMonthlyBudgetAcrossCategories(Number(cleanValue || 0), categories)
+      ).reduce(
+        (inputs, [category, amount]) => ({
+          ...inputs,
+          [category]: String(amount),
+        }),
+        {} as Record<string, string>
+      )
+    );
+  };
+
+  const addCategory = async () => {
+    if (savingBudget) return;
+
     const cleanName = newCategoryName.trim();
     if (!cleanName) {
       toast.show("Add a category name", "error");
       return;
     }
 
-    setCategoryBudgetInputs((inputs) => ({
-      ...inputs,
-      [cleanName]: inputs[cleanName] || "",
-    }));
-    setNewCategoryName("");
+    if (Object.keys(categoryBudgetInputs).includes(cleanName)) {
+      toast.show("Category already exists", "error");
+      return;
+    }
+
+    try {
+      setSavingBudget(true);
+      const categories = [...Object.keys(categoryBudgetInputs), cleanName];
+      const settings = await updateBudgetSettings({
+        monthlyBudget: Number(monthlyBudgetInput || 0),
+        categoryBudgets: splitMonthlyBudgetAcrossCategories(
+          Number(monthlyBudgetInput || 0),
+          categories
+        ),
+      });
+
+      setBudgetSettings(settings);
+      setCategoryBudgetInputs(budgetInputsFromSettings(settings));
+      setNewCategoryName("");
+      toast.show("Category added", "success");
+    } catch (error) {
+      logError("Failed to add category", error);
+      toast.show("Failed to add category", "error");
+    } finally {
+      setSavingBudget(false);
+    }
+  };
+
+  const removeCategory = async (category: string) => {
+    if (savingBudget) return;
+
+    const categories = Object.keys(categoryBudgetInputs).filter(
+      (item) => item !== category
+    );
+
+    if (!categories.length) {
+      toast.show("Keep at least one category", "error");
+      return;
+    }
+
+    try {
+      setSavingBudget(true);
+      const settings = await updateBudgetSettings({
+        monthlyBudget: Number(monthlyBudgetInput || 0),
+        categoryBudgets: splitMonthlyBudgetAcrossCategories(
+          Number(monthlyBudgetInput || 0),
+          categories
+        ),
+      });
+
+      setBudgetSettings(settings);
+      setCategoryBudgetInputs(budgetInputsFromSettings(settings));
+      toast.show("Category removed", "success");
+    } catch (error) {
+      logError("Failed to remove category", error);
+      toast.show("Failed to remove category", "error");
+    } finally {
+      setSavingBudget(false);
+    }
   };
 
   const ListHeader = (
@@ -427,30 +512,25 @@ export default function HomeScreen() {
             style={styles.budgetInput}
             value={monthlyBudgetInput}
             keyboardType="numeric"
-            onChangeText={(text) =>
-              setMonthlyBudgetInput(text.replace(/[^0-9]/g, ""))
-            }
+            onChangeText={updateMonthlyBudgetInput}
             placeholder="INR"
             placeholderTextColor="#8F867A"
           />
 
-          <Text style={styles.inputLabel}>Category budgets</Text>
+          <Text style={styles.inputLabel}>Category budgets auto split</Text>
           {budgetCategories.map((category) => (
             <View key={category} style={styles.categoryInputRow}>
               <Text style={styles.categoryInputLabel}>{category}</Text>
-              <TextInput
-                style={styles.categoryInput}
-                value={categoryBudgetInputs[category] || ""}
-                keyboardType="numeric"
-                onChangeText={(text) =>
-                  setCategoryBudgetInputs((inputs) => ({
-                    ...inputs,
-                    [category]: text.replace(/[^0-9]/g, ""),
-                  }))
-                }
-                placeholder="INR"
-                placeholderTextColor="#8F867A"
-              />
+              <Text style={styles.categoryAmountText}>
+                {formatInr(Number(categoryBudgetInputs[category] || 0))}
+              </Text>
+              <Pressable
+                style={styles.removeCategoryButton}
+                disabled={savingBudget}
+                onPress={() => removeCategory(category)}
+              >
+                <Ionicons name="close" size={18} color="#A85C44" />
+              </Pressable>
             </View>
           ))}
 
@@ -462,8 +542,14 @@ export default function HomeScreen() {
               placeholder="Add custom category"
               placeholderTextColor="#8F867A"
             />
-            <Pressable style={styles.addCategoryButton} onPress={addCategory}>
-              <Text style={styles.addCategoryText}>Add</Text>
+            <Pressable
+              style={[styles.addCategoryButton, savingBudget && styles.disabledButton]}
+              disabled={savingBudget}
+              onPress={addCategory}
+            >
+              <Text style={styles.addCategoryText}>
+                {savingBudget ? "Saving" : "Add"}
+              </Text>
             </Pressable>
           </View>
 
@@ -930,6 +1016,20 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: "700",
+  },
+  categoryAmountText: {
+    color: "#3A2E28",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  removeCategoryButton: {
+    alignItems: "center",
+    borderColor: "#E8DECE",
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 34,
+    minWidth: 34,
   },
   categoryInput: {
     backgroundColor: "#FAF6EE",

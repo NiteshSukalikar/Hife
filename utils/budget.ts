@@ -1,13 +1,6 @@
 import { BudgetSettings, PurchaseRequest, RequestPriority } from "@/constants/types";
 
-export const REQUEST_CATEGORIES = [
-  "Room",
-  "Event",
-  "Office",
-  "Kitchen",
-  "Electronics",
-  "Other",
-];
+export const REQUEST_CATEGORIES = ["Other"];
 
 export const DEFAULT_CATEGORY_BUDGETS = REQUEST_CATEGORIES.reduce(
   (budgets, category) => ({
@@ -25,12 +18,8 @@ export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
 export function getBudgetCategories(
   settings: BudgetSettings = DEFAULT_BUDGET_SETTINGS
 ) {
-  return Array.from(
-    new Set([
-      ...REQUEST_CATEGORIES,
-      ...Object.keys(settings.categoryBudgets || {}).filter(Boolean),
-    ])
-  );
+  const categories = Object.keys(settings.categoryBudgets || {}).filter(Boolean);
+  return categories.length ? categories : REQUEST_CATEGORIES;
 }
 
 export const PRIORITY_EXPLANATIONS: Record<RequestPriority, string> = {
@@ -110,12 +99,11 @@ export function buildBudgetSummary(
   settings: BudgetSettings = DEFAULT_BUDGET_SETTINGS
 ): BudgetSummary {
   const currentMonthKey = getMonthKey();
-  const categoryBudgets = {
-    ...DEFAULT_CATEGORY_BUDGETS,
-    ...(settings.categoryBudgets || {}),
-  };
+  const categoryBudgets = settings.categoryBudgets || DEFAULT_CATEGORY_BUDGETS;
   const categoryMap = new Map<string, CategorySummary>();
   const historyMap = new Map<string, MonthSummary>();
+  let approvedTotal = 0;
+  let pendingTotal = 0;
 
   const budgetCategories = getBudgetCategories(settings);
 
@@ -152,6 +140,9 @@ export function buildBudgetSummary(
 
     if (!isCurrentMonth) return;
 
+    if (isApprovedSpend) approvedTotal += amount;
+    if (isPending) pendingTotal += amount;
+
     const category = budgetCategories.includes(request.category)
       ? request.category
       : "Other";
@@ -162,15 +153,6 @@ export function buildBudgetSummary(
     if (isPending) summary.pendingTotal += amount;
     summary.remaining = Math.max(0, summary.budget - summary.approvedTotal);
   });
-
-  const approvedTotal = Array.from(categoryMap.values()).reduce(
-    (sum, item) => sum + item.approvedTotal,
-    0
-  );
-  const pendingTotal = Array.from(categoryMap.values()).reduce(
-    (sum, item) => sum + item.pendingTotal,
-    0
-  );
   const monthlyBudget = Number(settings.monthlyBudget || 0);
 
   return {

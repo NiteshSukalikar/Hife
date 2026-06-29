@@ -3,21 +3,13 @@ import { requireActiveHousehold } from "@/services/households";
 import { recordUsage } from "@/services/usageMonitoring";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 
-const DEFAULT_CATEGORIES = [
-  "Room",
-  "Event",
-  "Office",
-  "Kitchen",
-  "Electronics",
-  "Other",
-];
+const DEFAULT_CATEGORIES = ["Other"];
 
 function normalizeCategoryBudgets(categoryBudgets = {}) {
-  const categories = Array.from(
-    new Set([...DEFAULT_CATEGORIES, ...Object.keys(categoryBudgets || {})])
-  ).filter(Boolean);
+  const categories = Object.keys(categoryBudgets || {}).filter(Boolean);
+  const normalizedCategories = categories.length ? categories : DEFAULT_CATEGORIES;
 
-  return categories.reduce((budgets, category) => {
+  return normalizedCategories.reduce((budgets, category) => {
     budgets[category] = Number(categoryBudgets[category] || 0);
     return budgets;
   }, {});

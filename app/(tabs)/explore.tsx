@@ -59,7 +59,7 @@ export default function CreateRequestScreen() {
   const [reason, setReason] = useState("");
   const [priority, setPriority] = useState<RequestPriority>("P1");
   const [expectedPrice, setExpectedPrice] = useState("");
-  const [category, setCategory] = useState("Room");
+  const [category, setCategory] = useState("Other");
   const [linksText, setLinksText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -138,6 +138,12 @@ export default function CreateRequestScreen() {
     setAiError("");
   }, [productName, reason, priority, expectedPrice, maxRequestBudget, category]);
 
+  useEffect(() => {
+    if (!budgetCategories.includes(category)) {
+      setCategory(budgetCategories[0] || "Other");
+    }
+  }, [budgetCategories, category]);
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -164,7 +170,7 @@ export default function CreateRequestScreen() {
     setReason("");
     setPriority("P1");
     setExpectedPrice("");
-    setCategory("Room");
+    setCategory(budgetCategories[0] || "Other");
     setLinksText("");
     setImage(null);
     setImageError("");
