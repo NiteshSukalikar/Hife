@@ -392,7 +392,7 @@ export default function RequestDetailsScreen() {
                 value={decisionReason}
                 onChangeText={setDecisionReason}
                 placeholder="Add why this is approved, declined, postponed, or needs more info"
-                placeholderTextColor="#71717A"
+                placeholderTextColor="#8F867A"
                 multiline
                 maxLength={300}
               />
@@ -480,10 +480,10 @@ export default function RequestDetailsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#050505",
+    backgroundColor: "#FAF6EE",
   },
   container: {
-    backgroundColor: "#050505",
+    backgroundColor: "#FAF6EE",
     flexGrow: 1,
     padding: 16,
   },
@@ -494,12 +494,12 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
   },
   centerTitle: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 18,
     fontWeight: "700",
   },
   centerText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     marginTop: 8,
     textAlign: "center",
   },
@@ -511,13 +511,13 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     alignItems: "center",
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderWidth: 1,
     justifyContent: "center",
   },
   imagePlaceholderText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -535,12 +535,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   title: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 24,
     fontWeight: "800",
   },
   category: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 14,
     marginTop: 3,
   },
@@ -569,24 +569,24 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   sectionTitle: {
-    color: "#39FF14",
+    color: "#A85C44",
     fontSize: 15,
     fontWeight: "800",
     marginBottom: 8,
   },
   bodyText: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 15,
     lineHeight: 22,
   },
   creatorText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 13,
     fontWeight: "700",
     marginBottom: 8,
   },
   mutedText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 14,
   },
   metaGrid: {
@@ -595,76 +595,76 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   metaItem: {
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderRadius: 10,
     borderWidth: 1,
     flex: 1,
     padding: 10,
   },
   metaLabel: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 12,
     fontWeight: "700",
   },
   metaValue: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 14,
     fontWeight: "800",
     marginTop: 4,
   },
   metaHint: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 11,
     lineHeight: 15,
     marginTop: 4,
   },
   budgetImpact: {
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderRadius: 10,
     borderWidth: 1,
     padding: 12,
   },
   budgetImpactWarning: {
-    borderColor: "#f59e0b",
+    borderColor: "#C4943A",
   },
   budgetImpactText: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 14,
     lineHeight: 21,
   },
   warningText: {
-    color: "#FBBF24",
+    color: "#7A5A12",
     fontSize: 13,
     fontWeight: "800",
     marginTop: 6,
   },
   linkRow: {
     minHeight: 48,
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderWidth: 1,
     borderRadius: 8,
     marginBottom: 8,
     padding: 10,
   },
   linkSource: {
-    color: "#39FF14",
+    color: "#A85C44",
     fontSize: 13,
     fontWeight: "800",
   },
   linkUrl: {
-    color: "#B8FFB0",
+    color: "#7A8C6E",
     fontSize: 13,
     marginTop: 3,
   },
   input: {
-    backgroundColor: "#101312",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#263026",
+    borderColor: "#E8DECE",
     borderRadius: 8,
-    color: "#F8FAFC",
+    color: "#3A2E28",
     padding: 10,
     fontSize: 14,
   },
@@ -687,18 +687,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   approveButton: {
-    backgroundColor: "#39FF14",
+    backgroundColor: "#A85C44",
   },
   declineButton: {
-    backgroundColor: "#dc2626",
+    backgroundColor: "#A85C44",
   },
   secondaryButton: {
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderWidth: 1,
   },
   actionText: {
-    color: "#050505",
+    color: "#FAF6EE",
     fontSize: 15,
     fontWeight: "800",
   },
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   secondaryActionText: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 15,
     fontWeight: "800",
   },
@@ -718,20 +718,20 @@ const styles = StyleSheet.create({
   },
   purchaseButton: {
     alignItems: "center",
-    backgroundColor: "#39FF14",
+    backgroundColor: "#A85C44",
     borderRadius: 8,
     justifyContent: "center",
     minHeight: 48,
     paddingVertical: 12,
   },
   purchaseText: {
-    color: "#050505",
+    color: "#FAF6EE",
     fontSize: 15,
     fontWeight: "800",
   },
   cancelButton: {
     alignItems: "center",
-    backgroundColor: "#101312",
+    backgroundColor: "#FFFFFF",
     borderColor: "#fecaca",
     borderRadius: 8,
     borderWidth: 1,
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 15,
     fontWeight: "700",
   },

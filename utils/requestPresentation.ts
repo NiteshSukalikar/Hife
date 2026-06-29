@@ -14,13 +14,13 @@ export const STATUS_CHIP_COLORS: Record<
   RequestStatus,
   { bg: string; border: string; text: string }
 > = {
-  pending: { bg: "#2B2108", border: "#F59E0B", text: "#FBBF24" },
-  approved: { bg: "#123313", border: "#39FF14", text: "#B8FFB0" },
-  declined: { bg: "#351313", border: "#EF4444", text: "#FCA5A5" },
-  needs_more_info: { bg: "#10233F", border: "#60A5FA", text: "#BFDBFE" },
-  buy_later: { bg: "#281B3D", border: "#A78BFA", text: "#DDD6FE" },
-  purchased: { bg: "#0C302C", border: "#2DD4BF", text: "#99F6E4" },
-  cancelled: { bg: "#202124", border: "#71717A", text: "#D4D4D8" },
+  pending: { bg: "#FFF6D9", border: "#C4943A", text: "#7A5A12" },
+  approved: { bg: "#E9F1E4", border: "#7A8C6E", text: "#4F6848" },
+  declined: { bg: "#FBEDE8", border: "#A85C44", text: "#873926" },
+  needs_more_info: { bg: "#EAF0EC", border: "#7A8C6E", text: "#4F6848" },
+  buy_later: { bg: "#F0EAF8", border: "#8A77A8", text: "#5E4A7A" },
+  purchased: { bg: "#E5F4EA", border: "#5F9077", text: "#3D6C57" },
+  cancelled: { bg: "#EFEAE1", border: "#8F867A", text: "#665E54" },
 };
 
 export const PRIORITY_LABELS: Record<RequestPriority, string> = {
@@ -34,10 +34,10 @@ export const PRIORITY_CHIP_COLORS: Record<
   RequestPriority,
   { bg: string; border: string; text: string }
 > = {
-  P0: { bg: "#351313", border: "#EF4444", text: "#FCA5A5" },
-  P1: { bg: "#2B2108", border: "#F59E0B", text: "#FBBF24" },
-  P2: { bg: "#10233F", border: "#60A5FA", text: "#BFDBFE" },
-  P3: { bg: "#123313", border: "#39FF14", text: "#B8FFB0" },
+  P0: { bg: "#FBEDE8", border: "#A85C44", text: "#873926" },
+  P1: { bg: "#FFF6D9", border: "#C4943A", text: "#7A5A12" },
+  P2: { bg: "#E9F1E4", border: "#7A8C6E", text: "#4F6848" },
+  P3: { bg: "#EFEAE1", border: "#8F867A", text: "#665E54" },
 };
 
 export function getStatusLabel(status: RequestStatus) {

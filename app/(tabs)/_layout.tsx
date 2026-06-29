@@ -36,8 +36,8 @@ export default function TabLayout() {
 
   if (checkingHousehold) {
     return (
-      <View style={{ alignItems: 'center', backgroundColor: '#050505', flex: 1, justifyContent: 'center' }}>
-        <ActivityIndicator color="#39FF14" />
+      <View style={{ alignItems: 'center', backgroundColor: '#FAF6EE', flex: 1, justifyContent: 'center' }}>
+        <ActivityIndicator color="#A85C44" />
       </View>
     );
   }
@@ -53,7 +53,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
         tabBarStyle: {
           backgroundColor: Colors[colorScheme ?? 'light'].background,
-          borderTopColor: '#263026',
+          borderTopColor: '#E8DECE',
         },
         tabBarLabelStyle: {
           fontWeight: '700',

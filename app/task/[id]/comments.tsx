@@ -330,7 +330,7 @@ export default function CommentsScreen() {
 
           <TextInput
             placeholder="Write a comment..."
-            placeholderTextColor="#71717A"
+            placeholderTextColor="#8F867A"
             style={styles.input}
             value={text}
             onChangeText={setText}
@@ -345,12 +345,12 @@ export default function CommentsScreen() {
               disabled={isSending}
               onPress={pickImage}
             >
-              <Ionicons name="image-outline" size={22} color="#39FF14" />
+              <Ionicons name="image-outline" size={22} color="#A85C44" />
             </Pressable>
 
             <TextInput
               placeholder="Add link (optional)"
-              placeholderTextColor="#71717A"
+              placeholderTextColor="#8F867A"
               style={styles.linkInput}
               value={link}
               onChangeText={setLink}
@@ -363,7 +363,7 @@ export default function CommentsScreen() {
               disabled={isSending}
               onPress={handleAddComment}
             >
-              <Ionicons name="send" size={20} color="#050505" />
+              <Ionicons name="send" size={20} color="#FAF6EE" />
             </Pressable>
           </View>
         </View>
@@ -373,7 +373,7 @@ export default function CommentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#050505" },
+  container: { flex: 1, backgroundColor: "#FAF6EE" },
   flex: { flex: 1 },
   scroll: { flexGrow: 1 },
   commentsContent: {
@@ -385,13 +385,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   emptyTitle: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 17,
     fontWeight: "700",
     textAlign: "center",
   },
   emptyText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
@@ -406,12 +406,12 @@ const styles = StyleSheet.create({
   },
   myComment: {
     backgroundColor: "#173314",
-    borderColor: "#39FF14",
+    borderColor: "#A85C44",
     alignSelf: "flex-end",
   },
   otherComment: {
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     alignSelf: "flex-start",
   },
   commentMetaRow: {
@@ -421,17 +421,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   authorText: {
-    color: "#B8FFB0",
+    color: "#7A8C6E",
     flexShrink: 1,
     fontSize: 12,
     fontWeight: "900",
   },
   rolePill: {
-    backgroundColor: "#050505",
-    borderColor: "#263026",
+    backgroundColor: "#FAF6EE",
+    borderColor: "#E8DECE",
     borderRadius: 999,
     borderWidth: 1,
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 10,
     fontWeight: "800",
     overflow: "hidden",
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   commentText: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 15,
     lineHeight: 21,
     marginBottom: 6,
@@ -454,25 +454,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   commentLink: {
-    color: "#39FF14",
+    color: "#A85C44",
     fontSize: 13,
     marginBottom: 4,
   },
   time: {
     fontSize: 12,
-    color: "#A1A1AA",
+    color: "#8F867A",
     alignSelf: "flex-end",
   },
   inputArea: {
     borderTopWidth: 1,
-    borderColor: "#263026",
+    borderColor: "#E8DECE",
     padding: 10,
-    backgroundColor: "#050505",
+    backgroundColor: "#FAF6EE",
   },
   selectedImageRow: {
     alignItems: "center",
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: "row",
@@ -482,15 +482,15 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   selectedImageRowError: {
-    borderColor: "#dc2626",
+    borderColor: "#A85C44",
   },
   selectedImageText: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 13,
     fontWeight: "700",
   },
   removeImageText: {
-    color: "#FCA5A5",
+    color: "#873926",
     fontSize: 13,
     fontWeight: "700",
   },
@@ -501,23 +501,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   errorText: {
-    color: "#FCA5A5",
+    color: "#873926",
     fontSize: 13,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "#101312",
+    backgroundColor: "#FFFFFF",
     minHeight: 44,
     maxHeight: 80,
     borderWidth: 1,
-    borderColor: "#263026",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     padding: 8,
     marginBottom: 8,
-    color: "#F8FAFC",
+    color: "#3A2E28",
   },
   counterText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 12,
     fontWeight: "700",
     marginBottom: 8,
@@ -530,18 +530,18 @@ const styles = StyleSheet.create({
   },
   linkInput: {
     flex: 1,
-    backgroundColor: "#101312",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#263026",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     minHeight: 44,
     padding: 6,
     fontSize: 13,
-    color: "#F8FAFC",
+    color: "#3A2E28",
   },
   sendBtn: {
     alignItems: "center",
-    backgroundColor: "#39FF14",
+    backgroundColor: "#A85C44",
     borderRadius: 50,
     justifyContent: "center",
     minHeight: 44,

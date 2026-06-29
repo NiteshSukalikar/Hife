@@ -112,7 +112,7 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
 
         <Pressable style={styles.getStartedButton} onPress={hide}>
           <Text style={styles.getStartedText}>Get started</Text>
-          <Ionicons name="arrow-forward" size={18} color={BrandColors.appBlack} />
+          <Ionicons name="arrow-forward" size={18} color={BrandColors.warmCream} />
         </Pressable>
       </SafeAreaView>
     </Animated.View>
@@ -122,7 +122,7 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: BrandColors.appBlack,
+    backgroundColor: BrandColors.warmCream,
     zIndex: 1000,
   },
   safe: {
@@ -136,8 +136,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   halo: {
-    backgroundColor: "rgba(57, 255, 20, 0.08)",
-    borderColor: "rgba(57, 255, 20, 0.24)",
+    backgroundColor: "rgba(168, 92, 68, 0.10)",
+    borderColor: "rgba(168, 92, 68, 0.24)",
     borderRadius: 120,
     borderWidth: 1,
     height: 210,
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     width: 112,
   },
   brand: {
-    color: BrandColors.neonGreen,
+    color: BrandColors.clay,
     fontSize: 48,
     fontWeight: "900",
     letterSpacing: 0,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   getStartedButton: {
     alignItems: "center",
-    backgroundColor: BrandColors.neonGreen,
+    backgroundColor: BrandColors.clay,
     borderRadius: 8,
     flexDirection: "row",
     gap: 8,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     minHeight: 54,
   },
   getStartedText: {
-    color: BrandColors.appBlack,
+    color: BrandColors.warmCream,
     fontSize: 16,
     fontWeight: "900",
   },

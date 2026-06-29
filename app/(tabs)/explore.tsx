@@ -355,7 +355,7 @@ export default function CreateRequestScreen() {
               maxLength={40}
               onChangeText={setProductName}
               placeholder="Example: Air fryer"
-              placeholderTextColor="#71717A"
+              placeholderTextColor="#8F867A"
             />
 
             <View style={styles.fieldHeader}>
@@ -367,7 +367,7 @@ export default function CreateRequestScreen() {
               value={reason}
               onChangeText={setReason}
               placeholder="Why should this be purchased?"
-              placeholderTextColor="#71717A"
+              placeholderTextColor="#8F867A"
               multiline
               maxLength={500}
             />
@@ -410,7 +410,7 @@ export default function CreateRequestScreen() {
                   keyboardType="numeric"
                   onChangeText={(t) => setExpectedPrice(t.replace(/[^0-9]/g, ""))}
                   placeholder="INR"
-                  placeholderTextColor="#71717A"
+                  placeholderTextColor="#8F867A"
                 />
               </View>
 
@@ -420,7 +420,7 @@ export default function CreateRequestScreen() {
                   style={[styles.input, styles.disabledInput]}
                   value={formatInr(maxRequestBudget)}
                   editable={false}
-                  placeholderTextColor="#71717A"
+                  placeholderTextColor="#8F867A"
                 />
               </View>
             </View>
@@ -536,7 +536,7 @@ export default function CreateRequestScreen() {
               value={linksText}
               onChangeText={setLinksText}
               placeholder="Paste one or more links, separated by commas or lines"
-              placeholderTextColor="#71717A"
+              placeholderTextColor="#8F867A"
               multiline
               autoCapitalize="none"
               keyboardType="url"
@@ -565,7 +565,7 @@ export default function CreateRequestScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#050505",
+    backgroundColor: "#FAF6EE",
   },
   flex: {
     flex: 1,
@@ -578,15 +578,15 @@ const styles = StyleSheet.create({
   imagePicker: {
     height: 160,
     borderRadius: 10,
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
   },
   imagePickerError: {
-    borderColor: "#dc2626",
+    borderColor: "#A85C44",
   },
   image: {
     width: "100%",
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     alignItems: "center",
-    backgroundColor: "rgba(5, 5, 5, 0.72)",
+    backgroundColor: "rgba(250, 246, 238, 0.86)",
     bottom: 0,
     justifyContent: "center",
     left: 0,
@@ -604,22 +604,22 @@ const styles = StyleSheet.create({
     top: 0,
   },
   imageOverlayText: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 14,
     fontWeight: "700",
   },
   imageText: {
     fontSize: 16,
-    color: "#39FF14",
+    color: "#A85C44",
   },
   errorText: {
-    color: "#FCA5A5",
+    color: "#873926",
     fontSize: 13,
     marginBottom: 4,
     marginTop: -8,
   },
   label: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 6,
@@ -631,31 +631,31 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   counterText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 12,
     fontWeight: "700",
     marginTop: 12,
   },
   formSection: {
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     borderWidth: 1,
     marginTop: 16,
     padding: 12,
   },
   input: {
-    backgroundColor: "#101312",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#263026",
+    borderColor: "#E8DECE",
     borderRadius: 8,
-    color: "#F8FAFC",
+    color: "#3A2E28",
     minHeight: 44,
     padding: 10,
     fontSize: 14,
   },
   disabledInput: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     opacity: 0.82,
   },
   textArea: {
@@ -663,14 +663,14 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   pickerWrapper: {
-    backgroundColor: "#050505",
+    backgroundColor: "#FAF6EE",
     borderWidth: 1,
-    borderColor: "#263026",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     minHeight: 44,
   },
   picker: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
   },
   priceRow: {
     flexDirection: "row",
@@ -680,36 +680,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   budgetImpact: {
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     borderWidth: 1,
     marginTop: 16,
     padding: 12,
   },
   budgetImpactWarning: {
-    borderColor: "#f59e0b",
+    borderColor: "#C4943A",
   },
   budgetImpactTitle: {
-    color: "#39FF14",
+    color: "#A85C44",
     fontSize: 14,
     fontWeight: "800",
     marginBottom: 6,
   },
   budgetImpactText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 13,
     lineHeight: 19,
   },
   warningText: {
-    color: "#FBBF24",
+    color: "#7A5A12",
     fontSize: 13,
     fontWeight: "800",
     marginTop: 6,
   },
   aiPanel: {
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     borderWidth: 1,
     marginTop: 16,
@@ -724,19 +724,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   aiTitle: {
-    color: "#39FF14",
+    color: "#A85C44",
     fontSize: 14,
     fontWeight: "800",
   },
   aiHint: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
   },
   askAiButton: {
     alignItems: "center",
-    backgroundColor: "#39FF14",
+    backgroundColor: "#A85C44",
     borderRadius: 8,
     justifyContent: "center",
     minHeight: 44,
@@ -744,12 +744,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   askAiText: {
-    color: "#050505",
+    color: "#FAF6EE",
     fontSize: 13,
     fontWeight: "800",
   },
   aiResult: {
-    borderTopColor: "#263026",
+    borderTopColor: "#E8DECE",
     borderTopWidth: 1,
     marginTop: 12,
     paddingTop: 12,
@@ -761,31 +761,31 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   aiResultLabel: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 12,
     fontWeight: "700",
   },
   aiResultValue: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 16,
     fontWeight: "800",
     marginTop: 2,
   },
   aiPriorityPill: {
-    backgroundColor: "#39FF14",
+    backgroundColor: "#A85C44",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
   aiPriorityText: {
-    color: "#050505",
+    color: "#FAF6EE",
     fontSize: 13,
     fontWeight: "900",
   },
   applyPriorityButton: {
     alignSelf: "flex-start",
     alignItems: "center",
-    borderColor: "#39FF14",
+    borderColor: "#A85C44",
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: "center",
@@ -795,34 +795,34 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   applyPriorityText: {
-    color: "#39FF14",
+    color: "#A85C44",
     fontSize: 12,
     fontWeight: "800",
   },
   aiSectionLabel: {
-    color: "#B8FFB0",
+    color: "#7A8C6E",
     fontSize: 12,
     fontWeight: "800",
     marginTop: 12,
     textTransform: "uppercase",
   },
   aiBody: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 13,
     lineHeight: 19,
     marginTop: 4,
   },
   aiMessage: {
-    backgroundColor: "#171A18",
+    backgroundColor: "#F5F0E8",
     borderRadius: 8,
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 13,
     lineHeight: 19,
     marginTop: 6,
     padding: 10,
   },
   aiCacheText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 12,
     marginTop: 10,
   },
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     alignItems: "center",
-    backgroundColor: "#39FF14",
+    backgroundColor: "#A85C44",
     borderRadius: 8,
     justifyContent: "center",
     marginTop: 24,
@@ -843,7 +843,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   saveText: {
-    color: "#050505",
+    color: "#FAF6EE",
     fontSize: 16,
     fontWeight: "600",
   },

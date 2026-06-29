@@ -186,7 +186,7 @@ export default function HouseholdScreen() {
               value={householdName}
               onChangeText={setHouseholdName}
               placeholder="Example: Family, event, office"
-              placeholderTextColor="#71717A"
+              placeholderTextColor="#8F867A"
               maxLength={40}
             />
           </>
@@ -198,7 +198,7 @@ export default function HouseholdScreen() {
               value={inviteCode}
               onChangeText={(text) => setInviteCode(text.toUpperCase())}
               placeholder="ABC123"
-              placeholderTextColor="#71717A"
+              placeholderTextColor="#8F867A"
               autoCapitalize="characters"
               maxLength={12}
             />
@@ -215,7 +215,7 @@ export default function HouseholdScreen() {
               ? "Create a password for this room"
               : "Enter the room password"
           }
-          placeholderTextColor="#71717A"
+          placeholderTextColor="#8F867A"
           secureTextEntry
           maxLength={40}
         />
@@ -226,7 +226,7 @@ export default function HouseholdScreen() {
           value={displayName}
           onChangeText={setDisplayName}
           placeholder="What should your partner see?"
-          placeholderTextColor="#71717A"
+          placeholderTextColor="#8F867A"
           maxLength={32}
         />
 
@@ -236,7 +236,7 @@ export default function HouseholdScreen() {
           value={roleLabel}
           onChangeText={setRoleLabel}
           placeholder="Partner A, Partner B, or a custom label"
-          placeholderTextColor="#71717A"
+          placeholderTextColor="#8F867A"
           maxLength={32}
         />
 
@@ -260,7 +260,7 @@ export default function HouseholdScreen() {
 
 const styles = StyleSheet.create({
   safe: {
-    backgroundColor: "#050505",
+    backgroundColor: "#FAF6EE",
     flex: 1,
   },
   container: {
@@ -271,66 +271,66 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   title: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 26,
     fontWeight: "800",
   },
   subtitle: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 14,
     lineHeight: 21,
     marginTop: 8,
   },
   inviteCard: {
-    backgroundColor: "#101312",
-    borderColor: "#39FF14",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#A85C44",
     borderRadius: 8,
     borderWidth: 1,
     marginBottom: 18,
     padding: 14,
   },
   inviteLabel: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 12,
     fontWeight: "700",
     textTransform: "uppercase",
   },
   inviteCode: {
-    color: "#39FF14",
+    color: "#A85C44",
     fontSize: 28,
     fontWeight: "900",
     letterSpacing: 2,
     marginTop: 4,
   },
   invitePassword: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 18,
     fontWeight: "900",
     marginBottom: 8,
     marginTop: 4,
   },
   inviteHelp: {
-    color: "#B8FFB0",
+    color: "#7A8C6E",
     fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
   },
   continueButton: {
     alignItems: "center",
-    backgroundColor: "#39FF14",
+    backgroundColor: "#A85C44",
     borderRadius: 8,
     justifyContent: "center",
     marginTop: 12,
     minHeight: 46,
   },
   continueText: {
-    color: "#050505",
+    color: "#FAF6EE",
     fontSize: 14,
     fontWeight: "900",
   },
   segmented: {
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: "row",
@@ -344,29 +344,29 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   segmentActive: {
-    backgroundColor: "#39FF14",
+    backgroundColor: "#A85C44",
   },
   segmentText: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 14,
     fontWeight: "800",
   },
   segmentTextActive: {
-    color: "#050505",
+    color: "#FAF6EE",
   },
   label: {
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 6,
     marginTop: 12,
   },
   input: {
-    backgroundColor: "#101312",
-    borderColor: "#263026",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     borderWidth: 1,
-    color: "#F8FAFC",
+    color: "#3A2E28",
     fontSize: 15,
     padding: 11,
   },
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: "center",
-    backgroundColor: "#39FF14",
+    backgroundColor: "#A85C44",
     borderRadius: 8,
     marginTop: 24,
     paddingVertical: 14,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   primaryText: {
-    color: "#050505",
+    color: "#FAF6EE",
     fontSize: 16,
     fontWeight: "800",
   },

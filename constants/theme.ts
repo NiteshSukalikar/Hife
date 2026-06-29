@@ -6,22 +6,25 @@
 import { Platform } from 'react-native';
 
 export const BrandColors = {
-  appBlack: "#050505",
-  panelBlack: "#101312",
-  elevatedBlack: "#171A18",
-  neonGreen: "#39FF14",
-  neonGreenSoft: "#B8FFB0",
-  text: "#F8FAFC",
-  mutedText: "#A1A1AA",
-  border: "#263026",
+  warmCream: "#FAF6EE",
+  clay: "#A85C44",
+  sage: "#7A8C6E",
+  amber: "#C4943A",
+  charcoal: "#3A2E28",
+  linen: "#E8DECE",
+  card: "#FFFFFF",
+  input: "#F5F0E8",
+  text: "#3A2E28",
+  mutedText: "#8F867A",
+  border: "#E8DECE",
 };
 
-const tintColor = BrandColors.neonGreen;
+const tintColor = BrandColors.clay;
 
 export const Colors = {
   light: {
     text: BrandColors.text,
-    background: BrandColors.appBlack,
+    background: BrandColors.warmCream,
     tint: tintColor,
     icon: BrandColors.mutedText,
     tabIconDefault: BrandColors.mutedText,
@@ -29,7 +32,7 @@ export const Colors = {
   },
   dark: {
     text: BrandColors.text,
-    background: BrandColors.appBlack,
+    background: BrandColors.warmCream,
     tint: tintColor,
     icon: BrandColors.mutedText,
     tabIconDefault: BrandColors.mutedText,

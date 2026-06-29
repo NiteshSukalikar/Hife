@@ -1,7 +1,7 @@
 import { ToastProvider } from "@/components/toast/toastProvider";
 import StartupIntro from "@/components/startup-intro";
 import {
-  DarkTheme,
+  DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
@@ -10,15 +10,15 @@ import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 const HifeNavigationTheme = {
-  ...DarkTheme,
+  ...DefaultTheme,
   colors: {
-    ...DarkTheme.colors,
-    primary: "#39FF14",
-    background: "#050505",
-    card: "#050505",
-    text: "#F8FAFC",
-    border: "#263026",
-    notification: "#39FF14",
+    ...DefaultTheme.colors,
+    primary: "#A85C44",
+    background: "#FAF6EE",
+    card: "#FFFFFF",
+    text: "#3A2E28",
+    border: "#E8DECE",
+    notification: "#A85C44",
   },
 };
 
@@ -45,7 +45,7 @@ export default function RootLayout() {
           <StartupIntro />
         </ToastProvider>
 
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
       </ThemeProvider>
     </SafeAreaProvider>
   );

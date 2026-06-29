@@ -14,10 +14,10 @@ describe("request presentation helpers", () => {
 
   it("returns semantic status chip colors", () => {
     expect(getStatusChipColor("approved")).toMatchObject({
-      border: "#39FF14",
+      border: "#7A8C6E",
     });
     expect(getStatusChipColor("declined")).toMatchObject({
-      border: "#EF4444",
+      border: "#A85C44",
     });
   });
 

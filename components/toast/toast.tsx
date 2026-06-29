@@ -74,8 +74,8 @@ export default function Toast({ message, type, onHide }: Props) {
       style={[
         styles.container,
         {
-          backgroundColor: type === "error" ? "#fee2e2" : "#dcfce7",
-          borderColor: type === "error" ? "#ef4444" : "#22c55e",
+          backgroundColor: type === "error" ? "#FBEDE8" : "#E9F1E4",
+          borderColor: type === "error" ? "#A85C44" : "#7A8C6E",
           transform: [
             { translateY },
             { translateX: pan.x },
@@ -87,7 +87,7 @@ export default function Toast({ message, type, onHide }: Props) {
       <Text
         style={[
           styles.text,
-          { color: type === "error" ? "#991b1b" : "#166534" },
+          { color: type === "error" ? "#873926" : "#4F6848" },
         ]}
       >
         {message}

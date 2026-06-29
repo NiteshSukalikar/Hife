@@ -2,41 +2,55 @@
 
 ## Direction
 
-Hife should use a sharp black and neon green visual identity. The app should feel modern, focused, and decision-oriented, with enough contrast for quick household purchase reviews.
+Hife now uses a warm, people-centered visual identity. The app should feel like
+shared planning for partners, rooms, events, and small teams: calm, human,
+clear, and trustworthy.
 
 ## Core Colors
 
-- App black: `#050505`
-- Panel black: `#101312`
-- Elevated black: `#171A18`
-- Neon green: `#39FF14`
-- Neon green soft: `#B8FFB0`
-- White text: `#F8FAFC`
-- Muted text: `#A1A1AA`
-- Border: `#263026`
+- Warm cream / page background: `#FAF6EE`
+- Clay / primary action: `#A85C44`
+- Sage / success and positive state: `#7A8C6E`
+- Amber / warning and pending state: `#C4943A`
+- Charcoal / primary text: `#3A2E28`
+- Linen / dividers and quiet surfaces: `#E8DECE`
+- Card: `#FFFFFF`
+- Input background: `#F5F0E8`
+- Muted text: `#8F867A`
+
+## Semantic Status Colors
+
+- Pending: warm amber chip on `#FFF6D9`
+- Approved: sage chip on `#E9F1E4`
+- Declined: clay/red-brown chip on `#FBEDE8`
+- Buy later: soft lavender chip on `#F0EAF8`
+- Purchased: soft green chip on `#E5F4EA`
+- Cancelled: linen chip on `#EFEAE1`
 
 ## Usage Rules
 
-- Use app black for the primary screen background.
-- Use panel black for cards, forms, and input areas.
-- Use neon green for primary actions, active tabs, selected filters, and the Hife logo.
-- Use white for primary text.
-- Use muted gray for helper text, timestamps, and secondary labels.
-- Keep status colors readable and semantic. Approved can use neon green, but declined should remain red, pending amber, and needs-info blue.
-- Avoid large white sections because they break the intended identity.
+- Use warm cream for the page background.
+- Use white for cards and major content surfaces.
+- Use linen for dividers, borders, and quiet separation.
+- Use clay for primary actions, selected tabs, active filters, links, and the
+  logo stroke.
+- Use charcoal for primary text and muted taupe for helper text.
+- Keep cards lightly bordered and spacious; avoid dense neon treatments.
+- Keep status colors semantic and calm rather than high-alert unless the action
+  is destructive.
 
 ## Logo Direction
 
-The Hife logo uses:
+The Hife logo uses a Duo mark:
 
-- Black background.
-- Neon green mark.
-- A connected `H` symbol representing two partners.
-- Clean wordmark text: `Hife`.
+- Two overlapping clay circles for partnership and shared rooms.
+- A charcoal `H` in the center.
+- Warm cream background.
+- Optional wordmark: `Duo` for the design concept, but the product name remains
+  `Hife` in the app.
 
 ## App Asset Usage
 
-- `assets/brand/hife-logo.svg`: Source logo.
 - `assets/images/icon.png`: Main app icon.
 - `assets/images/favicon.png`: Web favicon/thumbnail.
 - `assets/images/splash-icon.png`: Startup splash logo.
@@ -48,8 +62,7 @@ The Hife logo uses:
 
 The startup screen should use:
 
-- Background: `#050505`
-- Logo: neon green Hife mark
-- Splash image width: `220`
-
-This keeps the app launch consistent with the product theme.
+- Background: `#FAF6EE`
+- Logo: Duo mark
+- Primary action: clay button with warm cream label
+- Splash background: `#FAF6EE`

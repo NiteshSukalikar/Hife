@@ -22,8 +22,8 @@ export default function Header() {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    backgroundColor: "#050505",
-    borderBottomColor: "#263026",
+    backgroundColor: "#FAF6EE",
+    borderBottomColor: "#E8DECE",
     borderBottomWidth: 1,
     flexDirection: "row",
     gap: 10,
@@ -36,12 +36,12 @@ const styles = StyleSheet.create({
     width: 40,
   },
   title: {
-    color: "#39FF14",
+    color: "#A85C44",
     fontSize: 20,
     fontWeight: "800",
   },
   subtitle: {
-    color: "#A1A1AA",
+    color: "#8F867A",
     fontSize: 12,
     marginTop: 2,
   },
