@@ -78,6 +78,7 @@ export default function HomeScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterValue>("all");
   const [loading, setLoading] = useState(true);
   const [savingBudget, setSavingBudget] = useState(false);
+  const [showBudgetOverview, setShowBudgetOverview] = useState(false);
   const [showBudgetSettings, setShowBudgetSettings] = useState(false);
   const [showCategorySummary, setShowCategorySummary] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -337,47 +338,87 @@ export default function HomeScreen() {
 
   const ListHeader = (
     <View style={styles.budgetPanel}>
-      <View style={styles.budgetHeader}>
+      <Pressable
+        style={styles.budgetHeader}
+        onPress={() => setShowBudgetOverview((value) => !value)}
+      >
         <View>
           <Text style={styles.budgetEyebrow}>Current month</Text>
           <Text style={styles.budgetTitle}>Budget overview</Text>
         </View>
-        <Pressable
-          style={styles.settingsButton}
-          onPress={() => setShowBudgetSettings((value) => !value)}
-        >
-          <Text style={styles.settingsButtonText}>
-            {showBudgetSettings ? "Close" : "Edit"}
+        <View style={styles.budgetHeaderAction}>
+          <Text style={styles.budgetHeaderMeta}>
+            {formatInr(budgetSummary.remainingBudget)} left
           </Text>
-        </Pressable>
-      </View>
+          <Ionicons
+            name={showBudgetOverview ? "chevron-up" : "chevron-down"}
+            size={20}
+            color="#A85C44"
+          />
+        </View>
+      </Pressable>
 
-      <View style={styles.budgetStats}>
-        <View style={styles.budgetStat}>
-          <Text style={styles.statLabel}>Monthly budget</Text>
-          <Text style={styles.statValue}>
-            {formatInr(budgetSummary.monthlyBudget)}
-          </Text>
+      {!showBudgetOverview ? (
+        <View style={styles.compactBudgetRow}>
+          <View>
+            <Text style={styles.statLabel}>Monthly</Text>
+            <Text style={styles.compactBudgetValue}>
+              {formatInr(budgetSummary.monthlyBudget)}
+            </Text>
+          </View>
+          <View style={styles.compactDivider} />
+          <View>
+            <Text style={styles.statLabel}>Pending</Text>
+            <Text style={styles.compactBudgetValue}>
+              {formatInr(budgetSummary.pendingTotal)}
+            </Text>
+          </View>
+          <Pressable
+            style={styles.compactDetailsButton}
+            onPress={() => setShowBudgetOverview(true)}
+          >
+            <Text style={styles.compactDetailsText}>Details</Text>
+          </Pressable>
         </View>
-        <View style={styles.budgetStat}>
-          <Text style={styles.statLabel}>Approved</Text>
-          <Text style={styles.statValue}>
-            {formatInr(budgetSummary.approvedTotal)}
-          </Text>
-        </View>
-        <View style={styles.budgetStat}>
-          <Text style={styles.statLabel}>Pending</Text>
-          <Text style={styles.statValue}>
-            {formatInr(budgetSummary.pendingTotal)}
-          </Text>
-        </View>
-        <View style={styles.budgetStat}>
-          <Text style={styles.statLabel}>Remaining</Text>
-          <Text style={styles.statValue}>
-            {formatInr(budgetSummary.remainingBudget)}
-          </Text>
-        </View>
-      </View>
+      ) : null}
+
+      {showBudgetOverview ? (
+        <>
+          <View style={styles.budgetStats}>
+            <View style={styles.budgetStat}>
+              <Text style={styles.statLabel}>Monthly budget</Text>
+              <Text style={styles.statValue}>
+                {formatInr(budgetSummary.monthlyBudget)}
+              </Text>
+            </View>
+            <View style={styles.budgetStat}>
+              <Text style={styles.statLabel}>Approved</Text>
+              <Text style={styles.statValue}>
+                {formatInr(budgetSummary.approvedTotal)}
+              </Text>
+            </View>
+            <View style={styles.budgetStat}>
+              <Text style={styles.statLabel}>Pending</Text>
+              <Text style={styles.statValue}>
+                {formatInr(budgetSummary.pendingTotal)}
+              </Text>
+            </View>
+            <View style={styles.budgetStat}>
+              <Text style={styles.statLabel}>Remaining</Text>
+              <Text style={styles.statValue}>
+                {formatInr(budgetSummary.remainingBudget)}
+              </Text>
+            </View>
+          </View>
+
+          <Pressable
+            style={styles.settingsButton}
+            onPress={() => setShowBudgetSettings((value) => !value)}
+          >
+            <Text style={styles.settingsButtonText}>
+              {showBudgetSettings ? "Close budget settings" : "Edit budget"}
+            </Text>
+          </Pressable>
 
       {showBudgetSettings ? (
         <View style={styles.settingsPanel}>
@@ -520,6 +561,8 @@ export default function HomeScreen() {
           </View>
         ))
       )}
+        </>
+      ) : null}
     </View>
   );
 
@@ -750,7 +793,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 12,
+    minHeight: 44,
+  },
+  budgetHeaderAction: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6,
+  },
+  budgetHeaderMeta: {
+    color: "#A85C44",
+    fontSize: 13,
+    fontWeight: "800",
   },
   budgetEyebrow: {
     color: "#7A8C6E",
@@ -770,7 +823,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: "center",
-    minHeight: 44,
+    marginTop: 10,
+    minHeight: 42,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -783,6 +837,45 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+    marginTop: 12,
+  },
+  compactBudgetRow: {
+    alignItems: "center",
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  compactBudgetValue: {
+    color: "#3A2E28",
+    fontSize: 14,
+    fontWeight: "900",
+    marginTop: 3,
+  },
+  compactDivider: {
+    alignSelf: "stretch",
+    backgroundColor: "#E8DECE",
+    width: 1,
+  },
+  compactDetailsButton: {
+    alignItems: "center",
+    borderColor: "#A85C44",
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 36,
+    paddingHorizontal: 12,
+  },
+  compactDetailsText: {
+    color: "#A85C44",
+    fontSize: 12,
+    fontWeight: "900",
   },
   budgetStat: {
     backgroundColor: "#F5F0E8",
