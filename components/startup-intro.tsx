@@ -28,11 +28,11 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
   });
   const logoTranslate = logo.interpolate({
     inputRange: [0, 1],
-    outputRange: [18, 0],
+    outputRange: [14, 0],
   });
-  const pulseScale = pulse.interpolate({
+  const markOpacity = pulse.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.08],
+    outputRange: [0.34, 0.58],
   });
 
   const hide = useCallback(() => {
@@ -88,25 +88,24 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
         <View style={styles.center}>
           <Animated.View
             style={[
-              styles.halo,
+              styles.brandStack,
               {
-                transform: [{ scale: pulseScale }],
+                transform: [{ translateY: logoTranslate }, { scale: logoScale }],
               },
             ]}
-          />
-          <Animated.View
-            style={{
-              alignItems: "center",
-              transform: [{ translateY: logoTranslate }, { scale: logoScale }],
-            }}
           >
-            <Image
-              source={require("@/assets/images/icon.png")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
+            <View style={styles.markWrap}>
+              <Animated.View
+                style={[styles.markGlow, { opacity: markOpacity }]}
+              />
+              <Image
+                source={require("@/assets/images/android-icon-foreground.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
             <Text style={styles.brand}>Hife</Text>
-            <Text style={styles.subtitle}>Create a room. Set a budget. Decide together.</Text>
+            <Text style={styles.subtitle}>Shared budgets. Clear decisions.</Text>
           </Animated.View>
         </View>
 
@@ -128,49 +127,61 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     justifyContent: "space-between",
-    padding: 24,
+    paddingBottom: 28,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   center: {
     alignItems: "center",
     flex: 1,
     justifyContent: "center",
+    paddingBottom: 42,
   },
-  halo: {
-    backgroundColor: "rgba(168, 92, 68, 0.10)",
-    borderColor: "rgba(168, 92, 68, 0.24)",
-    borderRadius: 120,
-    borderWidth: 1,
-    height: 210,
+  brandStack: {
+    alignItems: "center",
+    marginTop: -28,
+  },
+  markWrap: {
+    alignItems: "center",
+    height: 118,
+    justifyContent: "center",
+    width: 150,
+  },
+  markGlow: {
+    backgroundColor: "#F0DED4",
+    borderRadius: 68,
+    height: 136,
     position: "absolute",
-    width: 210,
+    width: 136,
   },
   logo: {
-    height: 112,
-    width: 112,
+    height: 104,
+    width: 132,
   },
   brand: {
     color: BrandColors.clay,
-    fontSize: 48,
-    fontWeight: "900",
+    fontSize: 54,
+    fontWeight: "800",
     letterSpacing: 0,
     marginTop: 18,
   },
   subtitle: {
     color: BrandColors.mutedText,
     fontSize: 16,
-    lineHeight: 22,
-    marginTop: 8,
-    maxWidth: 280,
+    fontWeight: "600",
+    lineHeight: 23,
+    marginTop: 10,
+    maxWidth: 250,
     textAlign: "center",
   },
   getStartedButton: {
     alignItems: "center",
     backgroundColor: BrandColors.clay,
-    borderRadius: 8,
+    borderRadius: 12,
     flexDirection: "row",
     gap: 8,
     justifyContent: "center",
-    minHeight: 54,
+    minHeight: 52,
   },
   getStartedText: {
     color: BrandColors.warmCream,
