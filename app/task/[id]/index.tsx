@@ -20,6 +20,7 @@ import {
 } from "@/utils/budget";
 import {
   getPriorityChipColor,
+  getPriorityLabel,
   getStatusChipColor,
   getStatusLabel,
   STATUS_LABELS,
@@ -347,7 +348,7 @@ export default function RequestDetailsScreen() {
                       { color: priorityColor.text },
                     ]}
                   >
-                    {request.priority}
+                    {getPriorityLabel(request.priority)}
                   </Text>
                 </View>
               ) : null}
@@ -384,7 +385,9 @@ export default function RequestDetailsScreen() {
             <View style={styles.metaGrid}>
               <View style={styles.metaItem}>
                 <Text style={styles.metaLabel}>Priority</Text>
-                <Text style={styles.metaValue}>{request.priority}</Text>
+                <Text style={styles.metaValue}>
+                  {getPriorityLabel(request.priority)}
+                </Text>
                 <Text style={styles.metaHint}>
                   {PRIORITY_EXPLANATIONS[request.priority]}
                 </Text>

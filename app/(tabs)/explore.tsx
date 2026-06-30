@@ -4,6 +4,8 @@ import {
   AiDecisionResult,
   AiRecommendation,
   BudgetSettings,
+  PurchaseTiming,
+  PurchaseType,
   PurchaseRequest,
   RequestPriority,
 } from "@/constants/types";
@@ -27,6 +29,8 @@ import {
 } from "@/utils/budget";
 import { validateImageAsset } from "@/utils/productMedia";
 import { parseProductLinks } from "@/utils/productLinks";
+import { buildRequestBudgetImpact } from "@/utils/requestBudgetImpact";
+import { getPriorityLabel } from "@/utils/requestPresentation";
 import { validateRequestDraft } from "@/utils/requestValidation";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -52,10 +56,25 @@ const AI_RECOMMENDATION_LABELS: Record<AiRecommendation, string> = {
   needs_more_info: "Needs more info",
 };
 const PRIORITY_OPTIONS: { label: string; value: RequestPriority; helper: string }[] = [
-  { label: "P0", value: "P0", helper: "12 hrs" },
-  { label: "P1", value: "P1", helper: "24 hrs" },
-  { label: "P2", value: "P2", helper: "48 hrs" },
-  { label: "P3", value: "P3", helper: "72 hrs" },
+  { label: "Need today", value: "P0", helper: "Cannot wait" },
+  { label: "Soon", value: "P1", helper: "1-2 days" },
+  { label: "This week", value: "P2", helper: "Can wait" },
+  { label: "Someday", value: "P3", helper: "Low urgency" },
+];
+const TIMING_OPTIONS: { label: string; value: PurchaseTiming; helper: string }[] = [
+  { label: "Today", value: "today", helper: "Need it now" },
+  { label: "Few days", value: "few_days", helper: "Can compare" },
+  { label: "This month", value: "this_month", helper: "Plan ahead" },
+  { label: "No rush", value: "no_rush", helper: "Wait safely" },
+];
+const PURCHASE_TYPE_OPTIONS: {
+  label: string;
+  value: PurchaseType;
+  helper: string;
+}[] = [
+  { label: "New", value: "new_purchase", helper: "First buy" },
+  { label: "Replace", value: "replacement", helper: "Old one failed" },
+  { label: "Upgrade", value: "upgrade", helper: "Better version" },
 ];
 const PREVIEW_BUDGET_SETTINGS: BudgetSettings = {
   monthlyBudget: 5000,
@@ -137,6 +156,10 @@ export default function CreateRequestScreen() {
   const [productName, setProductName] = useState("");
   const [reason, setReason] = useState("");
   const [priority, setPriority] = useState<RequestPriority>("P1");
+  const [purchaseTiming, setPurchaseTiming] =
+    useState<PurchaseTiming>("few_days");
+  const [purchaseType, setPurchaseType] =
+    useState<PurchaseType>("new_purchase");
   const [expectedPrice, setExpectedPrice] = useState("");
   const [category, setCategory] = useState("Other");
   const [linksText, setLinksText] = useState("");
@@ -219,22 +242,41 @@ export default function CreateRequestScreen() {
   const categoryProjectedRemaining = Number(
     categorySummary?.projectedRemaining || 0
   );
-  const safeToSpendAfterRequest = budgetSummary.safeToSpend - expectedAmount;
+  const requestImpact = buildRequestBudgetImpact({
+    amount: expectedAmount,
+    safeToSpend: budgetSummary.safeToSpend,
+    categoryBudget: categorySummary?.budget || 0,
+    categoryProjectedRemaining,
+  });
+  const selectedUrgency = getPriorityLabel(priority);
   const maxRequestBudget =
     budgetSummary.decisionBudget > 0
       ? Math.min(categoryProjectedRemaining, Math.max(0, budgetSummary.safeToSpend))
       : categoryRemaining;
   const exceedsSafeToSpend =
-    budgetSummary.decisionBudget > 0 && safeToSpendAfterRequest < 0;
-  const exceedsCategoryBudget =
-    !!categorySummary?.budget && expectedAmount > categoryProjectedRemaining;
-  const consumesTooMuchCategory =
-    !!categorySummary?.budget && expectedAmount > categorySummary.budget * 0.5;
+    budgetSummary.decisionBudget > 0 && requestImpact.exceedsSafeToSpend;
+  const exceedsCategoryBudget = requestImpact.exceedsCategoryBudget;
+  const consumesTooMuchCategory = requestImpact.consumesLargeCategoryShare;
+  const shouldReviewBeforeSubmit =
+    expectedAmount > 0 &&
+    (exceedsSafeToSpend ||
+      exceedsCategoryBudget ||
+      (budgetSummary.decisionBudget > 0 &&
+        expectedAmount >= budgetSummary.decisionBudget * 0.25));
 
   useEffect(() => {
     setAiDecision(null);
     setAiError("");
-  }, [productName, reason, priority, expectedPrice, maxRequestBudget, category]);
+  }, [
+    productName,
+    reason,
+    priority,
+    purchaseTiming,
+    purchaseType,
+    expectedPrice,
+    maxRequestBudget,
+    category,
+  ]);
 
   useEffect(() => {
     if (!budgetCategories.includes(category)) {
@@ -267,6 +309,8 @@ export default function CreateRequestScreen() {
     setProductName("");
     setReason("");
     setPriority("P1");
+    setPurchaseTiming("few_days");
+    setPurchaseType("new_purchase");
     setExpectedPrice("");
     setCategory(budgetCategories[0] || "Other");
     setLinksText("");
@@ -344,7 +388,7 @@ export default function CreateRequestScreen() {
     }
   };
 
-  const onSave = async () => {
+  const onSave = async (confirmedHighValue = false) => {
     if (isSaving) return;
 
     const validation = validateRequestDraft({
@@ -364,6 +408,21 @@ export default function CreateRequestScreen() {
       Alert.alert(
         "Validation",
         "Set a category budget on the dashboard before creating this request"
+      );
+      return;
+    }
+
+    if (shouldReviewBeforeSubmit && !confirmedHighValue) {
+      Alert.alert(
+        "Review budget impact",
+        "This request uses a meaningful part of the available budget. Check the timing and impact before sending it for approval.",
+        [
+          { text: "Keep editing", style: "cancel" },
+          {
+            text: "Create request",
+            onPress: () => onSave(true),
+          },
+        ]
       );
       return;
     }
@@ -395,6 +454,8 @@ export default function CreateRequestScreen() {
         productName,
         reason,
         priority,
+        purchaseTiming,
+        purchaseType,
         expectedPrice: Number(expectedPrice),
         maxBudget: maxRequestBudget,
         category,
@@ -437,7 +498,12 @@ export default function CreateRequestScreen() {
               {image ? (
                 <Image source={{ uri: image }} style={styles.image} />
               ) : (
-                <Text style={styles.imageText}>Add product image</Text>
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imageText}>Add product image</Text>
+                  <Text style={styles.imageHint}>
+                    Optional, but useful for quick decisions.
+                  </Text>
+                </View>
               )}
               {uploadingImage ? (
                 <View style={styles.imageOverlay}>
@@ -493,6 +559,23 @@ export default function CreateRequestScreen() {
                 value={priority}
                 onChange={setPriority}
               />
+              <Text style={styles.promptText}>
+                Can this wait? {PRIORITY_EXPLANATIONS[priority]}
+              </Text>
+
+              <Text style={styles.label}>Purchase timing</Text>
+              <SelectTiles
+                options={TIMING_OPTIONS}
+                value={purchaseTiming}
+                onChange={setPurchaseTiming}
+              />
+
+              <Text style={styles.label}>Purchase type</Text>
+              <SelectTiles
+                options={PURCHASE_TYPE_OPTIONS}
+                value={purchaseType}
+                onChange={setPurchaseType}
+              />
             </View>
 
             <View style={styles.priceRow}>
@@ -528,37 +611,53 @@ export default function CreateRequestScreen() {
               ]}
             >
               <Text style={styles.budgetImpactTitle}>Budget impact</Text>
+              <View style={styles.impactRow}>
+                <Text style={styles.budgetImpactText}>Category budget</Text>
+                <Text style={styles.budgetImpactValue}>
+                  {formatInr(requestImpact.categoryBudget)}
+                </Text>
+              </View>
+              <View style={styles.impactRow}>
+                <Text style={styles.budgetImpactText}>Category left now</Text>
+                <Text style={styles.budgetImpactValue}>
+                  {formatInr(requestImpact.categoryProjectedRemaining)}
+                </Text>
+              </View>
+              <View style={styles.impactRow}>
+                <Text style={styles.budgetImpactText}>Category after request</Text>
+                <Text style={styles.budgetImpactValue}>
+                  {requestImpact.categoryRemainingAfterRequest < 0
+                    ? `over by ${formatInr(Math.abs(requestImpact.categoryRemainingAfterRequest))}`
+                    : formatInr(requestImpact.categoryRemainingAfterRequest)}
+                </Text>
+              </View>
               <Text style={styles.budgetImpactText}>
-                Safe to spend now: {formatInr(budgetSummary.safeToSpend)}
+                Safe to spend now: {formatInr(requestImpact.safeToSpendNow)}
               </Text>
               <Text style={styles.budgetImpactText}>
                 After this request:{" "}
-                {safeToSpendAfterRequest < 0
-                  ? `over by ${formatInr(Math.abs(safeToSpendAfterRequest))}`
-                  : formatInr(safeToSpendAfterRequest)}
+                {requestImpact.safeToSpendAfterRequest < 0
+                  ? `over by ${formatInr(Math.abs(requestImpact.safeToSpendAfterRequest))}`
+                  : formatInr(requestImpact.safeToSpendAfterRequest)}
               </Text>
               <Text style={styles.budgetImpactText}>
-                {category} projected left:{" "}
-                {formatInr(categoryProjectedRemaining)}
-              </Text>
-              <Text style={styles.budgetImpactText}>
-                Priority: {priority} - {PRIORITY_EXPLANATIONS[priority]}
+                Urgency: {selectedUrgency}
               </Text>
               {expectedAmount > 0 && exceedsSafeToSpend ? (
                 <Text style={styles.warningText}>
-                  This request would push safe-to-spend below zero.
+                  This would push safe-to-spend below zero. Consider waiting or lowering the amount.
                 </Text>
               ) : null}
               {expectedAmount > 0 && exceedsCategoryBudget ? (
                 <Text style={styles.warningText}>
-                  This request exceeds the remaining {category} category budget.
+                  This is above the remaining {category} category room.
                 </Text>
               ) : null}
               {expectedAmount > 0 &&
               !exceedsCategoryBudget &&
               consumesTooMuchCategory ? (
                 <Text style={styles.warningText}>
-                  This request uses a large share of the {category} category.
+                  This uses a large share of the {category} category. A quick review is wise.
                 </Text>
               ) : null}
             </View>
@@ -598,7 +697,7 @@ export default function CreateRequestScreen() {
                     </View>
                     <View style={styles.aiPriorityPill}>
                       <Text style={styles.aiPriorityText}>
-                        {aiDecision.suggestedPriority}
+                        {getPriorityLabel(aiDecision.suggestedPriority)}
                       </Text>
                     </View>
                   </View>
@@ -652,7 +751,7 @@ export default function CreateRequestScreen() {
             <Pressable
               style={[styles.saveBtn, isSaving ? styles.disabledBtn : null]}
               disabled={isSaving}
-              onPress={onSave}
+              onPress={() => onSave()}
             >
               <Text style={styles.saveText}>
                 {uploadingImage
@@ -722,11 +821,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
+  imagePlaceholder: {
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 24,
+  },
   imageText: {
     fontSize: 16,
     color: "#A05232",
     fontFamily: "serif",
     fontWeight: "700",
+  },
+  imageHint: {
+    color: "#776E64",
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 18,
+    textAlign: "center",
   },
   errorText: {
     color: "#873926",
@@ -797,7 +908,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexGrow: 1,
     minHeight: 52,
-    minWidth: 84,
+    minWidth: 112,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
@@ -851,6 +962,26 @@ const styles = StyleSheet.create({
     color: "rgba(237, 228, 214, 0.74)",
     fontSize: 14,
     lineHeight: 21,
+  },
+  budgetImpactValue: {
+    color: "#F7F2EB",
+    flexShrink: 0,
+    fontSize: 14,
+    fontWeight: "800",
+    lineHeight: 21,
+  },
+  impactRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+  },
+  promptText: {
+    color: "#776E64",
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 19,
+    marginTop: 8,
   },
   warningText: {
     color: "#C8A15A",

@@ -26,10 +26,10 @@ export function getBudgetCategories(
 }
 
 export const PRIORITY_EXPLANATIONS: Record<RequestPriority, string> = {
-  P0: "Emergency or must buy immediately.",
-  P1: "Important, should be decided within 24 hours.",
-  P2: "Useful, can wait a few days.",
-  P3: "Nice to have, low urgency.",
+  P0: "Needed right away and hard to delay.",
+  P1: "Important soon, but there is time to compare options.",
+  P2: "Useful this week or this month if the budget allows.",
+  P3: "Nice to have and safe to postpone.",
 };
 
 export type CategorySummary = {

@@ -1,4 +1,6 @@
 export type RequestPriority = "P0" | "P1" | "P2" | "P3";
+export type PurchaseTiming = "today" | "few_days" | "this_month" | "no_rush";
+export type PurchaseType = "new_purchase" | "replacement" | "upgrade";
 
 export type RequestStatus =
   | "pending"
@@ -51,6 +53,8 @@ export type PurchaseRequest = {
   maxBudget: number;
   budget: number;
   category: string;
+  purchaseTiming?: PurchaseTiming;
+  purchaseType?: PurchaseType;
   links: ProductLink[];
   status: RequestStatus;
   decisionReason?: string;

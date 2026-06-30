@@ -44,6 +44,7 @@ import {
 } from "@/utils/budget";
 import {
   getPriorityChipColor,
+  getPriorityLabel,
   getStatusChipColor,
   getStatusLabel,
 } from "@/utils/requestPresentation";
@@ -1047,7 +1048,7 @@ export default function HomeScreen() {
                         { color: priorityColor.text },
                       ]}
                     >
-                      {item.priority}
+                      {getPriorityLabel(item.priority as RequestPriority)}
                     </Text>
                   </View>
                 </View>

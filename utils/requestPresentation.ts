@@ -24,10 +24,10 @@ export const STATUS_CHIP_COLORS: Record<
 };
 
 export const PRIORITY_LABELS: Record<RequestPriority, string> = {
-  P0: "P0",
-  P1: "P1",
-  P2: "P2",
-  P3: "P3",
+  P0: "Need today",
+  P1: "Soon",
+  P2: "This week",
+  P3: "Someday",
 };
 
 export const PRIORITY_CHIP_COLORS: Record<
@@ -50,4 +50,8 @@ export function getStatusChipColor(status: RequestStatus) {
 
 export function getPriorityChipColor(priority: RequestPriority) {
   return PRIORITY_CHIP_COLORS[priority] || PRIORITY_CHIP_COLORS.P1;
+}
+
+export function getPriorityLabel(priority: RequestPriority) {
+  return PRIORITY_LABELS[priority] || PRIORITY_LABELS.P1;
 }

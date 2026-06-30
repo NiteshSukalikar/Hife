@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   getPriorityChipColor,
+  getPriorityLabel,
   getStatusChipColor,
   getStatusLabel,
 } from "@/utils/requestPresentation";
@@ -23,5 +24,10 @@ describe("request presentation helpers", () => {
 
   it("returns distinct priority chip colors", () => {
     expect(getPriorityChipColor("P0")).not.toEqual(getPriorityChipColor("P3"));
+  });
+
+  it("maps stored priority codes to human urgency labels", () => {
+    expect(getPriorityLabel("P0")).toBe("Need today");
+    expect(getPriorityLabel("P3")).toBe("Someday");
   });
 });

@@ -74,18 +74,18 @@ approved purchases, and pending purchases.
 
 Goal: Make request creation help users think clearly before asking for approval.
 
-- [ ] Replace P0, P1, P2, and P3 labels with human urgency labels.
-- [ ] Keep technical priority values internally only if needed for storage.
-- [ ] Add need-by date or purchase timing.
-- [ ] Add a "Can this wait?" field or decision prompt.
-- [ ] Add replacement/upgrade/new purchase type.
-- [ ] Show selected category budget while creating a request.
-- [ ] Show remaining category budget while creating a request.
-- [ ] Show projected remaining budget after the request amount.
-- [ ] Add inline guidance when a request is above available budget.
-- [ ] Make product image optional but visually polished when missing.
-- [ ] Improve form spacing so fields feel premium and easy to scan.
-- [ ] Add a final review step before submitting high-value requests.
+- [x] Replace P0, P1, P2, and P3 labels with human urgency labels.
+- [x] Keep technical priority values internally only if needed for storage.
+- [x] Add need-by date or purchase timing.
+- [x] Add a "Can this wait?" field or decision prompt.
+- [x] Add replacement/upgrade/new purchase type.
+- [x] Show selected category budget while creating a request.
+- [x] Show remaining category budget while creating a request.
+- [x] Show projected remaining budget after the request amount.
+- [x] Add inline guidance when a request is above available budget.
+- [x] Make product image optional but visually polished when missing.
+- [x] Improve form spacing so fields feel premium and easy to scan.
+- [x] Add a final review step before submitting high-value requests.
 
 ## Phase 15: Request Details And Decision Flow
 
