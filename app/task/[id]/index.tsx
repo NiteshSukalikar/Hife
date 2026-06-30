@@ -19,6 +19,10 @@ import {
   PRIORITY_EXPLANATIONS,
 } from "@/utils/budget";
 import {
+  buildRequestBudgetImpact,
+  buildRequestDecisionSummary,
+} from "@/utils/requestBudgetImpact";
+import {
   getPriorityChipColor,
   getPriorityLabel,
   getStatusChipColor,
@@ -45,6 +49,55 @@ import {
 function canMarkPurchased(status: RequestStatus) {
   return status === "approved";
 }
+
+const PURCHASE_TIMING_LABELS: Record<string, string> = {
+  today: "Needed today",
+  few_days: "In a few days",
+  this_month: "This month",
+  no_rush: "No rush",
+};
+
+const PURCHASE_TYPE_LABELS: Record<string, string> = {
+  new_purchase: "New purchase",
+  replacement: "Replacement",
+  upgrade: "Upgrade",
+};
+
+function getDecisionReasonHint(status: RequestStatus) {
+  if (status === "declined") return "Add what would need to change.";
+  if (status === "buy_later") return "Add when it should be reconsidered.";
+  if (status === "needs_more_info") return "Add what information is missing.";
+  return "Optional, but helpful for the household.";
+}
+
+function formatDecisionInr(amount: number) {
+  if (amount < 0) return `-${formatInr(Math.abs(amount))}`;
+  return formatInr(amount);
+}
+
+function toDisplayDate(value: unknown) {
+  if (!value) return "";
+
+  const maybeTimestamp = value as { toDate?: () => Date; seconds?: number };
+  const date =
+    typeof maybeTimestamp.toDate === "function"
+      ? maybeTimestamp.toDate()
+      : typeof maybeTimestamp.seconds === "number"
+        ? new Date(maybeTimestamp.seconds * 1000)
+        : value instanceof Date
+          ? value
+          : null;
+
+  if (!date) return "";
+
+  return date.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 const previewTimestamp = {
   toDate: () => new Date("2026-06-29T19:54:28+05:30"),
 };
@@ -254,29 +307,47 @@ export default function RequestDetailsScreen() {
     () => buildBudgetSummary(householdRequests, budgetSettings),
     [budgetSettings, householdRequests]
   );
+  const budgetBeforeRequest = useMemo(
+    () =>
+      buildBudgetSummary(
+        request
+          ? householdRequests.filter((item) => item.id !== request.id)
+          : householdRequests,
+        budgetSettings
+      ),
+    [budgetSettings, householdRequests, request]
+  );
   const categorySummary = request
-    ? budgetSummary.categorySummaries.find(
+    ? budgetBeforeRequest.categorySummaries.find(
         (item) => item.category === request.category
       )
     : null;
   const requestAmount = request ? getRequestAmount(request) : 0;
-  const safeToSpendAfterApproval = budgetSummary.safeToSpend;
+  const budgetImpact = request
+    ? buildRequestBudgetImpact({
+        amount: requestAmount,
+        safeToSpend: budgetBeforeRequest.safeToSpend,
+        categoryBudget: categorySummary?.budget || 0,
+        categoryProjectedRemaining: categorySummary?.projectedRemaining || 0,
+      })
+    : null;
+  const decisionSummary = budgetImpact
+    ? buildRequestDecisionSummary(budgetImpact)
+    : null;
   const wouldReduceSafeToSpendBelowZero =
-    !!request &&
-    budgetSummary.decisionBudget > 0 &&
-    request.status === "pending" &&
-    safeToSpendAfterApproval < 0;
+    !!request && request.status === "pending" && !!budgetImpact?.exceedsSafeToSpend;
   const wouldExceedCategoryBudget =
-    !!request &&
-    !!categorySummary?.budget &&
-    request.status === "pending" &&
-    categorySummary.approvedTotal + categorySummary.pendingTotal >
-      categorySummary.budget;
+    !!request && request.status === "pending" && !!budgetImpact?.exceedsCategoryBudget;
   const wouldConsumeTooMuchCategory =
     !!request &&
-    !!categorySummary?.budget &&
     request.status === "pending" &&
-    requestAmount > categorySummary.budget * 0.5;
+    !!budgetImpact?.consumesLargeCategoryShare;
+  const decisionReasonHint = request
+    ? getDecisionReasonHint(request.status)
+    : "";
+  const decisionDate = request
+    ? toDisplayDate(request.decisionAt || request.lastActivityAt)
+    : "";
 
   return (
     <>
@@ -323,8 +394,18 @@ export default function RequestDetailsScreen() {
             {request.image ? (
               <Image source={{ uri: request.image }} style={styles.image} />
             ) : (
-              <View style={[styles.image, styles.imagePlaceholder]}>
-                <Text style={styles.imagePlaceholderText}>No image added</Text>
+              <View style={styles.imagePlaceholder}>
+                <View style={styles.imagePlaceholderMark}>
+                  <Text style={styles.imagePlaceholderMarkText}>H</Text>
+                </View>
+                <View style={styles.imagePlaceholderCopy}>
+                  <Text style={styles.imagePlaceholderText}>
+                    No product image
+                  </Text>
+                  <Text style={styles.imagePlaceholderSubtext}>
+                    Decision can still be made from the price, reason, and links.
+                  </Text>
+                </View>
               </View>
             )}
 
@@ -394,11 +475,77 @@ export default function RequestDetailsScreen() {
               </View>
               <View style={styles.metaItem}>
                 <Text style={styles.metaLabel}>Expected</Text>
-                <Text style={styles.metaValue}>INR {request.expectedPrice}</Text>
+                <Text style={styles.metaValue}>{formatInr(requestAmount)}</Text>
               </View>
               <View style={styles.metaItem}>
                 <Text style={styles.metaLabel}>Max budget</Text>
-                <Text style={styles.metaValue}>INR {request.maxBudget}</Text>
+                <Text style={styles.metaValue}>{formatInr(request.maxBudget)}</Text>
+              </View>
+              {request.purchaseTiming ? (
+                <View style={styles.metaItem}>
+                  <Text style={styles.metaLabel}>Timing</Text>
+                  <Text style={styles.metaValue}>
+                    {PURCHASE_TIMING_LABELS[request.purchaseTiming] ||
+                      "Timing not set"}
+                  </Text>
+                </View>
+              ) : null}
+              {request.purchaseType ? (
+                <View style={styles.metaItem}>
+                  <Text style={styles.metaLabel}>Type</Text>
+                  <Text style={styles.metaValue}>
+                    {PURCHASE_TYPE_LABELS[request.purchaseType] ||
+                      "Purchase type not set"}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            {decisionSummary && budgetImpact ? (
+              <View
+                style={[
+                  styles.summaryCard,
+                  decisionSummary.state === "safe"
+                    ? styles.summarySafe
+                    : decisionSummary.state === "risky"
+                      ? styles.summaryRisky
+                      : styles.summaryOverBudget,
+                ]}
+              >
+                <Text style={styles.summaryEyebrow}>Decision summary</Text>
+                <Text style={styles.summaryTitle}>{decisionSummary.title}</Text>
+                <Text style={styles.summaryText}>{decisionSummary.message}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Money decision</Text>
+              <View style={styles.impactGrid}>
+                <View style={styles.impactCard}>
+                  <Text style={styles.impactLabel}>Safe-to-spend before</Text>
+                  <Text style={styles.impactValue}>
+                    {formatInr(budgetImpact?.safeToSpendNow || 0)}
+                  </Text>
+                </View>
+                <View style={styles.impactCard}>
+                  <Text style={styles.impactLabel}>Request amount</Text>
+                  <Text style={styles.impactValue}>{formatInr(requestAmount)}</Text>
+                </View>
+                <View style={styles.impactCard}>
+                  <Text style={styles.impactLabel}>After approval</Text>
+                  <Text
+                    style={[
+                      styles.impactValue,
+                      wouldReduceSafeToSpendBelowZero
+                        ? styles.impactValueWarning
+                        : null,
+                    ]}
+                  >
+                    {formatDecisionInr(
+                      budgetImpact?.safeToSpendAfterRequest || 0
+                    )}
+                  </Text>
+                </View>
               </View>
             </View>
 
@@ -414,31 +561,36 @@ export default function RequestDetailsScreen() {
               ]}
             >
               <Text style={[styles.sectionTitle, styles.darkSectionTitle]}>
-                Budget impact
+                Category impact
               </Text>
               <Text style={styles.budgetImpactText}>
-                Current approved this month:{" "}
+                Household approved this month:{" "}
                 {formatInr(budgetSummary.approvedTotal)}
               </Text>
               <Text style={styles.budgetImpactText}>
-                Current pending this month: {formatInr(budgetSummary.pendingTotal)}
+                Household pending this month: {formatInr(budgetSummary.pendingTotal)}
               </Text>
               <Text style={styles.budgetImpactText}>
-                Safe to spend now: {formatInr(budgetSummary.safeToSpend)}
-              </Text>
-              <Text style={styles.budgetImpactText}>
-                Decision budget: {formatInr(budgetSummary.decisionBudget)}
+                Decision budget: {formatInr(budgetBeforeRequest.decisionBudget)}
               </Text>
               {categorySummary ? (
-                <Text style={styles.budgetImpactText}>
-                  {request.category} projected left:{" "}
-                  {formatInr(categorySummary.projectedRemaining)} of{" "}
-                  {formatInr(categorySummary.budget)}
-                </Text>
+                <>
+                  <Text style={styles.budgetImpactText}>
+                    {request.category} before request:{" "}
+                    {formatInr(budgetImpact?.categoryProjectedRemaining || 0)}
+                  </Text>
+                  <Text style={styles.budgetImpactText}>
+                    {request.category} after approval:{" "}
+                    {formatDecisionInr(
+                      budgetImpact?.categoryRemainingAfterRequest || 0
+                    )} of{" "}
+                    {formatInr(categorySummary.budget)}
+                  </Text>
+                </>
               ) : null}
               {wouldReduceSafeToSpendBelowZero ? (
                 <Text style={styles.warningText}>
-                  Approval would keep safe-to-spend below zero.
+                  Approval would take safe-to-spend below zero.
                 </Text>
               ) : null}
               {wouldExceedCategoryBudget ? (
@@ -475,60 +627,96 @@ export default function RequestDetailsScreen() {
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Decision reason</Text>
+              <Text style={styles.reasonHint}>{decisionReasonHint}</Text>
               <TextInput
                 style={[styles.input, styles.reasonInput]}
                 value={decisionReason}
                 onChangeText={setDecisionReason}
-                placeholder="Add why this is approved, declined, postponed, or needs more info"
+                placeholder="Add a short reason for this decision"
                 placeholderTextColor="#8F867A"
                 multiline
                 maxLength={300}
               />
             </View>
 
-            <View style={styles.actionGrid}>
+            <View style={styles.actionPanel}>
+              <Text style={styles.actionPanelTitle}>Choose a decision</Text>
+              <Text style={styles.actionPanelHint}>
+                Decline, buy later, and needs info require a short reason.
+              </Text>
               <Pressable
-                style={[styles.actionButton, styles.approveButton]}
+                style={[styles.actionButton, styles.primaryDecisionButton]}
                 disabled={!!savingStatus}
                 onPress={() => confirmStatusChange("approved")}
               >
                 <Text style={styles.actionText}>
                   {savingStatus === "approved" ? "Saving..." : "Approve"}
                 </Text>
+                <Text style={styles.actionHint}>Safe to buy now</Text>
               </Pressable>
 
-              <Pressable
-                style={[styles.actionButton, styles.declineButton]}
-                disabled={!!savingStatus}
-                onPress={() => confirmStatusChange("declined")}
-              >
-                <Text style={styles.declineActionText}>
-                  {savingStatus === "declined" ? "Saving..." : "Decline"}
-                </Text>
-              </Pressable>
+              <View style={styles.secondaryDecisionGrid}>
+                <Pressable
+                  style={[styles.actionButton, styles.secondaryButton]}
+                  disabled={!!savingStatus}
+                  onPress={() => confirmStatusChange("buy_later")}
+                >
+                  <Text style={styles.secondaryActionText}>
+                    {savingStatus === "buy_later" ? "Saving..." : "Buy later"}
+                  </Text>
+                  <Text style={styles.secondaryActionHint}>Revisit timing</Text>
+                </Pressable>
 
-              <Pressable
-                style={[styles.actionButton, styles.secondaryButton]}
-                disabled={!!savingStatus}
-                onPress={() => confirmStatusChange("buy_later")}
-              >
-                <Text style={styles.secondaryActionText}>
-                  {savingStatus === "buy_later" ? "Saving..." : "Buy Later"}
-                </Text>
-              </Pressable>
+                <Pressable
+                  style={[styles.actionButton, styles.secondaryButton]}
+                  disabled={!!savingStatus}
+                  onPress={() => confirmStatusChange("needs_more_info")}
+                >
+                  <Text style={styles.secondaryActionText}>
+                    {savingStatus === "needs_more_info" ? "Saving..." : "Needs info"}
+                  </Text>
+                  <Text style={styles.secondaryActionHint}>Ask before deciding</Text>
+                </Pressable>
 
-              <Pressable
-                style={[styles.actionButton, styles.secondaryButton]}
-                disabled={!!savingStatus}
-                onPress={() => confirmStatusChange("needs_more_info")}
-              >
-                <Text style={styles.secondaryActionText}>
-                  {savingStatus === "needs_more_info" ? "Saving..." : "Need Info"}
-                </Text>
-              </Pressable>
+                <Pressable
+                  style={[styles.actionButton, styles.declineButton]}
+                  disabled={!!savingStatus}
+                  onPress={() => confirmStatusChange("declined")}
+                >
+                  <Text style={styles.declineActionText}>
+                    {savingStatus === "declined" ? "Saving..." : "Decline"}
+                  </Text>
+                  <Text style={styles.declineActionHint}>Not a fit now</Text>
+                </Pressable>
+              </View>
             </View>
 
+            {(request.decisionReason || request.decisionBy || decisionDate) ? (
+              <View style={styles.historyCard}>
+                <Text style={styles.historyLabel}>Decision history</Text>
+                <Text style={styles.historyText}>
+                  {getStatusLabel(request.status)}
+                  {decisionDate ? ` on ${decisionDate}` : ""}
+                  {request.decisionBy ? " by a household member" : ""}
+                </Text>
+                {request.decisionReason ? (
+                  <Text style={styles.historyReason}>
+                    {request.decisionReason}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+
             <View style={styles.footerActions}>
+              {request.status === "purchased" ? (
+                <View style={styles.purchasedState}>
+                  <Text style={styles.purchasedStateTitle}>Purchase recorded</Text>
+                  <Text style={styles.purchasedStateText}>
+                    This item is counted as approved household spend for the month.
+                  </Text>
+                </View>
+              ) : null}
+
               {canMarkPurchased(request.status) ? (
                 <Pressable
                   style={styles.purchaseButton}
@@ -542,6 +730,20 @@ export default function RequestDetailsScreen() {
                   </Text>
                 </Pressable>
               ) : null}
+
+              <Pressable
+                style={styles.commentButton}
+                onPress={() =>
+                  router.push({
+                    pathname: "/task/[id]/comments",
+                    params: { id: request.id, title: request.productName },
+                  })
+                }
+              >
+                <Text style={styles.commentText}>
+                  Discuss{request.commentCount ? ` (${request.commentCount})` : ""}
+                </Text>
+              </Pressable>
 
               <Pressable
                 style={styles.cancelButton}
@@ -632,15 +834,45 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     alignItems: "center",
-    backgroundColor: "#171310",
-    borderColor: "rgba(200, 161, 90, 0.26)",
+    backgroundColor: "#EFEAE1",
+    borderColor: "#DDCDBB",
+    borderRadius: 16,
     borderWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 112,
+    marginBottom: 20,
+    padding: 16,
+  },
+  imagePlaceholderMark: {
+    alignItems: "center",
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
+    borderRadius: 14,
+    borderWidth: 1,
+    height: 52,
     justifyContent: "center",
+    width: 52,
+  },
+  imagePlaceholderMarkText: {
+    color: "#A05232",
+    fontFamily: "serif",
+    fontSize: 24,
+    fontWeight: "900",
+  },
+  imagePlaceholderCopy: {
+    flex: 1,
   },
   imagePlaceholderText: {
-    color: "rgba(237, 228, 214, 0.70)",
-    fontSize: 14,
-    fontWeight: "600",
+    color: "#1C1510",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  imagePlaceholderSubtext: {
+    color: "#776E64",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
   },
   headerRow: {
     alignItems: "flex-start",
@@ -754,6 +986,73 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     marginTop: 4,
   },
+  summaryCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 18,
+    padding: 16,
+  },
+  summarySafe: {
+    backgroundColor: "#E9F1E4",
+    borderColor: "#7A8C6E",
+  },
+  summaryRisky: {
+    backgroundColor: "#FFF6D9",
+    borderColor: "#C4943A",
+  },
+  summaryOverBudget: {
+    backgroundColor: "#FBEDE8",
+    borderColor: "#A85C44",
+  },
+  summaryEyebrow: {
+    color: "#776E64",
+    fontSize: 12,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+  summaryTitle: {
+    color: "#1C1510",
+    fontFamily: "serif",
+    fontSize: 24,
+    fontWeight: "900",
+    marginTop: 4,
+  },
+  summaryText: {
+    color: "#40362E",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  impactGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  impactCard: {
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
+    borderRadius: 14,
+    borderWidth: 1,
+    flexBasis: "31%",
+    flexGrow: 1,
+    minWidth: 104,
+    padding: 12,
+  },
+  impactLabel: {
+    color: "#776E64",
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 16,
+  },
+  impactValue: {
+    color: "#1C1510",
+    fontSize: 17,
+    fontWeight: "900",
+    marginTop: 6,
+  },
+  impactValueWarning: {
+    color: "#A85C44",
+  },
   budgetImpact: {
     backgroundColor: "#171310",
     borderColor: "rgba(200, 161, 90, 0.26)",
@@ -807,45 +1106,124 @@ const styles = StyleSheet.create({
     minHeight: 88,
     textAlignVertical: "top",
   },
-  actionGrid: {
+  reasonHint: {
+    color: "#776E64",
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  actionPanel: {
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 10,
+    padding: 12,
+  },
+  actionPanelTitle: {
+    color: "#1C1510",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  actionPanelHint: {
+    color: "#776E64",
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 17,
+    marginTop: -4,
+  },
+  secondaryDecisionGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
   },
   actionButton: {
     alignItems: "center",
-    borderRadius: 14,
-    flexBasis: "48%",
-    flexGrow: 1,
+    borderRadius: 12,
     justifyContent: "center",
-    minHeight: 48,
+    minHeight: 64,
+    paddingHorizontal: 10,
     paddingVertical: 12,
+  },
+  primaryDecisionButton: {
+    backgroundColor: "#6F7F6A",
+    minHeight: 68,
   },
   approveButton: {
     backgroundColor: "#6F7F6A",
   },
   declineButton: {
-    backgroundColor: "#6A3D27",
+    backgroundColor: "#FBEDE8",
+    borderColor: "#A85C44",
+    borderWidth: 1,
+    flexBasis: "100%",
+    flexGrow: 1,
   },
   secondaryButton: {
-    backgroundColor: "#FFFBF5",
+    backgroundColor: "#F7F2EB",
     borderColor: "#DDCDBB",
     borderWidth: 1,
+    flexBasis: "47%",
+    flexGrow: 1,
   },
   actionText: {
     color: "#FFF9F0",
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 16,
+    fontWeight: "900",
+  },
+  actionHint: {
+    color: "rgba(255, 249, 240, 0.78)",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 3,
   },
   declineActionText: {
-    color: "#fff",
+    color: "#873926",
     fontSize: 15,
-    fontWeight: "800",
+    fontWeight: "900",
+  },
+  declineActionHint: {
+    color: "#A85C44",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 3,
   },
   secondaryActionText: {
     color: "#1C1510",
     fontSize: 15,
+    fontWeight: "900",
+  },
+  secondaryActionHint: {
+    color: "#776E64",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 3,
+  },
+  historyCard: {
+    backgroundColor: "#EFEAE1",
+    borderColor: "#DDCDBB",
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 14,
+    padding: 14,
+  },
+  historyLabel: {
+    color: "#776E64",
+    fontSize: 12,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+  historyText: {
+    color: "#1C1510",
+    fontSize: 14,
     fontWeight: "800",
+    marginTop: 5,
+  },
+  historyReason: {
+    color: "#40362E",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 6,
   },
   footerActions: {
     gap: 10,
@@ -861,6 +1239,39 @@ const styles = StyleSheet.create({
   },
   purchaseText: {
     color: "#FFF9F0",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  purchasedState: {
+    backgroundColor: "#E5F4EA",
+    borderColor: "#5F9077",
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+  },
+  purchasedStateTitle: {
+    color: "#3D6C57",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  purchasedStateText: {
+    color: "#4F6848",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  commentButton: {
+    alignItems: "center",
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
+    borderRadius: 14,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 48,
+    paddingVertical: 12,
+  },
+  commentText: {
+    color: "#1C1510",
     fontSize: 15,
     fontWeight: "800",
   },

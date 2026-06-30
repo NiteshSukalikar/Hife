@@ -16,6 +16,12 @@ export type RequestBudgetImpact = {
   consumesLargeCategoryShare: boolean;
 };
 
+export type RequestDecisionSummary = {
+  state: "safe" | "risky" | "over_budget";
+  title: string;
+  message: string;
+};
+
 function cleanAmount(value: number) {
   return Math.max(0, Number(value || 0));
 }
@@ -46,5 +52,34 @@ export function buildRequestBudgetImpact({
     consumesLargeCategoryShare:
       cleanCategoryBudget > 0 &&
       cleanRequestAmount > cleanCategoryBudget * 0.5,
+  };
+}
+
+export function buildRequestDecisionSummary(
+  impact: RequestBudgetImpact
+): RequestDecisionSummary {
+  if (impact.exceedsSafeToSpend) {
+    return {
+      state: "over_budget",
+      title: "Over budget",
+      message:
+        "Approval would take safe-to-spend below zero. Postponing or lowering the amount is the calmer choice.",
+    };
+  }
+
+  if (impact.exceedsCategoryBudget || impact.consumesLargeCategoryShare) {
+    return {
+      state: "risky",
+      title: "Needs care",
+      message:
+        "Safe-to-spend can cover this, but the category impact is high. Compare timing before approving.",
+    };
+  }
+
+  return {
+    state: "safe",
+    title: "Looks safe",
+    message:
+      "Approval keeps safe-to-spend and the selected category in a workable range.",
   };
 }

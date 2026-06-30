@@ -92,19 +92,19 @@ Goal: Make request creation help users think clearly before asking for approval.
 Goal: Make the details screen the central place for confident approval,
 decline, postponement, and discussion.
 
-- [ ] Replace the large black missing-image block with a polished neutral
+- [x] Replace the large black missing-image block with a polished neutral
   placeholder.
-- [ ] Show budget before request, request amount, and budget after approval.
-- [ ] Show category impact and monthly impact separately.
-- [ ] Make approve, decline, buy later, and needs info actions equally clear.
-- [ ] Require or encourage a decision reason for decline and buy later.
-- [ ] Add a clear purchased state after approval.
-- [ ] Add decision history with decision maker and timestamp.
-- [ ] Add a summary card explaining why the request is safe, risky, or over
+- [x] Show budget before request, request amount, and budget after approval.
+- [x] Show category impact and monthly impact separately.
+- [x] Make approve, decline, buy later, and needs info actions equally clear.
+- [x] Require or encourage a decision reason for decline and buy later.
+- [x] Add a clear purchased state after approval.
+- [x] Add decision history with decision maker and timestamp.
+- [x] Add a summary card explaining why the request is safe, risky, or over
   budget.
-- [ ] Keep discussion accessible without making it compete with primary decision
+- [x] Keep discussion accessible without making it compete with primary decision
   actions.
-- [ ] Improve sticky bottom action layout so it feels less cramped.
+- [x] Improve sticky bottom action layout so it feels less cramped.
 
 ## Phase 16: Discussion And Partner Collaboration
 
