@@ -1,6 +1,5 @@
 import Header from "@/components/header";
 import useToast from "@/components/toast/useToast";
-import { updateBudgetSettings } from "@/services/budgets";
 import {
   createHousehold,
   getActiveHousehold,
@@ -9,11 +8,7 @@ import {
 import { logError } from "@/utils/safeLogger";
 import {
   buildInviteGuidance,
-  cleanMoneyInput,
-  getSetupCategoryNames,
   normalizeInviteCode,
-  parseMoneyInput,
-  splitBudgetAcrossCategories,
   validateHouseholdSetup,
 } from "@/utils/onboardingSetup";
 import { useRouter } from "expo-router";
@@ -42,10 +37,8 @@ export default function HouseholdScreen() {
   const [roomPassword, setRoomPassword] = useState("");
   const [currentInviteCode, setCurrentInviteCode] = useState("");
   const [currentRoomPassword, setCurrentRoomPassword] = useState("");
-  const [monthlyBudgetInput, setMonthlyBudgetInput] = useState("");
-  const [categoryNamesInput, setCategoryNamesInput] = useState(
-    "Home, Groceries, Other"
-  );
+  const monthlyBudgetInput = "";
+  const categoryNamesInput = "Other";
   const [loadingHousehold, setLoadingHousehold] = useState(true);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -114,29 +107,6 @@ export default function HouseholdScreen() {
 
       setCurrentInviteCode(household.inviteCode);
       setCurrentRoomPassword(mode === "create" ? roomPassword : "");
-
-      if (mode === "create" && parseMoneyInput(monthlyBudgetInput) > 0) {
-        try {
-          const monthlyBudget = parseMoneyInput(monthlyBudgetInput);
-          const categoryNames = getSetupCategoryNames(categoryNamesInput);
-
-          await updateBudgetSettings({
-            monthlyBudget,
-            monthlyIncome: 0,
-            committedExpenses: 0,
-            savingsReserve: 0,
-            categoryBudgets: splitBudgetAcrossCategories(
-              monthlyBudget,
-              categoryNames
-            ),
-          });
-        } catch (budgetError) {
-          logError("First budget setup failed", budgetError);
-          setSetupError(
-            "Room created, but the first budget did not save. Continue to the room and edit the budget from the dashboard."
-          );
-        }
-      }
 
       show(
         mode === "create" ? "Room created" : "Room joined",
@@ -354,38 +324,6 @@ export default function HouseholdScreen() {
               You can use practical labels now and edit the wording later as the
               room grows.
             </Text>
-
-            {mode === "create" ? (
-              <>
-                <Text style={styles.sectionTitle}>First budget</Text>
-                <Text style={styles.label}>Monthly room budget</Text>
-                <TextInput
-                  style={styles.input}
-                  value={monthlyBudgetInput}
-                  onChangeText={(text) =>
-                    setMonthlyBudgetInput(cleanMoneyInput(text))
-                  }
-                  placeholder="Optional, example: 12000"
-                  placeholderTextColor="#8F867A"
-                  keyboardType="numeric"
-                  maxLength={9}
-                />
-
-                <Text style={styles.label}>Starting categories</Text>
-                <TextInput
-                  style={styles.input}
-                  value={categoryNamesInput}
-                  onChangeText={setCategoryNamesInput}
-                  placeholder="Home, Groceries, Other"
-                  placeholderTextColor="#8F867A"
-                  maxLength={80}
-                />
-                <Text style={styles.helpText}>
-                  Keep this light for now. Hife will split the first budget
-                  across these categories so requests have useful context.
-                </Text>
-              </>
-            ) : null}
 
             <Pressable
               style={[styles.primaryButton, saving && styles.disabledButton]}

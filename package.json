@@ -8,6 +8,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "eas configure": "eas build:configure",
+    "whoami": "eas whoami",
+    "apk": "eas build -p android --profile preview",
     "lint": "expo lint",
     "test": "vitest run"
   },

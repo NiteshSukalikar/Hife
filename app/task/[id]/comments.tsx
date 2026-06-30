@@ -8,9 +8,7 @@ import {
 import { getBudgetSettings } from "@/services/budgets";
 import { addComment, subscribeToComments } from "@/services/comments";
 import {
-  getNotificationSettings,
   markCommentsRead,
-  scheduleLocalNotification,
 } from "@/services/notifications";
 import {
   subscribeToPurchaseRequest,
@@ -144,6 +142,8 @@ export default function CommentsScreen() {
   const { show } = useToast();
   const insets = useSafeAreaInsets();
   const { palette } = useHifeTheme();
+  const screenTextColor = palette.chromeText;
+  const screenMutedColor = palette.chromeMutedText;
 
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -263,7 +263,7 @@ export default function CommentsScreen() {
 
     subscribeToComments(
       taskId as string,
-      async (data: Comment[], snapshot: any) => {
+      async (data: Comment[]) => {
         setComments(data);
         setLoading(false);
         await markCommentsRead(taskId as string, data.length);
@@ -272,30 +272,6 @@ export default function CommentsScreen() {
           initialSnapshotSeen.current = true;
           return;
         }
-
-        const settings = await getNotificationSettings();
-
-        if (!settings.enabled || !settings.comments) return;
-
-        snapshot.docChanges().forEach((change: any) => {
-          const item = data.find(
-            (comment: Comment) => comment.id === change.doc.id
-          );
-          const currentUserId = myUserIdRef.current;
-
-          if (
-            change.type === "added" &&
-            item &&
-            currentUserId &&
-            item.authorId !== currentUserId
-          ) {
-            scheduleLocalNotification({
-              title: "New comment",
-              body: item.text,
-              data: { requestId: taskId },
-            });
-          }
-        });
       },
       (e: unknown) => {
         logError("Failed to listen for discussion", e);
@@ -566,8 +542,10 @@ export default function CommentsScreen() {
           <View style={styles.commentsContent}>
             {!loading && comments.length === 0 && (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyTitle}>No discussion yet</Text>
-                <Text style={styles.emptyText}>
+                <Text style={[styles.emptyTitle, { color: screenTextColor }]}>
+                  No discussion yet
+                </Text>
+                <Text style={[styles.emptyText, { color: screenMutedColor }]}>
                   Add a note, product link, or question to start the decision.
                 </Text>
               </View>

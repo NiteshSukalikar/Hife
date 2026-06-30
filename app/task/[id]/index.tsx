@@ -150,6 +150,13 @@ export default function RequestDetailsScreen() {
   const { id } = useLocalSearchParams();
   const { show } = useToast();
   const { palette } = useHifeTheme();
+  const screenTextColor = palette.chromeText;
+  const screenMutedColor = palette.chromeMutedText;
+  const inputStyle = {
+    backgroundColor: palette.card,
+    borderColor: palette.border,
+    color: palette.text,
+  };
 
   const [request, setRequest] = useState<PurchaseRequest | null>(null);
   const [householdRequests, setHouseholdRequests] = useState<PurchaseRequest[]>([]);
@@ -380,14 +387,14 @@ export default function RequestDetailsScreen() {
       >
         {loading && !request ? (
           <View style={styles.centerState}>
-            <Text style={styles.centerText}>Loading request...</Text>
+            <Text style={[styles.centerText, { color: screenMutedColor }]}>Loading request...</Text>
           </View>
         ) : null}
 
         {!loading && !request ? (
           <View style={styles.centerState}>
-            <Text style={styles.centerTitle}>Request unavailable</Text>
-            <Text style={styles.centerText}>
+            <Text style={[styles.centerTitle, { color: screenTextColor }]}>Request unavailable</Text>
+            <Text style={[styles.centerText, { color: screenMutedColor }]}>
               Go back and try opening the request again.
             </Text>
           </View>
@@ -420,8 +427,12 @@ export default function RequestDetailsScreen() {
 
             <View style={styles.headerRow}>
               <View style={styles.headerText}>
-                <Text style={styles.title}>{request.productName}</Text>
-                <Text style={styles.category}>{request.category}</Text>
+                <Text style={[styles.title, { color: screenTextColor }]}>
+                  {request.productName}
+                </Text>
+                <Text style={[styles.category, { color: screenMutedColor }]}>
+                  {request.category}
+                </Text>
               </View>
               <View style={styles.headerChips}>
               {priorityColor ? (
@@ -459,9 +470,11 @@ export default function RequestDetailsScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Decision context</Text>
+              <Text style={[styles.sectionTitle, { color: palette.primary }]}>
+                Decision context
+              </Text>
               {request.createdByDisplayName || request.createdByRoleLabel ? (
-                <Text style={styles.creatorText}>
+                <Text style={[styles.creatorText, { color: screenMutedColor }]}>
                   Requested by{" "}
                   {request.createdByDisplayName || request.createdByRoleLabel}
                   {request.createdByRoleLabel
@@ -469,7 +482,9 @@ export default function RequestDetailsScreen() {
                     : ""}
                 </Text>
               ) : null}
-              <Text style={styles.bodyText}>{request.reason || "No reason added."}</Text>
+              <Text style={[styles.bodyText, { color: screenTextColor }]}>
+                {request.reason || "No reason added."}
+              </Text>
             </View>
 
             <View style={styles.metaGrid}>
@@ -528,7 +543,9 @@ export default function RequestDetailsScreen() {
             ) : null}
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Money decision</Text>
+              <Text style={[styles.sectionTitle, { color: palette.primary }]}>
+                Money decision
+              </Text>
               <View style={styles.impactGrid}>
                 <View style={styles.impactCard}>
                   <Text style={styles.impactLabel}>Safe-to-spend before</Text>
@@ -570,26 +587,26 @@ export default function RequestDetailsScreen() {
                   : null,
               ]}
             >
-              <Text style={[styles.sectionTitle, styles.darkSectionTitle]}>
+              <Text style={[styles.sectionTitle, { color: palette.primary }]}>
                 Category impact
               </Text>
-              <Text style={styles.budgetImpactText}>
+              <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>
                 Household approved this month:{" "}
                 {formatInr(budgetSummary.approvedTotal)}
               </Text>
-              <Text style={styles.budgetImpactText}>
+              <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>
                 Household pending this month: {formatInr(budgetSummary.pendingTotal)}
               </Text>
-              <Text style={styles.budgetImpactText}>
+              <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>
                 Decision budget: {formatInr(budgetBeforeRequest.decisionBudget)}
               </Text>
               {categorySummary ? (
                 <>
-                  <Text style={styles.budgetImpactText}>
+                  <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>
                     {request.category} before request:{" "}
                     {formatInr(budgetImpact?.categoryProjectedRemaining || 0)}
                   </Text>
-                  <Text style={styles.budgetImpactText}>
+                  <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>
                     {request.category} after approval:{" "}
                     {formatDecisionInr(
                       budgetImpact?.categoryRemainingAfterRequest || 0
@@ -616,9 +633,13 @@ export default function RequestDetailsScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Product links</Text>
+              <Text style={[styles.sectionTitle, { color: palette.primary }]}>
+                Product links
+              </Text>
               {request.links.length === 0 ? (
-                <Text style={styles.mutedText}>No product links added.</Text>
+                <Text style={[styles.mutedText, { color: screenMutedColor }]}>
+                  No product links added.
+                </Text>
               ) : (
                 request.links.map((link, index) => (
                   <Pressable
@@ -636,14 +657,18 @@ export default function RequestDetailsScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Decision reason</Text>
-              <Text style={styles.reasonHint}>{decisionReasonHint}</Text>
+              <Text style={[styles.sectionTitle, { color: palette.primary }]}>
+                Decision reason
+              </Text>
+              <Text style={[styles.reasonHint, { color: screenMutedColor }]}>
+                {decisionReasonHint}
+              </Text>
               <TextInput
-                style={[styles.input, styles.reasonInput]}
+                style={[styles.input, inputStyle, styles.reasonInput]}
                 value={decisionReason}
                 onChangeText={setDecisionReason}
                 placeholder="Add a short reason for this decision"
-                placeholderTextColor="#8F867A"
+                placeholderTextColor={palette.mutedText}
                 multiline
                 maxLength={300}
               />
@@ -771,7 +796,7 @@ export default function RequestDetailsScreen() {
               </Pressable>
 
               <Pressable style={styles.backButton} onPress={() => router.back()}>
-                <Text style={styles.backText}>Back</Text>
+                <Text style={[styles.backText, { color: screenMutedColor }]}>Back</Text>
               </Pressable>
             </View>
           </>
@@ -785,7 +810,7 @@ export default function RequestDetailsScreen() {
           ]}
         >
           <Pressable
-            style={styles.stickySecondary}
+            style={[styles.stickySecondary, { borderColor: palette.border }]}
             onPress={() =>
               router.push({
                 pathname: "/task/[id]/comments",
@@ -793,7 +818,9 @@ export default function RequestDetailsScreen() {
               })
             }
           >
-            <Text style={styles.stickySecondaryText}>Discuss</Text>
+            <Text style={[styles.stickySecondaryText, { color: palette.chromeText }]}>
+              Discuss
+            </Text>
           </Pressable>
           {request.status === "pending" ? (
             <Pressable

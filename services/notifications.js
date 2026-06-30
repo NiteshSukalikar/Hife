@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 
 const NOTIFICATION_SETTINGS_KEY = "HIFE_NOTIFICATION_SETTINGS";
 const READ_COUNTS_KEY = "HIFE_READ_COMMENT_COUNTS";
+const NOTIFICATION_CHANNEL_ID = "hife-updates-v2";
 
 export const DEFAULT_NOTIFICATION_SETTINGS = {
   enabled: false,
@@ -15,7 +16,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS = {
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
     shouldShowBanner: true,
     shouldShowList: true,
@@ -28,6 +29,13 @@ async function ensureAndroidChannel() {
   await Notifications.setNotificationChannelAsync("hife-updates", {
     name: "Hife updates",
     importance: Notifications.AndroidImportance.DEFAULT,
+  });
+
+  await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
+    name: "Hife updates",
+    importance: Notifications.AndroidImportance.DEFAULT,
+    sound: "default",
+    vibrationPattern: [0, 250, 250, 250],
   });
 }
 
@@ -95,8 +103,12 @@ export async function scheduleLocalNotification({ title, body, data = {} }) {
       title,
       body,
       data,
+      sound: "default",
     },
-    trigger: null,
+    trigger:
+      Platform.OS === "android"
+        ? { channelId: NOTIFICATION_CHANNEL_ID, seconds: 1 }
+        : null,
   });
 }
 

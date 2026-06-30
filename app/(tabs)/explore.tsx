@@ -181,6 +181,13 @@ export default function CreateRequestScreen() {
     Platform.OS === "web" &&
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("preview");
+  const screenTextColor = palette.chromeText;
+  const screenMutedColor = palette.chromeMutedText;
+  const inputStyle = {
+    backgroundColor: palette.card,
+    borderColor: palette.border,
+    color: palette.text,
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -519,28 +526,32 @@ export default function CreateRequestScreen() {
             ) : null}
 
             <View style={styles.fieldHeader}>
-              <Text style={styles.label}>Product name</Text>
-              <Text style={styles.counterText}>{productName.length}/40</Text>
+            <Text style={[styles.label, { color: screenTextColor }]}>Product name</Text>
+              <Text style={[styles.counterText, { color: screenMutedColor }]}>
+                {productName.length}/40
+              </Text>
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, inputStyle]}
               value={productName}
               maxLength={40}
               onChangeText={setProductName}
               placeholder="Example: Air fryer"
-              placeholderTextColor="#8F867A"
+              placeholderTextColor={palette.mutedText}
             />
 
             <View style={styles.fieldHeader}>
-              <Text style={styles.label}>Reason</Text>
-              <Text style={styles.counterText}>{reason.length}/500</Text>
+              <Text style={[styles.label, { color: screenTextColor }]}>Reason</Text>
+              <Text style={[styles.counterText, { color: screenMutedColor }]}>
+                {reason.length}/500
+              </Text>
             </View>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, inputStyle, styles.textArea]}
               value={reason}
               onChangeText={setReason}
               placeholder="Why should this be purchased?"
-              placeholderTextColor="#8F867A"
+              placeholderTextColor={palette.mutedText}
               multiline
               maxLength={500}
             />
@@ -551,7 +562,7 @@ export default function CreateRequestScreen() {
                 { backgroundColor: palette.card, borderColor: palette.border },
               ]}
             >
-              <Text style={styles.label}>Category</Text>
+              <Text style={[styles.label, { color: palette.text }]}>Category</Text>
               <SelectTiles
                 options={budgetCategories.map((item) => ({
                   label: item,
@@ -561,24 +572,24 @@ export default function CreateRequestScreen() {
                 onChange={setCategory}
               />
 
-              <Text style={styles.label}>Priority</Text>
+              <Text style={[styles.label, { color: palette.text }]}>Priority</Text>
               <SelectTiles
                 options={PRIORITY_OPTIONS}
                 value={priority}
                 onChange={setPriority}
               />
-              <Text style={styles.promptText}>
+              <Text style={[styles.promptText, { color: palette.mutedText }]}>
                 Can this wait? {PRIORITY_EXPLANATIONS[priority]}
               </Text>
 
-              <Text style={styles.label}>Purchase timing</Text>
+              <Text style={[styles.label, { color: palette.text }]}>Purchase timing</Text>
               <SelectTiles
                 options={TIMING_OPTIONS}
                 value={purchaseTiming}
                 onChange={setPurchaseTiming}
               />
 
-              <Text style={styles.label}>Purchase type</Text>
+              <Text style={[styles.label, { color: palette.text }]}>Purchase type</Text>
               <SelectTiles
                 options={PURCHASE_TYPE_OPTIONS}
                 value={purchaseType}
@@ -588,24 +599,24 @@ export default function CreateRequestScreen() {
 
             <View style={styles.priceRow}>
               <View style={styles.priceField}>
-                <Text style={styles.label}>Expected price</Text>
+                <Text style={[styles.label, { color: screenTextColor }]}>Expected price</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, inputStyle]}
                   value={expectedPrice}
                   keyboardType="numeric"
                   onChangeText={(t) => setExpectedPrice(t.replace(/[^0-9]/g, ""))}
                   placeholder="INR"
-                  placeholderTextColor="#8F867A"
+                  placeholderTextColor={palette.mutedText}
                 />
               </View>
 
               <View style={styles.priceField}>
-                <Text style={styles.label}>Max budget</Text>
+                <Text style={[styles.label, { color: screenTextColor }]}>Max budget</Text>
                 <TextInput
-                  style={[styles.input, styles.disabledInput]}
+                  style={[styles.input, inputStyle, styles.disabledInput]}
                   value={formatInr(maxRequestBudget)}
                   editable={false}
-                  placeholderTextColor="#8F867A"
+                  placeholderTextColor={palette.mutedText}
                 />
               </View>
             </View>
@@ -619,37 +630,39 @@ export default function CreateRequestScreen() {
                   : null,
               ]}
             >
-              <Text style={styles.budgetImpactTitle}>Budget impact</Text>
+              <Text style={[styles.budgetImpactTitle, { color: palette.primary }]}>
+                Budget impact
+              </Text>
               <View style={styles.impactRow}>
-                <Text style={styles.budgetImpactText}>Category budget</Text>
-                <Text style={styles.budgetImpactValue}>
+                <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>Category budget</Text>
+                <Text style={[styles.budgetImpactValue, { color: palette.text }]}>
                   {formatInr(requestImpact.categoryBudget)}
                 </Text>
               </View>
               <View style={styles.impactRow}>
-                <Text style={styles.budgetImpactText}>Category left now</Text>
-                <Text style={styles.budgetImpactValue}>
+                <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>Category left now</Text>
+                <Text style={[styles.budgetImpactValue, { color: palette.text }]}>
                   {formatInr(requestImpact.categoryProjectedRemaining)}
                 </Text>
               </View>
               <View style={styles.impactRow}>
-                <Text style={styles.budgetImpactText}>Category after request</Text>
-                <Text style={styles.budgetImpactValue}>
+                <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>Category after request</Text>
+                <Text style={[styles.budgetImpactValue, { color: palette.text }]}>
                   {requestImpact.categoryRemainingAfterRequest < 0
                     ? `over by ${formatInr(Math.abs(requestImpact.categoryRemainingAfterRequest))}`
                     : formatInr(requestImpact.categoryRemainingAfterRequest)}
                 </Text>
               </View>
-              <Text style={styles.budgetImpactText}>
+              <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>
                 Safe to spend now: {formatInr(requestImpact.safeToSpendNow)}
               </Text>
-              <Text style={styles.budgetImpactText}>
+              <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>
                 After this request:{" "}
                 {requestImpact.safeToSpendAfterRequest < 0
                   ? `over by ${formatInr(Math.abs(requestImpact.safeToSpendAfterRequest))}`
                   : formatInr(requestImpact.safeToSpendAfterRequest)}
               </Text>
-              <Text style={styles.budgetImpactText}>
+              <Text style={[styles.budgetImpactText, { color: palette.mutedText }]}>
                 Urgency: {selectedUrgency}
               </Text>
               {expectedAmount > 0 && exceedsSafeToSpend ? (
@@ -749,15 +762,15 @@ export default function CreateRequestScreen() {
             </View>
 
             <View style={styles.fieldHeader}>
-              <Text style={styles.label}>Product links</Text>
-              <Text style={styles.counterText}>Optional</Text>
+              <Text style={[styles.label, { color: screenTextColor }]}>Product links</Text>
+              <Text style={[styles.counterText, { color: screenMutedColor }]}>Optional</Text>
             </View>
             <TextInput
-              style={[styles.input, styles.linksInput]}
+              style={[styles.input, inputStyle, styles.linksInput]}
               value={linksText}
               onChangeText={setLinksText}
               placeholder="Paste one or more links, separated by commas or lines"
-              placeholderTextColor="#8F867A"
+              placeholderTextColor={palette.mutedText}
               multiline
               autoCapitalize="none"
               keyboardType="url"

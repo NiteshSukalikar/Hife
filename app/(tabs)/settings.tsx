@@ -193,6 +193,13 @@ export default function SettingsScreen() {
       const categoryInputs = budgetInputsFromSettings(settings);
       setCategoryBudgetInputs(categoryInputs);
       setMonthlyBudgetInput(String(sumCategoryBudgetInputs(categoryInputs)));
+      setMonthlyIncomeInput(settings.monthlyIncome ? String(settings.monthlyIncome) : "");
+      setCommittedExpensesInput(
+        settings.committedExpenses ? String(settings.committedExpenses) : ""
+      );
+      setSavingsReserveInput(
+        settings.savingsReserve ? String(settings.savingsReserve) : ""
+      );
       toast.show("Budget settings saved", "success");
     } catch (error) {
       logError("Failed to save budget settings", error);
@@ -210,10 +217,10 @@ export default function SettingsScreen() {
           <Text style={[styles.eyebrow, { color: palette.primary }]}>
             Settings
           </Text>
-          <Text style={[styles.title, { color: palette.text }]}>
+          <Text style={[styles.title, { color: palette.chromeText }]}>
             Make Hife feel right
           </Text>
-          <Text style={[styles.subtitle, { color: palette.mutedText }]}>
+          <Text style={[styles.subtitle, { color: palette.chromeMutedText }]}>
             Choose the visual style for shared purchase decisions on this
             device. Your room, requests, budgets, and comments stay unchanged.
           </Text>

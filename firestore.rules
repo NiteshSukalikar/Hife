@@ -87,6 +87,19 @@ service cloud.firestore {
         && request.resource.data.categoryBudgets is map;
     }
 
+    function isLegacyBudgetUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly([
+          'monthlyBudget',
+          'categoryBudgets',
+          'updatedAt'
+        ])
+        && request.resource.data.monthlyBudget is number
+        && request.resource.data.monthlyBudget >= 0
+        && request.resource.data.monthlyBudget <= 10000000
+        && request.resource.data.categoryBudgets is map;
+    }
+
     function isValidPriority(priority) {
       return priority in ['P0', 'P1', 'P2', 'P3'];
     }
@@ -183,7 +196,7 @@ service cloud.firestore {
       allow get: if isHouseholdMember(householdId);
       allow list: if signedIn() && request.auth.uid in resource.data.memberIds;
       allow create: if isCreatingOwnHousehold();
-      allow update: if isHouseholdMember(householdId) && isBudgetUpdate()
+      allow update: if isHouseholdMember(householdId) && (isBudgetUpdate() || isLegacyBudgetUpdate())
         || isJoiningHousehold();
       allow delete: if false;
 

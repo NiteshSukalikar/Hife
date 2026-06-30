@@ -1083,6 +1083,7 @@ export default function HomeScreen() {
       ) : null}
     </View>
   );
+  void ListHeader;
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
@@ -1133,13 +1134,12 @@ export default function HomeScreen() {
         contentContainerStyle={styles.listContent}
         data={filteredRequests}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={ListHeader}
         refreshing={loading}
         onRefresh={loadRequests}
         ListEmptyComponent={
           !loading ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>
+              <Text style={[styles.emptyTitle, { color: palette.chromeText }]}>
                 {error
                   ? "Requests unavailable"
                   : budgetSummary.monthlyBudget <= 0
@@ -1148,7 +1148,7 @@ export default function HomeScreen() {
                       ? "No purchase decisions yet"
                       : "No matching requests"}
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: palette.chromeMutedText }]}>
                 {error
                   ? error
                   : budgetSummary.monthlyBudget <= 0
