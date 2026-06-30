@@ -508,7 +508,7 @@ export default function CommentsScreen() {
                   </View>
                 ) : null}
                 {activeRequest.category ? (
-                  <Text style={styles.summaryCategory} numberOfLines={1}>
+                  <Text style={styles.summaryCategory}>
                     {activeRequest.category}
                   </Text>
                 ) : null}
@@ -626,7 +626,7 @@ export default function CommentsScreen() {
                         <Text style={styles.commentLinkSource}>
                           {linkPreview.source}
                         </Text>
-                        <Text style={styles.commentLink} numberOfLines={1}>
+                        <Text style={styles.commentLink}>
                           {linkPreview.url}
                         </Text>
                       </View>
@@ -776,9 +776,11 @@ const styles = StyleSheet.create({
   },
   summaryAmount: {
     color: "#3A2E28",
+    flexShrink: 1,
     fontSize: 17,
     fontWeight: "900",
     lineHeight: 23,
+    maxWidth: "44%",
     textAlign: "right",
   },
   summaryChipsRow: {
@@ -803,6 +805,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 12,
     fontWeight: "800",
+    lineHeight: 17,
   },
   summaryBudgetRow: {
     alignItems: "center",
@@ -951,7 +954,7 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   commentLinkButton: {
-    alignItems: "center",
+    alignItems: "flex-start",
     backgroundColor: "#F5F0E8",
     borderColor: "#E8DECE",
     borderRadius: 8,
@@ -984,6 +987,7 @@ const styles = StyleSheet.create({
   commentLink: {
     color: "#776E64",
     fontSize: 12,
+    lineHeight: 17,
     marginTop: 1,
   },
   time: {

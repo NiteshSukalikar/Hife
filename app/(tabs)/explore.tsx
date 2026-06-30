@@ -981,10 +981,11 @@ const styles = StyleSheet.create({
   },
   budgetImpactValue: {
     color: "#3A2E28",
-    flexShrink: 0,
+    flexShrink: 1,
     fontSize: 14,
     fontWeight: "800",
     lineHeight: 21,
+    textAlign: "right",
   },
   impactRow: {
     alignItems: "center",

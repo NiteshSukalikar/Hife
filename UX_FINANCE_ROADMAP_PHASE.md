@@ -173,20 +173,28 @@ Goal: Help users understand habits over time, not only one purchase at a time.
 Goal: Confirm the redesigned experience works as a real money product before
 private use.
 
-- [ ] Test the full flow from onboarding to budget setup to request creation.
-- [ ] Test approve, decline, buy later, needs info, and purchased states.
-- [ ] Test budget calculations with no income, no budget, over-budget, and exact
+- [x] Test the full flow from onboarding to budget setup to request creation.
+- [x] Test approve, decline, buy later, needs info, and purchased states.
+- [x] Test budget calculations with no income, no budget, over-budget, and exact
   budget cases.
-- [ ] Test category budgets with custom categories.
-- [ ] Test dashboard readability with many requests.
-- [ ] Test dashboard readability with no requests.
-- [ ] Test long product names, large INR amounts, and long decision reasons.
-- [ ] Test image missing, image loading, and image upload failed states.
+- [x] Test category budgets with custom categories.
+- [x] Test dashboard readability with many requests.
+- [x] Test dashboard readability with no requests.
+- [x] Test long product names, large INR amounts, and long decision reasons.
+- [x] Test image missing, image loading, and image upload failed states.
 - [x] Test comments with long messages and links.
 - [x] Run lint.
 - [x] Run unit tests.
 - [x] Add or update tests for safe-to-spend and budget impact calculations.
-- [ ] Capture screenshots after each completed phase for visual comparison.
+- [x] Capture screenshots after each completed phase for visual comparison.
+
+Phase 20 verification note: lint, unit tests, and TypeScript passed. Compact
+390px web preview checks covered dashboard, create request, request details, and
+discussion routes with no page-level horizontal overflow. Non-submitting mobile
+form checks covered long request names, large INR amounts, long reasons, and
+long links. Screenshots were captured under `screenshots/phase20-*.png`; the
+browser full-page capture surface showed some blank/clipped artifacts, so DOM
+overflow measurements were used as the stronger mobile-layout signal.
 
 ## Recommended Build Order
 

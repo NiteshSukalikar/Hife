@@ -627,7 +627,7 @@ export default function RequestDetailsScreen() {
                     onPress={() => openLink(link)}
                   >
                     <Text style={styles.linkSource}>{link.source}</Text>
-                    <Text style={styles.linkUrl} numberOfLines={1}>
+                    <Text style={styles.linkUrl}>
                       {link.url}
                     </Text>
                   </Pressable>
@@ -1107,6 +1107,7 @@ const styles = StyleSheet.create({
   linkUrl: {
     color: "#6F7F6A",
     fontSize: 13,
+    lineHeight: 18,
     marginTop: 3,
   },
   input: {

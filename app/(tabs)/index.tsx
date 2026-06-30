@@ -667,7 +667,7 @@ export default function HomeScreen() {
             return (
               <View key={item.category} style={styles.categoryPreviewRow}>
                 <View style={styles.categoryPreviewTop}>
-                  <Text style={styles.categoryPreviewName} numberOfLines={1}>
+                  <Text style={styles.categoryPreviewName}>
                     {item.category}
                   </Text>
                   <Text style={styles.categoryPreviewAmount}>
@@ -1243,23 +1243,23 @@ export default function HomeScreen() {
                   </View>
                 </View>
 
-                <Text style={styles.metaText} numberOfLines={1}>
+                <Text style={styles.metaText}>
                   {item.category} category
                 </Text>
-                <Text style={styles.budget} numberOfLines={1}>
+                <Text style={styles.budget}>
                   {reservesBudget ? "After approval" : "Safe to spend"}:{" "}
                   {formatSafeToSpend(afterApproval)}
                 </Text>
-                <Text style={styles.cardBudgetMeta} numberOfLines={1}>
+                <Text style={styles.cardBudgetMeta}>
                   Category projected left:{" "}
                   {formatSafeToSpend(categoryAfterApproval)}
                 </Text>
                 {safeSpendWarning ? (
-                  <Text style={styles.cardWarningText} numberOfLines={1}>
+                  <Text style={styles.cardWarningText}>
                     Would push safe-to-spend below zero.
                   </Text>
                 ) : categoryWarning ? (
-                  <Text style={styles.cardWarningText} numberOfLines={1}>
+                  <Text style={styles.cardWarningText}>
                     Large impact on this category.
                   </Text>
                 ) : null}
@@ -1490,8 +1490,10 @@ const styles = StyleSheet.create({
   },
   compactBudgetValue: {
     color: "#3A2E28",
+    flexShrink: 1,
     fontSize: 18,
     fontWeight: "900",
+    lineHeight: 23,
     marginTop: 3,
   },
   compactDivider: {
@@ -1522,8 +1524,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   categoryPreviewTop: {
-    alignItems: "center",
+    alignItems: "flex-start",
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     gap: 10,
   },
@@ -1535,6 +1538,7 @@ const styles = StyleSheet.create({
   },
   categoryPreviewAmount: {
     color: "#776E64",
+    flexShrink: 1,
     fontSize: 12,
     fontWeight: "700",
   },
@@ -1842,12 +1846,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: "800",
+    minWidth: 0,
   },
   priceText: {
     color: "#3A2E28",
-    flexShrink: 0,
+    flexShrink: 1,
     fontSize: 16,
     fontWeight: "900",
+    lineHeight: 21,
+    maxWidth: "46%",
+    textAlign: "right",
   },
   chipRow: {
     alignItems: "center",

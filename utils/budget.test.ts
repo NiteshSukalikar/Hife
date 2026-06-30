@@ -138,6 +138,21 @@ describe("buildBudgetSummary", () => {
     expect(summary.spendingProgress).toBe(1);
   });
 
+  it("keeps exact-budget decisions at zero safe-to-spend without marking over budget", () => {
+    const summary = buildBudgetSummary(
+      [
+        request({ id: "approved", expectedPrice: 7000, status: "approved" }),
+        request({ id: "pending", expectedPrice: 3000, status: "pending" }),
+      ],
+      settings
+    );
+
+    expect(summary.safeToSpend).toBe(0);
+    expect(summary.remainingBudget).toBe(3000);
+    expect(summary.spendingProgress).toBe(1);
+    expect(summary.budgetHealth).toBe("tight");
+  });
+
   it("marks budget health as needs review when no monthly budget is set", () => {
     const summary = buildBudgetSummary([], {
       monthlyBudget: 0,
