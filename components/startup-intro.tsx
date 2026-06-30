@@ -115,7 +115,7 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
               />
             </View>
             <Text style={styles.brand}>Hife</Text>
-            <Text style={styles.subtitle}>Shared budgets. Clear decisions.</Text>
+            <Text style={styles.subtitle}>Shared purchase decisions.</Text>
           </Animated.View>
         </View>
 
@@ -131,7 +131,7 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: BrandColors.primaryCharcoal,
+    backgroundColor: BrandColors.warmCream,
     zIndex: 1000,
   },
   safe: {
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     width: 132,
   },
   brand: {
-    color: BrandColors.warmCream,
+    color: BrandColors.charcoal,
     fontFamily: "serif",
     fontSize: 54,
     fontWeight: "800",
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   subtitle: {
-    color: "rgba(237, 228, 214, 0.72)",
+    color: BrandColors.mutedText,
     fontSize: 16,
     fontWeight: "600",
     lineHeight: 23,
@@ -189,9 +189,9 @@ const styles = StyleSheet.create({
   },
   getStartedButton: {
     alignItems: "center",
-    backgroundColor: BrandColors.copper,
-    borderColor: "rgba(200, 161, 90, 0.48)",
-    borderRadius: 14,
+    backgroundColor: BrandColors.clay,
+    borderColor: BrandColors.clay,
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: "row",
     gap: 8,

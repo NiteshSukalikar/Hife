@@ -573,7 +573,7 @@ export default function HomeScreen() {
           <Ionicons
             name={showBudgetOverview ? "chevron-up" : "chevron-down"}
             size={20}
-            color="#C8A15A"
+            color="#A85C44"
           />
         </View>
       </Pressable>
@@ -784,7 +784,7 @@ export default function HomeScreen() {
                 disabled={savingBudget}
                 onPress={() => removeCategory(category)}
               >
-                <Ionicons name="close" size={18} color="#C8A15A" />
+                <Ionicons name="close" size={18} color="#A85C44" />
               </Pressable>
             </View>
           ))}
@@ -833,8 +833,8 @@ export default function HomeScreen() {
                     ? enableNotifications()
                     : toggleNotificationSetting("enabled", false)
                 }
-                trackColor={{ false: "#4A3B31", true: "#B66A3C" }}
-                thumbColor="#F7F2EB"
+                trackColor={{ false: "#E8DECE", true: "#A85C44" }}
+                thumbColor="#FAF6EE"
               />
             </View>
 
@@ -854,8 +854,8 @@ export default function HomeScreen() {
                     onValueChange={(value) =>
                       toggleNotificationSetting(key, value)
                     }
-                    trackColor={{ false: "#4A3B31", true: "#B66A3C" }}
-                    thumbColor="#F7F2EB"
+                    trackColor={{ false: "#E8DECE", true: "#A85C44" }}
+                    thumbColor="#FAF6EE"
                   />
                 </View>
               )
@@ -1128,12 +1128,12 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F7F2EB",
+    backgroundColor: "#FAF6EE",
   },
   filtersWrapper: {
     borderBottomWidth: 1,
-    backgroundColor: "#11100F",
-    borderColor: "rgba(200, 161, 90, 0.20)",
+    backgroundColor: "#FAF6EE",
+    borderColor: "#E8DECE",
   },
   filters: {
     gap: 12,
@@ -1143,7 +1143,8 @@ const styles = StyleSheet.create({
   filterChip: {
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(237, 228, 214, 0.22)",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     borderRadius: 999,
     justifyContent: "center",
     minHeight: 48,
@@ -1151,32 +1152,32 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   filterChipActive: {
-    backgroundColor: "#B66A3C",
-    borderColor: "#C8A15A",
+    backgroundColor: "#A85C44",
+    borderColor: "#A85C44",
   },
   filterText: {
-    color: "rgba(247, 242, 235, 0.76)",
+    color: "#8F867A",
     fontSize: 15,
     fontWeight: "700",
   },
   filterTextActive: {
-    color: "#FFF9F0",
+    color: "#FAF6EE",
   },
   listContent: {
     padding: 18,
     paddingBottom: 28,
   },
   budgetPanel: {
-    backgroundColor: "#171310",
-    borderColor: "rgba(200, 161, 90, 0.26)",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
     borderWidth: 1,
     marginBottom: 22,
     overflow: "hidden",
     padding: 18,
-    shadowColor: "#000",
+    shadowColor: "#7A4B36",
     shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.22,
+    shadowOpacity: 0.08,
     shadowRadius: 26,
   },
   budgetHeader: {
@@ -1191,7 +1192,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   healthPill: {
-    borderColor: "rgba(237, 228, 214, 0.18)",
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
     borderRadius: 999,
     borderWidth: 1,
     fontSize: 12,
@@ -1202,49 +1204,48 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   budgetEyebrow: {
-    color: "#C8A15A",
+    color: "#7A8C6E",
     fontSize: 12,
     fontWeight: "800",
     textTransform: "uppercase",
   },
   budgetTitle: {
-    color: "#F7F2EB",
-    fontFamily: "serif",
+    color: "#3A2E28",
     fontSize: 28,
     fontWeight: "800",
     marginTop: 2,
   },
   safeSpendHero: {
-    borderBottomColor: "rgba(237, 228, 214, 0.12)",
+    borderBottomColor: "#E8DECE",
     borderBottomWidth: 1,
     marginTop: 14,
     paddingBottom: 14,
   },
   safeSpendValue: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 36,
     fontWeight: "900",
   },
   safeSpendHelp: {
-    color: "rgba(237, 228, 214, 0.72)",
+    color: "#776E64",
     fontSize: 13,
     lineHeight: 19,
     marginTop: 4,
   },
   progressTrack: {
-    backgroundColor: "rgba(247, 242, 235, 0.11)",
+    backgroundColor: "#F5F0E8",
     borderRadius: 999,
     height: 9,
     marginTop: 12,
     overflow: "hidden",
   },
   progressFill: {
-    backgroundColor: "#6F7F6A",
+    backgroundColor: "#7A8C6E",
     borderRadius: 999,
     height: "100%",
   },
   progressFillWarning: {
-    backgroundColor: "#B66A3C",
+    backgroundColor: "#A85C44",
   },
   progressMetaRow: {
     flexDirection: "row",
@@ -1253,14 +1254,14 @@ const styles = StyleSheet.create({
     marginTop: 7,
   },
   progressMetaText: {
-    color: "rgba(237, 228, 214, 0.58)",
+    color: "#8F867A",
     flexShrink: 1,
     fontSize: 11,
     fontWeight: "700",
   },
   settingsButton: {
     alignItems: "center",
-    borderColor: "rgba(200, 161, 90, 0.42)",
+    borderColor: "#A85C44",
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: "center",
@@ -1270,7 +1271,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   settingsButtonText: {
-    color: "#EDE4D6",
+    color: "#A85C44",
     fontSize: 13,
     fontWeight: "800",
   },
@@ -1282,9 +1283,9 @@ const styles = StyleSheet.create({
   },
   compactBudgetRow: {
     alignItems: "center",
-    backgroundColor: "rgba(247, 242, 235, 0.08)",
-    borderColor: "rgba(237, 228, 214, 0.12)",
-    borderRadius: 12,
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: "row",
     gap: 12,
@@ -1298,19 +1299,19 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   compactBudgetValue: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 18,
     fontWeight: "900",
     marginTop: 3,
   },
   compactDivider: {
     alignSelf: "stretch",
-    backgroundColor: "rgba(237, 228, 214, 0.16)",
+    backgroundColor: "#E8DECE",
     width: 1,
   },
   compactDetailsButton: {
     alignItems: "center",
-    borderColor: "#C8A15A",
+    borderColor: "#A85C44",
     borderRadius: 999,
     borderWidth: 1,
     justifyContent: "center",
@@ -1319,7 +1320,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   compactDetailsText: {
-    color: "#C8A15A",
+    color: "#A85C44",
     fontSize: 12,
     fontWeight: "900",
   },
@@ -1337,66 +1338,66 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   categoryPreviewName: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     flex: 1,
     fontSize: 13,
     fontWeight: "800",
   },
   categoryPreviewAmount: {
-    color: "rgba(237, 228, 214, 0.68)",
+    color: "#776E64",
     fontSize: 12,
     fontWeight: "700",
   },
   categoryTrack: {
-    backgroundColor: "rgba(247, 242, 235, 0.09)",
+    backgroundColor: "#F5F0E8",
     borderRadius: 999,
     height: 6,
     overflow: "hidden",
   },
   categoryFill: {
-    backgroundColor: "#C8A15A",
+    backgroundColor: "#C4943A",
     borderRadius: 999,
     height: "100%",
   },
   budgetStat: {
-    backgroundColor: "rgba(247, 242, 235, 0.08)",
-    borderColor: "rgba(237, 228, 214, 0.12)",
-    borderRadius: 12,
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
     borderWidth: 1,
     flexBasis: "48%",
     flexGrow: 1,
     padding: 10,
   },
   statLabel: {
-    color: "rgba(237, 228, 214, 0.68)",
+    color: "#776E64",
     fontSize: 12,
     fontWeight: "700",
   },
   statValue: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 18,
     fontWeight: "800",
     marginTop: 3,
   },
   settingsPanel: {
-    borderTopColor: "rgba(237, 228, 214, 0.14)",
+    borderTopColor: "#E8DECE",
     borderTopWidth: 1,
     marginTop: 12,
     paddingTop: 12,
   },
   inputLabel: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 13,
     fontWeight: "800",
     marginBottom: 6,
     marginTop: 8,
   },
   budgetInput: {
-    backgroundColor: "rgba(247, 242, 235, 0.08)",
-    borderColor: "rgba(237, 228, 214, 0.18)",
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     borderWidth: 1,
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 14,
     padding: 10,
   },
@@ -1407,19 +1408,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryInputLabel: {
-    color: "rgba(237, 228, 214, 0.66)",
+    color: "#776E64",
     flex: 1,
     fontSize: 13,
     fontWeight: "700",
   },
   categoryAmountText: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 13,
     fontWeight: "900",
   },
   removeCategoryButton: {
     alignItems: "center",
-    borderColor: "rgba(237, 228, 214, 0.18)",
+    borderColor: "#E8DECE",
     borderRadius: 999,
     borderWidth: 1,
     justifyContent: "center",
@@ -1428,10 +1429,10 @@ const styles = StyleSheet.create({
   },
   categoryInput: {
     backgroundColor: "#FAF6EE",
-    borderColor: "rgba(237, 228, 214, 0.18)",
+    borderColor: "#E8DECE",
     borderRadius: 8,
     borderWidth: 1,
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 14,
     padding: 9,
     width: 120,
@@ -1447,7 +1448,7 @@ const styles = StyleSheet.create({
   },
   addCategoryButton: {
     alignItems: "center",
-    borderColor: "#C8A15A",
+    borderColor: "#A85C44",
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: "center",
@@ -1455,13 +1456,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   addCategoryText: {
-    color: "#C8A15A",
+    color: "#A85C44",
     fontSize: 13,
     fontWeight: "900",
   },
   saveBudgetButton: {
     alignItems: "center",
-    backgroundColor: "#B66A3C",
+    backgroundColor: "#A85C44",
     borderRadius: 8,
     justifyContent: "center",
     marginTop: 8,
@@ -1469,7 +1470,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   saveBudgetText: {
-    color: "#FFF9F0",
+    color: "#FAF6EE",
     fontSize: 14,
     fontWeight: "800",
   },
@@ -1477,7 +1478,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   sectionHeading: {
-    color: "#C8A15A",
+    color: "#A85C44",
     fontSize: 14,
     fontWeight: "800",
     marginTop: 14,
@@ -1485,7 +1486,7 @@ const styles = StyleSheet.create({
   },
   summaryToggle: {
     alignItems: "center",
-    borderTopColor: "rgba(237, 228, 214, 0.14)",
+    borderTopColor: "#E8DECE",
     borderTopWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1493,22 +1494,22 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   summaryToggleText: {
-    color: "#EDE4D6",
+    color: "#3A2E28",
     fontSize: 13,
     fontWeight: "900",
   },
   summaryRow: {
-    borderTopColor: "rgba(237, 228, 214, 0.14)",
+    borderTopColor: "#E8DECE",
     borderTopWidth: 1,
     paddingVertical: 8,
   },
   summaryCategory: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 14,
     fontWeight: "800",
   },
   summaryText: {
-    color: "rgba(237, 228, 214, 0.66)",
+    color: "#776E64",
     fontSize: 12,
     marginTop: 2,
   },
@@ -1519,30 +1520,30 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   historyMonth: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 13,
     fontWeight: "800",
   },
   historyText: {
-    color: "rgba(237, 228, 214, 0.66)",
+    color: "#776E64",
     flex: 1,
     fontSize: 12,
     textAlign: "right",
   },
   historyEmpty: {
-    color: "rgba(237, 228, 214, 0.66)",
+    color: "#776E64",
     fontSize: 13,
   },
   card: {
     alignItems: "center",
-    backgroundColor: "#FFFBF5",
-    borderColor: "#DDCDBB",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: "row",
     marginBottom: 16,
     padding: 12,
-    shadowColor: "#6A3D27",
+    shadowColor: "#7A4B36",
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.10,
     shadowRadius: 22,
@@ -1550,7 +1551,7 @@ const styles = StyleSheet.create({
   image: {
     width: 82,
     height: 92,
-    borderRadius: 12,
+    borderRadius: 8,
     marginRight: 12,
   },
   actions: {
@@ -1576,14 +1577,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    color: "#1C1510",
+    color: "#3A2E28",
     flex: 1,
-    fontFamily: "serif",
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "800",
   },
   priceText: {
-    color: "#6A3D27",
+    color: "#3A2E28",
+    flexShrink: 0,
     fontSize: 16,
     fontWeight: "900",
   },
@@ -1622,7 +1623,7 @@ const styles = StyleSheet.create({
   },
   budget: {
     marginTop: 3,
-    color: "#A05232",
+    color: "#A85C44",
     fontSize: 15,
     fontWeight: "800",
   },
@@ -1633,7 +1634,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   cardWarningText: {
-    color: "#A05232",
+    color: "#A85C44",
     fontSize: 12,
     fontWeight: "900",
     marginTop: 2,
@@ -1645,7 +1646,7 @@ const styles = StyleSheet.create({
   },
   unreadBadge: {
     alignItems: "center",
-    backgroundColor: "#B66A3C",
+    backgroundColor: "#A85C44",
     borderRadius: 999,
     justifyContent: "center",
     minWidth: 18,
@@ -1656,12 +1657,12 @@ const styles = StyleSheet.create({
     top: -8,
   },
   unreadText: {
-    color: "#FFF9F0",
+    color: "#FAF6EE",
     fontSize: 10,
     fontWeight: "900",
   },
   notificationPanel: {
-    borderTopColor: "rgba(237, 228, 214, 0.14)",
+    borderTopColor: "#E8DECE",
     borderTopWidth: 1,
     marginTop: 14,
     paddingTop: 10,
@@ -1676,7 +1677,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationHint: {
-    color: "rgba(237, 228, 214, 0.66)",
+    color: "#776E64",
     fontSize: 12,
     lineHeight: 17,
     marginTop: -2,
@@ -1688,12 +1689,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   notificationLabel: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 13,
     fontWeight: "700",
   },
   imagePlaceholder: {
-    backgroundColor: "#F4ECE0",
+    backgroundColor: "#F5F0E8",
   },
   emptyState: {
     alignItems: "center",
@@ -1701,7 +1702,7 @@ const styles = StyleSheet.create({
     paddingVertical: 56,
   },
   emptyTitle: {
-    color: "#1C1510",
+    color: "#3A2E28",
     fontSize: 18,
     fontWeight: "700",
     textAlign: "center",

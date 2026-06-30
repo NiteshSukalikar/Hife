@@ -13,12 +13,12 @@ const HifeNavigationTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: "#B66A3C",
-    background: "#F7F2EB",
-    card: "#0F0F10",
-    text: "#1C1510",
-    border: "#DDCDBB",
-    notification: "#C8A15A",
+    primary: "#A85C44",
+    background: "#FAF6EE",
+    card: "#FFFFFF",
+    text: "#3A2E28",
+    border: "#E8DECE",
+    notification: "#C4943A",
   },
 };
 
@@ -45,7 +45,7 @@ export default function RootLayout() {
           <StartupIntro />
         </ToastProvider>
 
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
       </ThemeProvider>
     </SafeAreaProvider>
   );

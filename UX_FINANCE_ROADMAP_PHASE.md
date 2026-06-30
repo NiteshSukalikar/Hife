@@ -141,18 +141,18 @@ details.
 
 Goal: Make the app feel modern, trustworthy, and daily-use worthy.
 
-- [ ] Choose one final brand palette and remove conflicting black/neon versus
+- [x] Choose one final brand palette and remove conflicting black/neon versus
   warm cream/clay documentation.
-- [ ] Use display serif type only where it improves brand feel.
-- [ ] Use clearer sans-serif hierarchy for financial data and form labels.
-- [ ] Improve spacing consistency across cards, forms, chips, and bottom bars.
-- [ ] Reduce visual heaviness on dark sections.
-- [ ] Make status chips more scannable and consistent.
-- [ ] Make financial values visually prominent without feeling loud.
-- [ ] Ensure text never clips or truncates key decision information.
-- [ ] Improve touch target consistency for filters, chips, buttons, and tabs.
-- [ ] Verify all screens at common Android viewport sizes.
-- [ ] Verify all screens on web if web support remains part of the product.
+- [x] Use display serif type only where it improves brand feel.
+- [x] Use clearer sans-serif hierarchy for financial data and form labels.
+- [x] Improve spacing consistency across cards, forms, chips, and bottom bars.
+- [x] Reduce visual heaviness on dark sections.
+- [x] Make status chips more scannable and consistent.
+- [x] Make financial values visually prominent without feeling loud.
+- [x] Ensure text never clips or truncates key decision information.
+- [x] Improve touch target consistency for filters, chips, buttons, and tabs.
+- [x] Verify all screens at common Android viewport sizes.
+- [x] Verify all screens on web if web support remains part of the product.
 
 ## Phase 19: Finance Insights And History
 

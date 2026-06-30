@@ -6,30 +6,30 @@
 import { Platform } from 'react-native';
 
 export const BrandColors = {
-  primaryCharcoal: "#0F0F10",
-  espresso: "#1C1510",
-  richBrown: "#6A3D27",
-  copper: "#B66A3C",
-  warmCream: "#F7F2EB",
-  softBeige: "#EDE4D6",
-  mutedGold: "#C8A15A",
-  oliveSage: "#6F7F6A",
+  primaryCharcoal: "#3A2E28",
+  espresso: "#3A2E28",
+  richBrown: "#7A4B36",
+  copper: "#A85C44",
+  warmCream: "#FAF6EE",
+  softBeige: "#E8DECE",
+  mutedGold: "#C4943A",
+  oliveSage: "#7A8C6E",
   clay: "#A85C44",
-  sage: "#6F7F6A",
-  amber: "#C8A15A",
-  charcoal: "#0F0F10",
-  linen: "#EDE4D6",
-  card: "#FFFBF5",
-  input: "#F4ECE0",
-  text: "#1C1510",
-  mutedText: "#776E64",
-  border: "#DDCDBB",
-  hairline: "rgba(200, 161, 90, 0.24)",
-  darkSurface: "#171310",
-  darkPanel: "#211913",
+  sage: "#7A8C6E",
+  amber: "#C4943A",
+  charcoal: "#3A2E28",
+  linen: "#E8DECE",
+  card: "#FFFFFF",
+  input: "#F5F0E8",
+  text: "#3A2E28",
+  mutedText: "#8F867A",
+  border: "#E8DECE",
+  hairline: "rgba(58, 46, 40, 0.12)",
+  darkSurface: "#46372F",
+  darkPanel: "#5B463B",
 };
 
-const tintColor = BrandColors.copper;
+const tintColor = BrandColors.clay;
 
 export const Colors = {
   light: {
@@ -37,7 +37,7 @@ export const Colors = {
     background: BrandColors.warmCream,
     tint: tintColor,
     icon: BrandColors.mutedText,
-    tabIconDefault: BrandColors.softBeige,
+    tabIconDefault: BrandColors.mutedText,
     tabIconSelected: tintColor,
   },
   dark: {

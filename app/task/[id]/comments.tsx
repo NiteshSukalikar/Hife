@@ -171,11 +171,10 @@ export default function CommentsScreen() {
     navigation.setOptions({
       title: `${request?.productName || title || "Request"} - Discussion`,
       headerTitleAlign: "center",
-      headerStyle: { backgroundColor: "#0F0F10" },
-      headerTintColor: "#F7F2EB",
+      headerStyle: { backgroundColor: "#FFFFFF" },
+      headerTintColor: "#3A2E28",
       headerTitleStyle: {
-        color: "#F7F2EB",
-        fontFamily: "serif",
+        color: "#3A2E28",
         fontWeight: "800",
       },
     });
@@ -543,7 +542,7 @@ export default function CommentsScreen() {
                       style={styles.requestLinkPill}
                       onPress={() => openLink(item.url)}
                     >
-                      <Ionicons name="link-outline" size={14} color="#B66A3C" />
+                      <Ionicons name="link-outline" size={14} color="#A85C44" />
                       <Text style={styles.requestLinkText} numberOfLines={1}>
                         {item.source || "Product link"}
                       </Text>
@@ -611,7 +610,7 @@ export default function CommentsScreen() {
                       onPress={() => openLink(linkPreview.url)}
                     >
                       <View style={styles.commentLinkIcon}>
-                        <Ionicons name="link-outline" size={16} color="#B66A3C" />
+                        <Ionicons name="link-outline" size={16} color="#A85C44" />
                       </View>
                       <View style={styles.commentLinkCopy}>
                         <Text style={styles.commentLinkSource}>
@@ -698,7 +697,7 @@ export default function CommentsScreen() {
               disabled={isSending}
               onPress={pickImage}
             >
-              <Ionicons name="image-outline" size={22} color="#C8A15A" />
+              <Ionicons name="image-outline" size={22} color="#A85C44" />
             </Pressable>
 
             <TextInput
@@ -730,12 +729,12 @@ export default function CommentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0F0F10" },
+  container: { flex: 1, backgroundColor: "#FAF6EE" },
   flex: { flex: 1 },
   scroll: { flexGrow: 1 },
   summaryCard: {
-    backgroundColor: "#FFFBF5",
-    borderBottomColor: "#DDCDBB",
+    backgroundColor: "#FFFFFF",
+    borderBottomColor: "#E8DECE",
     borderBottomWidth: 1,
     paddingHorizontal: 20,
     paddingVertical: 16,
@@ -758,14 +757,14 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   summaryTitle: {
-    color: "#1C1510",
+    color: "#3A2E28",
     fontSize: 18,
     fontWeight: "900",
     lineHeight: 23,
     marginTop: 3,
   },
   summaryAmount: {
-    color: "#1C1510",
+    color: "#3A2E28",
     fontSize: 17,
     fontWeight: "900",
     lineHeight: 23,
@@ -818,9 +817,9 @@ const styles = StyleSheet.create({
   },
   latestActivityRow: {
     alignItems: "flex-start",
-    backgroundColor: "#F7EFE6",
-    borderColor: "#DDCDBB",
-    borderRadius: 10,
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: "row",
     gap: 7,
@@ -843,8 +842,8 @@ const styles = StyleSheet.create({
   },
   requestLinkPill: {
     alignItems: "center",
-    backgroundColor: "#F7EFE6",
-    borderColor: "#DDCDBB",
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
     borderRadius: 999,
     borderWidth: 1,
     flexDirection: "row",
@@ -854,7 +853,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   requestLinkText: {
-    color: "#B66A3C",
+    color: "#A85C44",
     flexShrink: 1,
     fontSize: 12,
     fontWeight: "900",
@@ -869,20 +868,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   emptyTitle: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 17,
     fontWeight: "700",
     textAlign: "center",
   },
   emptyText: {
-    color: "rgba(237, 228, 214, 0.70)",
+    color: "#776E64",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
     textAlign: "center",
   },
   commentCard: {
-    borderRadius: 14,
+    borderRadius: 8,
     borderWidth: 1,
     marginBottom: 16,
     maxWidth: "88%",
@@ -893,13 +892,13 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
   },
   myComment: {
-    backgroundColor: "#211913",
-    borderColor: "rgba(200, 161, 90, 0.52)",
+    backgroundColor: "#FBEDE8",
+    borderColor: "#A85C44",
     alignSelf: "flex-end",
   },
   otherComment: {
-    backgroundColor: "#FFFBF5",
-    borderColor: "#DDCDBB",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
     alignSelf: "flex-start",
   },
   commentMetaRow: {
@@ -909,17 +908,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   authorText: {
-    color: "#B66A3C",
+    color: "#A85C44",
     flexShrink: 1,
     fontSize: 12,
     fontWeight: "900",
   },
   rolePill: {
     backgroundColor: "rgba(200, 161, 90, 0.12)",
-    borderColor: "#C8A15A",
+    borderColor: "#C4943A",
     borderRadius: 999,
     borderWidth: 1,
-    color: "#C8A15A",
+    color: "#7A5A12",
     fontSize: 10,
     fontWeight: "800",
     overflow: "hidden",
@@ -927,24 +926,24 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   commentText: {
-    color: "#1C1510",
+    color: "#3A2E28",
     fontSize: 15,
     lineHeight: 22,
     marginBottom: 6,
   },
   myCommentText: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
   },
   commentImage: {
     height: 140,
-    borderRadius: 12,
+    borderRadius: 8,
     marginVertical: 6,
   },
   commentLinkButton: {
     alignItems: "center",
-    backgroundColor: "rgba(247, 239, 230, 0.94)",
-    borderColor: "#DDCDBB",
-    borderRadius: 12,
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: "row",
     gap: 10,
@@ -957,7 +956,7 @@ const styles = StyleSheet.create({
   commentLinkIcon: {
     alignItems: "center",
     backgroundColor: "#FFF9F0",
-    borderRadius: 14,
+    borderRadius: 8,
     height: 28,
     justifyContent: "center",
     width: 28,
@@ -967,7 +966,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   commentLinkSource: {
-    color: "#1C1510",
+    color: "#3A2E28",
     fontSize: 12,
     fontWeight: "900",
   },
@@ -982,20 +981,20 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   myTime: {
-    color: "rgba(237, 228, 214, 0.62)",
+    color: "#8F867A",
   },
   inputArea: {
     borderTopWidth: 1,
-    borderColor: "rgba(200, 161, 90, 0.24)",
+    borderColor: "#E8DECE",
     paddingHorizontal: 14,
     paddingVertical: 14,
-    backgroundColor: "#171310",
+    backgroundColor: "#FFFFFF",
   },
   selectedImageRow: {
     alignItems: "center",
-    backgroundColor: "#211913",
-    borderColor: "rgba(237, 228, 214, 0.18)",
-    borderRadius: 12,
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1004,10 +1003,10 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   selectedImageRowError: {
-    borderColor: "#B66A3C",
+    borderColor: "#A85C44",
   },
   selectedImageText: {
-    color: "#F7F2EB",
+    color: "#3A2E28",
     fontSize: 13,
     fontWeight: "700",
   },
@@ -1028,18 +1027,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "#211913",
+    backgroundColor: "#FFFFFF",
     minHeight: 58,
     maxHeight: 104,
     borderWidth: 1,
-    borderColor: "rgba(237, 228, 214, 0.20)",
-    borderRadius: 12,
+    borderColor: "#E8DECE",
+    borderRadius: 8,
     padding: 12,
     marginBottom: 8,
-    color: "#F7F2EB",
+    color: "#3A2E28",
   },
   counterText: {
-    color: "rgba(237, 228, 214, 0.66)",
+    color: "#8F867A",
     fontSize: 12,
     fontWeight: "700",
     marginBottom: 8,
@@ -1060,8 +1059,8 @@ const styles = StyleSheet.create({
   },
   quickReplyButton: {
     alignItems: "center",
-    backgroundColor: "#211913",
-    borderColor: "rgba(200, 161, 90, 0.34)",
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
     borderRadius: 999,
     borderWidth: 1,
     justifyContent: "center",
@@ -1069,24 +1068,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   quickReplyText: {
-    color: "#EDE4D6",
+    color: "#3A2E28",
     fontSize: 12,
     fontWeight: "800",
   },
   linkInput: {
     flex: 1,
-    backgroundColor: "#211913",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "rgba(237, 228, 214, 0.20)",
-    borderRadius: 12,
+    borderColor: "#E8DECE",
+    borderRadius: 8,
     minHeight: 44,
     padding: 6,
     fontSize: 13,
-    color: "#F7F2EB",
+    color: "#3A2E28",
   },
   sendBtn: {
     alignItems: "center",
-    backgroundColor: "#B66A3C",
+    backgroundColor: "#A85C44",
     borderRadius: 999,
     flexDirection: "row",
     gap: 6,
@@ -1096,7 +1095,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   sendText: {
-    color: "#FFF9F0",
+    color: "#FAF6EE",
     fontSize: 13,
     fontWeight: "900",
   },

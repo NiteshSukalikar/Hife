@@ -2,9 +2,9 @@
 
 ## Direction
 
-Hife uses a warm, people-centered visual identity. The app should feel like
+Hife uses one warm, people-centered visual identity. The app should feel like
 shared purchase planning for partners, rooms, events, and small teams: calm,
-human, clear, and trustworthy.
+human, clear, trustworthy, and polished enough for daily use.
 
 ## Core Colors
 
@@ -17,6 +17,14 @@ human, clear, and trustworthy.
 - Card: `#FFFFFF`
 - Input background: `#F5F0E8`
 - Muted text: `#8F867A`
+
+## Final Direction
+
+Hife uses the warm cream, clay, sage, amber, charcoal, linen, and white system
+above across every surface. Avoid returning to the older black/neon, espresso,
+copper, and gold-heavy treatment. Dark accents may be used only as quiet
+charcoal text or rare contrast surfaces; they should not dominate headers,
+budget panels, comments, or tab bars.
 
 ## Semantic Status Colors
 
@@ -40,8 +48,11 @@ human, clear, and trustworthy.
   is destructive.
 - Keep financial values clear and calm. The user should understand whether a
   purchase is safe without feeling alarmed.
-- Use brand display type sparingly. Dense financial information should favor
-  readability over decoration.
+- Use brand display type sparingly for the product name or large editorial
+  moments. Financial values, form labels, chips, and dense decision information
+  use a clear sans-serif hierarchy.
+- Keep card radius at `8px`. Circular controls and pills may stay fully rounded
+  when their shape communicates the control type.
 
 ## Logo Direction
 
