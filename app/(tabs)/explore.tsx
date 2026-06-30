@@ -28,7 +28,6 @@ import {
 import { validateImageAsset } from "@/utils/productMedia";
 import { parseProductLinks } from "@/utils/productLinks";
 import { validateRequestDraft } from "@/utils/requestValidation";
-import { Picker } from "@react-native-picker/picker";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -52,6 +51,83 @@ const AI_RECOMMENDATION_LABELS: Record<AiRecommendation, string> = {
   buy_later: "Buy later",
   needs_more_info: "Needs more info",
 };
+const PRIORITY_OPTIONS: { label: string; value: RequestPriority; helper: string }[] = [
+  { label: "P0", value: "P0", helper: "12 hrs" },
+  { label: "P1", value: "P1", helper: "24 hrs" },
+  { label: "P2", value: "P2", helper: "48 hrs" },
+  { label: "P3", value: "P3", helper: "72 hrs" },
+];
+const PREVIEW_BUDGET_SETTINGS: BudgetSettings = {
+  monthlyBudget: 5000,
+  categoryBudgets: {
+    Home: 5000,
+    Kitchen: 2500,
+    Work: 2000,
+  },
+};
+const PREVIEW_REQUESTS: PurchaseRequest[] = [
+  {
+    id: "preview",
+    title: "Quiet Air Purifier",
+    productName: "Quiet Air Purifier",
+    info: "Needed for better sleep and cleaner room air.",
+    reason: "The room gets dusty quickly and this keeps the space healthier without making noise.",
+    priority: "P1",
+    expectedPrice: 3500,
+    maxBudget: 5000,
+    budget: 5000,
+    category: "Home",
+    links: [],
+    status: "purchased",
+  },
+];
+
+type SelectTileProps<T extends string> = {
+  options: { label: string; value: T; helper?: string }[];
+  value: T;
+  onChange: (value: T) => void;
+};
+
+function SelectTiles<T extends string>({
+  options,
+  value,
+  onChange,
+}: SelectTileProps<T>) {
+  return (
+    <View style={styles.selectTiles}>
+      {options.map((option) => {
+        const selected = option.value === value;
+
+        return (
+          <Pressable
+            key={option.value}
+            style={[styles.selectTile, selected && styles.selectTileActive]}
+            onPress={() => onChange(option.value)}
+          >
+            <Text
+              style={[
+                styles.selectTileLabel,
+                selected && styles.selectTileLabelActive,
+              ]}
+            >
+              {option.label}
+            </Text>
+            {option.helper ? (
+              <Text
+                style={[
+                  styles.selectTileHelper,
+                  selected && styles.selectTileHelperActive,
+                ]}
+              >
+                {option.helper}
+              </Text>
+            ) : null}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 export default function CreateRequestScreen() {
   const [image, setImage] = useState<string | null>(null);
@@ -73,9 +149,18 @@ export default function CreateRequestScreen() {
   const [isAskingAi, setIsAskingAi] = useState(false);
 
   const toast = useToast();
+  const isPreview =
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("preview");
 
   useFocusEffect(
     useCallback(() => {
+      if (isPreview) {
+        setBudgetSettings(PREVIEW_BUDGET_SETTINGS);
+        return;
+      }
+
       getBudgetSettings()
         .then((settings) => {
           setBudgetSettings(settings);
@@ -83,10 +168,15 @@ export default function CreateRequestScreen() {
         .catch((error) => {
           logError("Failed to load budget context", error);
         });
-    }, [])
+    }, [isPreview])
   );
 
   useEffect(() => {
+    if (isPreview) {
+      setRequests(PREVIEW_REQUESTS);
+      return;
+    }
+
     let unsubscribe: undefined | (() => void);
     let cancelled = false;
 
@@ -107,7 +197,7 @@ export default function CreateRequestScreen() {
       cancelled = true;
       unsubscribe?.();
     };
-  }, []);
+  }, [isPreview]);
 
   const budgetSummary = useMemo(
     () => buildBudgetSummary(requests, budgetSettings),
@@ -379,32 +469,22 @@ export default function CreateRequestScreen() {
             />
 
             <View style={styles.formSection}>
-            <Text style={styles.label}>Category</Text>
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={category}
-                onValueChange={setCategory}
-                style={styles.picker}
-              >
-                {budgetCategories.map((item) => (
-                  <Picker.Item key={item} label={item} value={item} />
-                ))}
-              </Picker>
-            </View>
+              <Text style={styles.label}>Category</Text>
+              <SelectTiles
+                options={budgetCategories.map((item) => ({
+                  label: item,
+                  value: item,
+                }))}
+                value={category}
+                onChange={setCategory}
+              />
 
-            <Text style={styles.label}>Priority</Text>
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={priority}
-                onValueChange={(value) => setPriority(value)}
-                style={styles.picker}
-              >
-                <Picker.Item label="P0 - Immediate (12 hrs)" value="P0" />
-                <Picker.Item label="P1 - Within 24 hrs" value="P1" />
-                <Picker.Item label="P2 - Within 48 hrs" value="P2" />
-                <Picker.Item label="P3 - Within 72 hrs" value="P3" />
-              </Picker>
-            </View>
+              <Text style={styles.label}>Priority</Text>
+              <SelectTiles
+                options={PRIORITY_OPTIONS}
+                value={priority}
+                onChange={setPriority}
+              />
             </View>
 
             <View style={styles.priceRow}>
@@ -571,37 +651,44 @@ export default function CreateRequestScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#FAF6EE",
+    backgroundColor: "#F7F2EB",
   },
   flex: {
     flex: 1,
   },
   scroll: {
+    alignSelf: "center",
     flexGrow: 1,
-    padding: 16,
-    paddingBottom: 28,
+    maxWidth: 430,
+    padding: 20,
+    paddingBottom: 34,
+    width: "100%",
   },
   imagePicker: {
-    height: 160,
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
+    height: 190,
+    borderRadius: 18,
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
+    shadowColor: "#6A3D27",
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.10,
+    shadowRadius: 24,
   },
   imagePickerError: {
-    borderColor: "#A85C44",
+    borderColor: "#B66A3C",
   },
   image: {
     width: "100%",
     height: "100%",
-    borderRadius: 10,
+    borderRadius: 18,
   },
   imageOverlay: {
     alignItems: "center",
-    backgroundColor: "rgba(250, 246, 238, 0.86)",
+    backgroundColor: "rgba(247, 242, 235, 0.88)",
     bottom: 0,
     justifyContent: "center",
     left: 0,
@@ -610,13 +697,15 @@ const styles = StyleSheet.create({
     top: 0,
   },
   imageOverlayText: {
-    color: "#3A2E28",
+    color: "#1C1510",
     fontSize: 14,
     fontWeight: "700",
   },
   imageText: {
     fontSize: 16,
-    color: "#A85C44",
+    color: "#A05232",
+    fontFamily: "serif",
+    fontWeight: "700",
   },
   errorText: {
     color: "#873926",
@@ -625,9 +714,10 @@ const styles = StyleSheet.create({
     marginTop: -8,
   },
   label: {
-    color: "#3A2E28",
-    fontSize: 14,
-    fontWeight: "600",
+    color: "#1C1510",
+    fontFamily: "serif",
+    fontSize: 18,
+    fontWeight: "800",
     marginBottom: 6,
     marginTop: 12,
   },
@@ -637,46 +727,79 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   counterText: {
-    color: "#8F867A",
-    fontSize: 12,
+    color: "#776E64",
+    flexShrink: 0,
+    fontSize: 14,
     fontWeight: "700",
     marginTop: 12,
   },
   formSection: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
-    borderRadius: 8,
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
+    borderRadius: 16,
     borderWidth: 1,
-    marginTop: 16,
-    padding: 12,
+    marginTop: 20,
+    padding: 16,
+    shadowColor: "#6A3D27",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
   },
   input: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFFBF5",
     borderWidth: 1,
-    borderColor: "#E8DECE",
-    borderRadius: 8,
-    color: "#3A2E28",
-    minHeight: 44,
-    padding: 10,
-    fontSize: 14,
+    borderColor: "#DDCDBB",
+    borderRadius: 12,
+    color: "#1C1510",
+    minHeight: 52,
+    padding: 14,
+    fontSize: 16,
   },
   disabledInput: {
-    color: "#8F867A",
+    color: "#776E64",
     opacity: 0.82,
   },
   textArea: {
     height: 120,
     textAlignVertical: "top",
   },
-  pickerWrapper: {
-    backgroundColor: "#FAF6EE",
-    borderWidth: 1,
-    borderColor: "#E8DECE",
-    borderRadius: 8,
-    minHeight: 44,
+  selectTiles: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
-  picker: {
-    color: "#3A2E28",
+  selectTile: {
+    alignItems: "center",
+    backgroundColor: "#F4ECE0",
+    borderColor: "#DDCDBB",
+    borderRadius: 12,
+    borderWidth: 1,
+    flexGrow: 1,
+    minHeight: 52,
+    minWidth: 84,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  selectTileActive: {
+    backgroundColor: "#211913",
+    borderColor: "#C8A15A",
+  },
+  selectTileLabel: {
+    color: "#1C1510",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  selectTileLabelActive: {
+    color: "#F7F2EB",
+  },
+  selectTileHelper: {
+    color: "#776E64",
+    fontSize: 11,
+    fontWeight: "800",
+    marginTop: 2,
+  },
+  selectTileHelperActive: {
+    color: "#C8A15A",
   },
   priceRow: {
     flexDirection: "row",
@@ -686,40 +809,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   budgetImpact: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
-    borderRadius: 8,
+    backgroundColor: "#171310",
+    borderColor: "rgba(200, 161, 90, 0.26)",
+    borderRadius: 16,
     borderWidth: 1,
-    marginTop: 16,
-    padding: 12,
+    marginTop: 20,
+    padding: 16,
   },
   budgetImpactWarning: {
     borderColor: "#C4943A",
   },
   budgetImpactTitle: {
-    color: "#A85C44",
-    fontSize: 14,
+    color: "#C8A15A",
+    fontFamily: "serif",
+    fontSize: 20,
     fontWeight: "800",
     marginBottom: 6,
   },
   budgetImpactText: {
-    color: "#8F867A",
-    fontSize: 13,
-    lineHeight: 19,
+    color: "rgba(237, 228, 214, 0.74)",
+    fontSize: 14,
+    lineHeight: 21,
   },
   warningText: {
-    color: "#7A5A12",
+    color: "#C8A15A",
     fontSize: 13,
     fontWeight: "800",
     marginTop: 6,
   },
   aiPanel: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
-    borderRadius: 8,
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
+    borderRadius: 16,
     borderWidth: 1,
-    marginTop: 16,
-    padding: 12,
+    marginTop: 20,
+    padding: 16,
   },
   aiHeader: {
     alignItems: "center",
@@ -730,32 +854,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   aiTitle: {
-    color: "#A85C44",
-    fontSize: 14,
+    color: "#A05232",
+    fontFamily: "serif",
+    fontSize: 18,
     fontWeight: "800",
   },
   aiHint: {
-    color: "#8F867A",
+    color: "#776E64",
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
   },
   askAiButton: {
     alignItems: "center",
-    backgroundColor: "#A85C44",
-    borderRadius: 8,
+    backgroundColor: "#B66A3C",
+    borderRadius: 12,
     justifyContent: "center",
     minHeight: 44,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
   askAiText: {
-    color: "#FAF6EE",
+    color: "#FFF9F0",
     fontSize: 13,
     fontWeight: "800",
   },
   aiResult: {
-    borderTopColor: "#E8DECE",
+    borderTopColor: "#DDCDBB",
     borderTopWidth: 1,
     marginTop: 12,
     paddingTop: 12,
@@ -767,32 +892,33 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   aiResultLabel: {
-    color: "#8F867A",
+    color: "#776E64",
     fontSize: 12,
     fontWeight: "700",
   },
   aiResultValue: {
-    color: "#3A2E28",
-    fontSize: 16,
+    color: "#1C1510",
+    fontFamily: "serif",
+    fontSize: 20,
     fontWeight: "800",
     marginTop: 2,
   },
   aiPriorityPill: {
-    backgroundColor: "#A85C44",
+    backgroundColor: "#B66A3C",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
   aiPriorityText: {
-    color: "#FAF6EE",
+    color: "#FFF9F0",
     fontSize: 13,
     fontWeight: "900",
   },
   applyPriorityButton: {
     alignSelf: "flex-start",
     alignItems: "center",
-    borderColor: "#A85C44",
-    borderRadius: 8,
+    borderColor: "#B66A3C",
+    borderRadius: 12,
     borderWidth: 1,
     justifyContent: "center",
     marginTop: 10,
@@ -801,34 +927,34 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   applyPriorityText: {
-    color: "#A85C44",
+    color: "#A05232",
     fontSize: 12,
     fontWeight: "800",
   },
   aiSectionLabel: {
-    color: "#7A8C6E",
+    color: "#6F7F6A",
     fontSize: 12,
     fontWeight: "800",
     marginTop: 12,
     textTransform: "uppercase",
   },
   aiBody: {
-    color: "#3A2E28",
+    color: "#1C1510",
     fontSize: 13,
     lineHeight: 19,
     marginTop: 4,
   },
   aiMessage: {
-    backgroundColor: "#F5F0E8",
-    borderRadius: 8,
-    color: "#3A2E28",
+    backgroundColor: "#F4ECE0",
+    borderRadius: 12,
+    color: "#1C1510",
     fontSize: 13,
     lineHeight: 19,
     marginTop: 6,
     padding: 10,
   },
   aiCacheText: {
-    color: "#8F867A",
+    color: "#776E64",
     fontSize: 12,
     marginTop: 10,
   },
@@ -838,8 +964,8 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     alignItems: "center",
-    backgroundColor: "#A85C44",
-    borderRadius: 8,
+    backgroundColor: "#B66A3C",
+    borderRadius: 14,
     justifyContent: "center",
     marginTop: 24,
     minHeight: 52,
@@ -849,7 +975,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   saveText: {
-    color: "#FAF6EE",
+    color: "#FFF9F0",
     fontSize: 16,
     fontWeight: "600",
   },

@@ -5,6 +5,7 @@ import {
   Animated,
   Easing,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -17,7 +18,11 @@ type StartupIntroProps = {
 };
 
 export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
-  const [visible, setVisible] = useState(true);
+  const skipIntro =
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("preview");
+  const [visible, setVisible] = useState(!skipIntro);
   const fade = useRef(new Animated.Value(1)).current;
   const logo = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(0)).current;
@@ -47,6 +52,11 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
   }, [fade]);
 
   useEffect(() => {
+    if (skipIntro) {
+      setVisible(false);
+      return;
+    }
+
     Animated.timing(logo, {
       toValue: 1,
       duration: 720,
@@ -78,9 +88,9 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
       clearTimeout(timer);
       pulseLoop.stop();
     };
-  }, [durationMs, hide, logo, pulse]);
+  }, [durationMs, hide, logo, pulse, skipIntro]);
 
-  if (!visible) return null;
+  if (skipIntro || !visible) return null;
 
   return (
     <Animated.View style={[styles.overlay, { opacity: fade }]}>
@@ -121,7 +131,7 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: BrandColors.warmCream,
+    backgroundColor: BrandColors.primaryCharcoal,
     zIndex: 1000,
   },
   safe: {
@@ -148,7 +158,9 @@ const styles = StyleSheet.create({
     width: 150,
   },
   markGlow: {
-    backgroundColor: "#F0DED4",
+    backgroundColor: "rgba(182, 106, 60, 0.24)",
+    borderColor: "rgba(200, 161, 90, 0.24)",
+    borderWidth: 1,
     borderRadius: 68,
     height: 136,
     position: "absolute",
@@ -159,14 +171,15 @@ const styles = StyleSheet.create({
     width: 132,
   },
   brand: {
-    color: BrandColors.clay,
+    color: BrandColors.warmCream,
+    fontFamily: "serif",
     fontSize: 54,
     fontWeight: "800",
     letterSpacing: 0,
     marginTop: 18,
   },
   subtitle: {
-    color: BrandColors.mutedText,
+    color: "rgba(237, 228, 214, 0.72)",
     fontSize: 16,
     fontWeight: "600",
     lineHeight: 23,
@@ -176,8 +189,10 @@ const styles = StyleSheet.create({
   },
   getStartedButton: {
     alignItems: "center",
-    backgroundColor: BrandColors.clay,
-    borderRadius: 12,
+    backgroundColor: BrandColors.copper,
+    borderColor: "rgba(200, 161, 90, 0.48)",
+    borderRadius: 14,
+    borderWidth: 1,
     flexDirection: "row",
     gap: 8,
     justifyContent: "center",

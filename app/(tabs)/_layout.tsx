@@ -1,6 +1,6 @@
 import { Redirect, Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -11,10 +11,20 @@ import { logError } from '@/utils/safeLogger';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const isPreview =
+    Platform.OS === 'web' &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).has('preview');
   const [checkingHousehold, setCheckingHousehold] = useState(true);
   const [hasHousehold, setHasHousehold] = useState(false);
 
   useEffect(() => {
+    if (isPreview) {
+      setHasHousehold(true);
+      setCheckingHousehold(false);
+      return;
+    }
+
     let isMounted = true;
 
     getActiveHousehold()
@@ -32,7 +42,7 @@ export default function TabLayout() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isPreview]);
 
   if (checkingHousehold) {
     return (
@@ -52,11 +62,15 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
         tabBarStyle: {
-          backgroundColor: Colors[colorScheme ?? 'light'].background,
-          borderTopColor: '#E8DECE',
+          backgroundColor: '#11100F',
+          borderTopColor: 'rgba(200, 161, 90, 0.22)',
+          height: 78,
+          paddingBottom: 12,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontWeight: '700',
+          fontSize: 12,
+          fontWeight: '800',
         },
         headerShown: false,
         tabBarButton: HapticTab,

@@ -13,6 +13,7 @@ import {
   Switch,
   FlatList,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -60,6 +61,48 @@ const FILTERS: { label: string; value: FilterValue }[] = [
 ];
 
 const FILTER_VALUES = new Set<FilterValue>(FILTERS.map((filter) => filter.value));
+const previewTimestamp = {
+  toDate: () => new Date("2026-06-29T19:54:28+05:30"),
+};
+const PREVIEW_BUDGET_SETTINGS: BudgetSettings = {
+  monthlyBudget: 5000,
+  categoryBudgets: {
+    Home: 5000,
+    Kitchen: 2500,
+    Work: 2000,
+  },
+};
+const PREVIEW_REQUESTS: PurchaseRequest[] = [
+  {
+    id: "preview",
+    title: "Quiet Air Purifier",
+    productName: "Quiet Air Purifier",
+    info: "Needed for better sleep and cleaner room air.",
+    reason: "The room gets dusty quickly and this keeps the space healthier without making noise.",
+    priority: "P1",
+    expectedPrice: 3500,
+    maxBudget: 5000,
+    budget: 5000,
+    category: "Home",
+    links: [],
+    status: "purchased",
+    decisionReason: "Approved because it improves daily comfort and stays within the monthly room budget.",
+    decisionBy: null,
+    decisionAt: null,
+    image: null,
+    householdId: "preview-household",
+    createdBy: "partner-a",
+    createdByDisplayName: "Nitesh",
+    createdByRoleLabel: "Partner A",
+    createdAt: previewTimestamp,
+    updatedAt: previewTimestamp,
+    lastActivityAt: previewTimestamp,
+    lastActivityType: "comment",
+    commentCount: 4,
+    lastCommentBy: "partner-b",
+    lastCommentText: "Looks useful. Approved.",
+  },
+];
 
 function splitMonthlyBudgetAcrossCategories(
   monthlyBudget: number,
@@ -92,6 +135,10 @@ type NotificationSettings = typeof DEFAULT_NOTIFICATION_SETTINGS;
 export default function HomeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ filter?: string }>();
+  const isPreview =
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("preview");
   const toast = useToast();
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [budgetSettings, setBudgetSettings] = useState<BudgetSettings>(
@@ -122,6 +169,18 @@ export default function HomeScreen() {
   );
 
   const loadRequests = useCallback(async () => {
+    if (isPreview) {
+      setError(null);
+      setRequests(PREVIEW_REQUESTS);
+      setBudgetSettings(PREVIEW_BUDGET_SETTINGS);
+      setReadCommentCounts({ preview: 1 });
+      setMyUserId("partner-a");
+      setMonthlyBudgetInput(String(PREVIEW_BUDGET_SETTINGS.monthlyBudget));
+      setCategoryBudgetInputs(budgetInputsFromSettings(PREVIEW_BUDGET_SETTINGS));
+      setLoading(false);
+      return;
+    }
+
     try {
       setError(null);
       const [data, settings, readCounts, savedNotificationSettings, userId] =
@@ -150,7 +209,7 @@ export default function HomeScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isPreview]);
 
   useEffect(() => {
     myUserIdRef.current = myUserId;
@@ -171,6 +230,8 @@ export default function HomeScreen() {
   }, [params.filter]);
 
   useEffect(() => {
+    if (isPreview) return;
+
     let unsubscribe: undefined | (() => void);
     let cancelled = false;
 
@@ -256,7 +317,7 @@ export default function HomeScreen() {
       cancelled = true;
       unsubscribe?.();
     };
-  }, []);
+  }, [isPreview]);
 
   const budgetSummary = useMemo(
     () => buildBudgetSummary(requests, budgetSettings),
@@ -432,13 +493,15 @@ export default function HomeScreen() {
           <Text style={styles.budgetTitle}>Budget overview</Text>
         </View>
         <View style={styles.budgetHeaderAction}>
-          <Text style={styles.budgetHeaderMeta}>
-            {formatInr(budgetSummary.remainingBudget)} left
+          <Text style={styles.budgetHeaderMeta} numberOfLines={1}>
+            {budgetSummary.remainingBudget >= 1000
+              ? `INR ${(budgetSummary.remainingBudget / 1000).toFixed(1)}k`
+              : formatInr(budgetSummary.remainingBudget)}
           </Text>
           <Ionicons
             name={showBudgetOverview ? "chevron-up" : "chevron-down"}
             size={20}
-            color="#A85C44"
+            color="#C8A15A"
           />
         </View>
       </Pressable>
@@ -529,7 +592,7 @@ export default function HomeScreen() {
                 disabled={savingBudget}
                 onPress={() => removeCategory(category)}
               >
-                <Ionicons name="close" size={18} color="#A85C44" />
+                <Ionicons name="close" size={18} color="#C8A15A" />
               </Pressable>
             </View>
           ))}
@@ -578,8 +641,8 @@ export default function HomeScreen() {
                     ? enableNotifications()
                     : toggleNotificationSetting("enabled", false)
                 }
-                trackColor={{ false: "#E8DECE", true: "#A85C44" }}
-                thumbColor="#3A2E28"
+                trackColor={{ false: "#4A3B31", true: "#B66A3C" }}
+                thumbColor="#F7F2EB"
               />
             </View>
 
@@ -599,8 +662,8 @@ export default function HomeScreen() {
                     onValueChange={(value) =>
                       toggleNotificationSetting(key, value)
                     }
-                    trackColor={{ false: "#E8DECE", true: "#A85C44" }}
-                    thumbColor="#3A2E28"
+                    trackColor={{ false: "#4A3B31", true: "#B66A3C" }}
+                    thumbColor="#F7F2EB"
                   />
                 </View>
               )
@@ -795,7 +858,7 @@ export default function HomeScreen() {
                   <Ionicons
                     name="chatbubble-ellipses-outline"
                     size={22}
-                    color="#7A8C6E"
+                    color="#6F7F6A"
                   />
                   {Math.max(
                     Number(item.commentCount || 0) -
@@ -817,7 +880,7 @@ export default function HomeScreen() {
                 <Ionicons
                   name="chevron-forward"
                   size={22}
-                  color="#8F867A"
+                  color="#776E64"
                 />
               </View>
             </Pressable>
@@ -831,49 +894,56 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAF6EE",
+    backgroundColor: "#F7F2EB",
   },
   filtersWrapper: {
     borderBottomWidth: 1,
-    borderColor: "#E8DECE",
+    backgroundColor: "#11100F",
+    borderColor: "rgba(200, 161, 90, 0.20)",
   },
   filters: {
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
   },
   filterChip: {
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E8DECE",
+    borderColor: "rgba(237, 228, 214, 0.22)",
     borderRadius: 999,
     justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    minHeight: 48,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
   },
   filterChipActive: {
-    backgroundColor: "#A85C44",
-    borderColor: "#A85C44",
+    backgroundColor: "#B66A3C",
+    borderColor: "#C8A15A",
   },
   filterText: {
-    color: "#8F867A",
-    fontSize: 13,
-    fontWeight: "600",
+    color: "rgba(247, 242, 235, 0.76)",
+    fontSize: 15,
+    fontWeight: "700",
   },
   filterTextActive: {
-    color: "#FAF6EE",
+    color: "#FFF9F0",
   },
   listContent: {
-    padding: 12,
+    padding: 18,
+    paddingBottom: 28,
   },
   budgetPanel: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
-    borderRadius: 10,
+    backgroundColor: "#171310",
+    borderColor: "rgba(200, 161, 90, 0.26)",
+    borderRadius: 16,
     borderWidth: 1,
-    marginBottom: 14,
-    padding: 12,
+    marginBottom: 22,
+    overflow: "hidden",
+    padding: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.22,
+    shadowRadius: 26,
   },
   budgetHeader: {
     alignItems: "center",
@@ -887,25 +957,27 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   budgetHeaderMeta: {
-    color: "#A85C44",
-    fontSize: 13,
+    color: "#C8A15A",
+    fontSize: 15,
     fontWeight: "800",
+    maxWidth: 112,
   },
   budgetEyebrow: {
-    color: "#7A8C6E",
+    color: "#C8A15A",
     fontSize: 12,
     fontWeight: "800",
     textTransform: "uppercase",
   },
   budgetTitle: {
-    color: "#3A2E28",
-    fontSize: 18,
+    color: "#F7F2EB",
+    fontFamily: "serif",
+    fontSize: 28,
     fontWeight: "800",
     marginTop: 2,
   },
   settingsButton: {
     alignItems: "center",
-    borderColor: "#A85C44",
+    borderColor: "rgba(200, 161, 90, 0.42)",
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: "center",
@@ -915,7 +987,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   settingsButtonText: {
-    color: "#A85C44",
+    color: "#EDE4D6",
     fontSize: 13,
     fontWeight: "800",
   },
@@ -927,9 +999,9 @@ const styles = StyleSheet.create({
   },
   compactBudgetRow: {
     alignItems: "center",
-    backgroundColor: "#F5F0E8",
-    borderColor: "#E8DECE",
-    borderRadius: 8,
+    backgroundColor: "rgba(247, 242, 235, 0.08)",
+    borderColor: "rgba(237, 228, 214, 0.12)",
+    borderRadius: 12,
     borderWidth: 1,
     flexDirection: "row",
     gap: 12,
@@ -939,19 +1011,19 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   compactBudgetValue: {
-    color: "#3A2E28",
-    fontSize: 14,
+    color: "#F7F2EB",
+    fontSize: 18,
     fontWeight: "900",
     marginTop: 3,
   },
   compactDivider: {
     alignSelf: "stretch",
-    backgroundColor: "#E8DECE",
+    backgroundColor: "rgba(237, 228, 214, 0.16)",
     width: 1,
   },
   compactDetailsButton: {
     alignItems: "center",
-    borderColor: "#A85C44",
+    borderColor: "#C8A15A",
     borderRadius: 999,
     borderWidth: 1,
     justifyContent: "center",
@@ -959,49 +1031,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   compactDetailsText: {
-    color: "#A85C44",
+    color: "#C8A15A",
     fontSize: 12,
     fontWeight: "900",
   },
   budgetStat: {
-    backgroundColor: "#F5F0E8",
-    borderColor: "#E8DECE",
-    borderRadius: 8,
+    backgroundColor: "rgba(247, 242, 235, 0.08)",
+    borderColor: "rgba(237, 228, 214, 0.12)",
+    borderRadius: 12,
     borderWidth: 1,
     flexBasis: "48%",
     flexGrow: 1,
     padding: 10,
   },
   statLabel: {
-    color: "#8F867A",
+    color: "rgba(237, 228, 214, 0.68)",
     fontSize: 12,
     fontWeight: "700",
   },
   statValue: {
-    color: "#3A2E28",
-    fontSize: 15,
+    color: "#F7F2EB",
+    fontSize: 18,
     fontWeight: "800",
     marginTop: 3,
   },
   settingsPanel: {
-    borderTopColor: "#E8DECE",
+    borderTopColor: "rgba(237, 228, 214, 0.14)",
     borderTopWidth: 1,
     marginTop: 12,
     paddingTop: 12,
   },
   inputLabel: {
-    color: "#3A2E28",
+    color: "#F7F2EB",
     fontSize: 13,
     fontWeight: "800",
     marginBottom: 6,
     marginTop: 8,
   },
   budgetInput: {
-    backgroundColor: "#FAF6EE",
-    borderColor: "#E8DECE",
+    backgroundColor: "rgba(247, 242, 235, 0.08)",
+    borderColor: "rgba(237, 228, 214, 0.18)",
     borderRadius: 8,
     borderWidth: 1,
-    color: "#3A2E28",
+    color: "#F7F2EB",
     fontSize: 14,
     padding: 10,
   },
@@ -1012,19 +1084,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryInputLabel: {
-    color: "#8F867A",
+    color: "rgba(237, 228, 214, 0.66)",
     flex: 1,
     fontSize: 13,
     fontWeight: "700",
   },
   categoryAmountText: {
-    color: "#3A2E28",
+    color: "#F7F2EB",
     fontSize: 13,
     fontWeight: "900",
   },
   removeCategoryButton: {
     alignItems: "center",
-    borderColor: "#E8DECE",
+    borderColor: "rgba(237, 228, 214, 0.18)",
     borderRadius: 999,
     borderWidth: 1,
     justifyContent: "center",
@@ -1033,10 +1105,10 @@ const styles = StyleSheet.create({
   },
   categoryInput: {
     backgroundColor: "#FAF6EE",
-    borderColor: "#E8DECE",
+    borderColor: "rgba(237, 228, 214, 0.18)",
     borderRadius: 8,
     borderWidth: 1,
-    color: "#3A2E28",
+    color: "#F7F2EB",
     fontSize: 14,
     padding: 9,
     width: 120,
@@ -1052,7 +1124,7 @@ const styles = StyleSheet.create({
   },
   addCategoryButton: {
     alignItems: "center",
-    borderColor: "#A85C44",
+    borderColor: "#C8A15A",
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: "center",
@@ -1060,13 +1132,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   addCategoryText: {
-    color: "#A85C44",
+    color: "#C8A15A",
     fontSize: 13,
     fontWeight: "900",
   },
   saveBudgetButton: {
     alignItems: "center",
-    backgroundColor: "#A85C44",
+    backgroundColor: "#B66A3C",
     borderRadius: 8,
     justifyContent: "center",
     marginTop: 8,
@@ -1074,7 +1146,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   saveBudgetText: {
-    color: "#FAF6EE",
+    color: "#FFF9F0",
     fontSize: 14,
     fontWeight: "800",
   },
@@ -1082,7 +1154,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   sectionHeading: {
-    color: "#A85C44",
+    color: "#C8A15A",
     fontSize: 14,
     fontWeight: "800",
     marginTop: 14,
@@ -1090,7 +1162,7 @@ const styles = StyleSheet.create({
   },
   summaryToggle: {
     alignItems: "center",
-    borderTopColor: "#E8DECE",
+    borderTopColor: "rgba(237, 228, 214, 0.14)",
     borderTopWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1098,22 +1170,22 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   summaryToggleText: {
-    color: "#7A8C6E",
+    color: "#EDE4D6",
     fontSize: 13,
     fontWeight: "900",
   },
   summaryRow: {
-    borderTopColor: "#E8DECE",
+    borderTopColor: "rgba(237, 228, 214, 0.14)",
     borderTopWidth: 1,
     paddingVertical: 8,
   },
   summaryCategory: {
-    color: "#3A2E28",
+    color: "#F7F2EB",
     fontSize: 14,
     fontWeight: "800",
   },
   summaryText: {
-    color: "#8F867A",
+    color: "rgba(237, 228, 214, 0.66)",
     fontSize: 12,
     marginTop: 2,
   },
@@ -1124,35 +1196,39 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   historyMonth: {
-    color: "#3A2E28",
+    color: "#F7F2EB",
     fontSize: 13,
     fontWeight: "800",
   },
   historyText: {
-    color: "#8F867A",
+    color: "rgba(237, 228, 214, 0.66)",
     flex: 1,
     fontSize: 12,
     textAlign: "right",
   },
   historyEmpty: {
-    color: "#8F867A",
+    color: "rgba(237, 228, 214, 0.66)",
     fontSize: 13,
   },
   card: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
-    borderRadius: 8,
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: "row",
-    marginBottom: 12,
-    padding: 12,
+    marginBottom: 16,
+    padding: 14,
+    shadowColor: "#6A3D27",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.10,
+    shadowRadius: 22,
   },
   image: {
-    width: 72,
-    height: 72,
-    borderRadius: 8,
-    marginRight: 10,
+    width: 104,
+    height: 104,
+    borderRadius: 14,
+    marginRight: 16,
   },
   actions: {
     justifyContent: "space-between",
@@ -1177,14 +1253,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    color: "#3A2E28",
+    color: "#1C1510",
     flex: 1,
-    fontSize: 16,
-    fontWeight: "700",
+    fontFamily: "serif",
+    fontSize: 22,
+    fontWeight: "800",
   },
   priceText: {
-    color: "#A85C44",
-    fontSize: 14,
+    color: "#6A3D27",
+    fontSize: 18,
     fontWeight: "900",
   },
   chipRow: {
@@ -1216,24 +1293,24 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   metaText: {
-    color: "#8F867A",
-    fontSize: 13,
+    color: "#776E64",
+    fontSize: 16,
     marginTop: 5,
   },
   budget: {
     marginTop: 3,
-    color: "#A85C44",
-    fontSize: 13,
-    fontWeight: "600",
+    color: "#A05232",
+    fontSize: 15,
+    fontWeight: "800",
   },
   activityText: {
-    color: "#8F867A",
-    fontSize: 11,
+    color: "#776E64",
+    fontSize: 13,
     marginTop: 3,
   },
   unreadBadge: {
     alignItems: "center",
-    backgroundColor: "#A85C44",
+    backgroundColor: "#B66A3C",
     borderRadius: 999,
     justifyContent: "center",
     minWidth: 18,
@@ -1244,12 +1321,12 @@ const styles = StyleSheet.create({
     top: -8,
   },
   unreadText: {
-    color: "#FAF6EE",
+    color: "#FFF9F0",
     fontSize: 10,
     fontWeight: "900",
   },
   notificationPanel: {
-    borderTopColor: "#E8DECE",
+    borderTopColor: "rgba(237, 228, 214, 0.14)",
     borderTopWidth: 1,
     marginTop: 14,
     paddingTop: 10,
@@ -1264,7 +1341,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationHint: {
-    color: "#8F867A",
+    color: "rgba(237, 228, 214, 0.66)",
     fontSize: 12,
     lineHeight: 17,
     marginTop: -2,
@@ -1276,12 +1353,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   notificationLabel: {
-    color: "#3A2E28",
+    color: "#F7F2EB",
     fontSize: 13,
     fontWeight: "700",
   },
   imagePlaceholder: {
-    backgroundColor: "#F5F0E8",
+    backgroundColor: "#F4ECE0",
   },
   emptyState: {
     alignItems: "center",
@@ -1289,13 +1366,13 @@ const styles = StyleSheet.create({
     paddingVertical: 56,
   },
   emptyTitle: {
-    color: "#3A2E28",
+    color: "#1C1510",
     fontSize: 18,
     fontWeight: "700",
     textAlign: "center",
   },
   emptyText: {
-    color: "#8F867A",
+    color: "#776E64",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,

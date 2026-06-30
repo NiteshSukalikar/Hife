@@ -44,6 +44,48 @@ import {
 function canMarkPurchased(status: RequestStatus) {
   return status === "approved";
 }
+const previewTimestamp = {
+  toDate: () => new Date("2026-06-29T19:54:28+05:30"),
+};
+const PREVIEW_BUDGET_SETTINGS: BudgetSettings = {
+  monthlyBudget: 5000,
+  categoryBudgets: {
+    Home: 5000,
+    Kitchen: 2500,
+    Work: 2000,
+  },
+};
+const PREVIEW_REQUEST: PurchaseRequest = {
+  id: "preview",
+  title: "Quiet Air Purifier",
+  productName: "Quiet Air Purifier",
+  info: "Needed for better sleep and cleaner room air.",
+  reason:
+    "The room gets dusty quickly, and this keeps the space healthier without making noise.",
+  priority: "P1",
+  expectedPrice: 3500,
+  maxBudget: 5000,
+  budget: 5000,
+  category: "Home",
+  links: [{ source: "Amazon", url: "https://example.com/quiet-air-purifier" }],
+  status: "purchased",
+  decisionReason:
+    "Approved because it improves daily comfort and stays within the monthly room budget.",
+  decisionBy: null,
+  decisionAt: null,
+  image: null,
+  householdId: "preview-household",
+  createdBy: "partner-a",
+  createdByDisplayName: "Nitesh",
+  createdByRoleLabel: "Partner A",
+  createdAt: previewTimestamp,
+  updatedAt: previewTimestamp,
+  lastActivityAt: previewTimestamp,
+  lastActivityType: "comment",
+  commentCount: 4,
+  lastCommentBy: "partner-b",
+  lastCommentText: "Looks useful. Approved.",
+};
 
 export default function RequestDetailsScreen() {
   const router = useRouter();
@@ -60,8 +102,18 @@ export default function RequestDetailsScreen() {
   const [savingStatus, setSavingStatus] = useState<RequestStatus | null>(null);
 
   const requestId = id as string;
+  const isPreview =
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("preview");
 
   const loadRequestContext = useCallback(async () => {
+    if (isPreview) {
+      setBudgetSettings(PREVIEW_BUDGET_SETTINGS);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const [settings] = await Promise.all([
@@ -74,9 +126,17 @@ export default function RequestDetailsScreen() {
     } finally {
       setLoading(false);
     }
-  }, [show]);
+  }, [isPreview, show]);
 
   useEffect(() => {
+    if (isPreview) {
+      setRequest(PREVIEW_REQUEST);
+      setHouseholdRequests([PREVIEW_REQUEST]);
+      setDecisionReason(PREVIEW_REQUEST.decisionReason || "");
+      setLoading(false);
+      return;
+    }
+
     let requestUnsubscribe: undefined | (() => void);
     let listUnsubscribe: undefined | (() => void);
     let cancelled = false;
@@ -121,7 +181,7 @@ export default function RequestDetailsScreen() {
       requestUnsubscribe?.();
       listUnsubscribe?.();
     };
-  }, [loadRequestContext, requestId, show]);
+  }, [isPreview, loadRequestContext, requestId, show]);
 
   const handleStatusChange = async (status: RequestStatus) => {
     if (!request) return;
@@ -218,6 +278,13 @@ export default function RequestDetailsScreen() {
         options={{
           title: request?.productName || "Request details",
           headerTitleAlign: "center",
+          headerStyle: { backgroundColor: "#0F0F10" },
+          headerTintColor: "#F7F2EB",
+          headerTitleStyle: {
+            color: "#F7F2EB",
+            fontFamily: "serif",
+            fontWeight: "800",
+          },
         }}
       />
 
@@ -336,7 +403,9 @@ export default function RequestDetailsScreen() {
                   : null,
               ]}
             >
-              <Text style={styles.sectionTitle}>Budget impact</Text>
+              <Text style={[styles.sectionTitle, styles.darkSectionTitle]}>
+                Budget impact
+              </Text>
               <Text style={styles.budgetImpactText}>
                 Current approved this month:{" "}
                 {formatInr(budgetSummary.approvedTotal)}
@@ -476,6 +545,38 @@ export default function RequestDetailsScreen() {
           </>
         ) : null}
       </ScrollView>
+      {request ? (
+        <View style={styles.stickyDecisionBar}>
+          <Pressable
+            style={styles.stickySecondary}
+            onPress={() =>
+              router.push({
+                pathname: "/task/[id]/comments",
+                params: { id: request.id, title: request.productName },
+              })
+            }
+          >
+            <Text style={styles.stickySecondaryText}>Discuss</Text>
+          </Pressable>
+          {request.status === "pending" ? (
+            <Pressable
+              style={styles.stickyPrimary}
+              disabled={!!savingStatus}
+              onPress={() => confirmStatusChange("approved")}
+            >
+              <Text style={styles.stickyPrimaryText}>
+                {savingStatus === "approved" ? "Saving..." : "Approve"}
+              </Text>
+            </Pressable>
+          ) : (
+            <View style={styles.stickyStatus}>
+              <Text style={styles.stickyStatusText}>
+                {getStatusLabel(request.status)}
+              </Text>
+            </View>
+          )}
+        </View>
+      ) : null}
       </KeyboardAvoidingView>
     </>
   );
@@ -484,12 +585,13 @@ export default function RequestDetailsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FAF6EE",
+    backgroundColor: "#F7F2EB",
   },
   container: {
-    backgroundColor: "#FAF6EE",
+    backgroundColor: "#F7F2EB",
     flexGrow: 1,
-    padding: 16,
+    padding: 20,
+    paddingBottom: 120,
   },
   centerState: {
     alignItems: "center",
@@ -498,36 +600,36 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
   },
   centerTitle: {
-    color: "#3A2E28",
+    color: "#1C1510",
     fontSize: 18,
     fontWeight: "700",
   },
   centerText: {
-    color: "#8F867A",
+    color: "#776E64",
     marginTop: 8,
     textAlign: "center",
   },
   image: {
     width: "100%",
-    height: 220,
-    borderRadius: 12,
-    marginBottom: 16,
+    height: 250,
+    borderRadius: 18,
+    marginBottom: 20,
   },
   imagePlaceholder: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
+    backgroundColor: "#171310",
+    borderColor: "rgba(200, 161, 90, 0.26)",
     borderWidth: 1,
     justifyContent: "center",
   },
   imagePlaceholderText: {
-    color: "#8F867A",
+    color: "rgba(237, 228, 214, 0.70)",
     fontSize: 14,
     fontWeight: "600",
   },
   headerRow: {
     alignItems: "flex-start",
-    flexDirection: "row",
+    flexDirection: "column",
     gap: 12,
     marginBottom: 16,
   },
@@ -535,17 +637,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerChips: {
-    alignItems: "flex-end",
+    alignItems: "flex-start",
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 6,
   },
   title: {
-    color: "#3A2E28",
-    fontSize: 24,
+    color: "#1C1510",
+    fontFamily: "serif",
+    fontSize: 34,
     fontWeight: "800",
   },
   category: {
-    color: "#8F867A",
-    fontSize: 14,
+    color: "#776E64",
+    fontSize: 17,
     marginTop: 3,
   },
   statusChip: {
@@ -573,104 +678,115 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   sectionTitle: {
-    color: "#A85C44",
-    fontSize: 15,
+    color: "#A05232",
+    fontFamily: "serif",
+    fontSize: 22,
     fontWeight: "800",
     marginBottom: 8,
   },
+  darkSectionTitle: {
+    color: "#C8A15A",
+  },
   bodyText: {
-    color: "#3A2E28",
-    fontSize: 15,
-    lineHeight: 22,
+    color: "#1C1510",
+    fontSize: 17,
+    lineHeight: 25,
   },
   creatorText: {
-    color: "#8F867A",
-    fontSize: 13,
+    color: "#776E64",
+    fontSize: 14,
     fontWeight: "700",
     marginBottom: 8,
   },
   mutedText: {
-    color: "#8F867A",
+    color: "#776E64",
     fontSize: 14,
   },
   metaGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
     marginBottom: 18,
   },
   metaItem: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
-    borderRadius: 10,
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
+    borderRadius: 16,
     borderWidth: 1,
-    flex: 1,
-    padding: 10,
+    flexBasis: "47%",
+    flexGrow: 0,
+    minWidth: 104,
+    padding: 12,
+    shadowColor: "#6A3D27",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
   },
   metaLabel: {
-    color: "#8F867A",
-    fontSize: 12,
+    color: "#776E64",
+    fontSize: 13,
     fontWeight: "700",
   },
   metaValue: {
-    color: "#3A2E28",
-    fontSize: 14,
+    color: "#1C1510",
+    fontSize: 18,
     fontWeight: "800",
     marginTop: 4,
   },
   metaHint: {
-    color: "#8F867A",
+    color: "#776E64",
     fontSize: 11,
     lineHeight: 15,
     marginTop: 4,
   },
   budgetImpact: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
-    borderRadius: 10,
+    backgroundColor: "#171310",
+    borderColor: "rgba(200, 161, 90, 0.26)",
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 12,
+    padding: 16,
   },
   budgetImpactWarning: {
     borderColor: "#C4943A",
   },
   budgetImpactText: {
-    color: "#3A2E28",
-    fontSize: 14,
-    lineHeight: 21,
+    color: "rgba(237, 228, 214, 0.78)",
+    fontSize: 15,
+    lineHeight: 24,
   },
   warningText: {
-    color: "#7A5A12",
+    color: "#C8A15A",
     fontSize: 13,
     fontWeight: "800",
     marginTop: 6,
   },
   linkRow: {
     minHeight: 48,
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 8,
     padding: 10,
   },
   linkSource: {
-    color: "#A85C44",
+    color: "#A05232",
     fontSize: 13,
     fontWeight: "800",
   },
   linkUrl: {
-    color: "#7A8C6E",
+    color: "#6F7F6A",
     fontSize: 13,
     marginTop: 3,
   },
   input: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFFBF5",
     borderWidth: 1,
-    borderColor: "#E8DECE",
-    borderRadius: 8,
-    color: "#3A2E28",
-    padding: 10,
-    fontSize: 14,
+    borderColor: "#DDCDBB",
+    borderRadius: 12,
+    color: "#1C1510",
+    padding: 14,
+    fontSize: 16,
   },
   reasonInput: {
     minHeight: 88,
@@ -683,7 +799,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: 14,
     flexBasis: "48%",
     flexGrow: 1,
     justifyContent: "center",
@@ -691,18 +807,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   approveButton: {
-    backgroundColor: "#A85C44",
+    backgroundColor: "#6F7F6A",
   },
   declineButton: {
-    backgroundColor: "#A85C44",
+    backgroundColor: "#6A3D27",
   },
   secondaryButton: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E8DECE",
+    backgroundColor: "#FFFBF5",
+    borderColor: "#DDCDBB",
     borderWidth: 1,
   },
   actionText: {
-    color: "#FAF6EE",
+    color: "#FFF9F0",
     fontSize: 15,
     fontWeight: "800",
   },
@@ -712,7 +828,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   secondaryActionText: {
-    color: "#3A2E28",
+    color: "#1C1510",
     fontSize: 15,
     fontWeight: "800",
   },
@@ -722,22 +838,22 @@ const styles = StyleSheet.create({
   },
   purchaseButton: {
     alignItems: "center",
-    backgroundColor: "#A85C44",
-    borderRadius: 8,
+    backgroundColor: "#B66A3C",
+    borderRadius: 14,
     justifyContent: "center",
     minHeight: 48,
     paddingVertical: 12,
   },
   purchaseText: {
-    color: "#FAF6EE",
+    color: "#FFF9F0",
     fontSize: 15,
     fontWeight: "800",
   },
   cancelButton: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFFBF5",
     borderColor: "#fecaca",
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1,
     justifyContent: "center",
     minHeight: 48,
@@ -755,8 +871,61 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backText: {
-    color: "#8F867A",
+    color: "#776E64",
     fontSize: 15,
     fontWeight: "700",
+  },
+  stickyDecisionBar: {
+    alignItems: "center",
+    backgroundColor: "#171310",
+    borderColor: "rgba(200, 161, 90, 0.24)",
+    borderTopWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  stickySecondary: {
+    alignItems: "center",
+    borderColor: "rgba(237, 228, 214, 0.22)",
+    borderRadius: 14,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 52,
+  },
+  stickySecondaryText: {
+    color: "#EDE4D6",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  stickyPrimary: {
+    alignItems: "center",
+    backgroundColor: "#6F7F6A",
+    borderRadius: 14,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 52,
+  },
+  stickyPrimaryText: {
+    color: "#FFF9F0",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  stickyStatus: {
+    alignItems: "center",
+    backgroundColor: "rgba(111, 127, 106, 0.18)",
+    borderColor: "#6F7F6A",
+    borderRadius: 14,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 52,
+  },
+  stickyStatusText: {
+    color: "#DDE8D8",
+    fontSize: 14,
+    fontWeight: "900",
+    textTransform: "uppercase",
   },
 });

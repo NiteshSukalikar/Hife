@@ -1,19 +1,41 @@
 # Hife
 
-Hife is a household purchase request app for couples. One partner can create a
-request with a product image, budget, priority, and details. The other partner
-can review it, discuss it, and eventually approve, decline, postpone, or mark it
+Hife is a shared purchase decision app for couples, rooms, and small groups.
+It helps people answer one practical money question before buying something:
+"Can we safely buy this?"
+
+One person can create a request with a product image, reason, expected price,
+budget context, priority, and links. The other person can review the impact,
+discuss it, and approve, decline, postpone, ask for more information, or mark it
 as purchased.
 
 The app is currently an Expo/React Native prototype using Firebase Firestore for
 data and Cloudinary for image uploads.
 
+## Product Positioning
+
+Hife is not trying to be a full bank replacement or complete personal finance
+suite yet. The current product focus is:
+
+- Shared purchase decisions
+- Monthly room or household budget confidence
+- Category budget awareness
+- Partner discussion and approval history
+- Calm, low-stress spending decisions
+
+The app should avoid overpromising full budgeting features until income,
+committed expenses, savings buffers, and deeper spending insights are complete.
+
 ## Brand Theme
 
-Hife uses a black and neon green identity:
+Hife uses a warm premium identity designed to feel calm, trustworthy, and
+human for money conversations:
 
-- App black: `#050505`
-- Neon green: `#39FF14`
+- Warm cream page background
+- Charcoal and dark espresso surfaces
+- Clay/copper primary actions
+- Sage positive states
+- Amber pending or warning states
 - Theme guide: `BRAND_THEME.md`
 - Logo source: `assets/brand/hife-logo.svg`
 

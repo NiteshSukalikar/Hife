@@ -2,18 +2,19 @@
 
 ## Purpose
 
-Hife is a shared household purchase decision app for couples. The main idea is simple: when one partner wants to buy something, they can create a request with the item details, budget, priority, image, and product links. The other partner can review the request, discuss it, and decide whether to approve, decline, postpone, or ask for more information.
+Hife is a shared purchase decision app for couples, rooms, and small groups. The main idea is simple: before someone buys something, they create a request with the item details, budget context, priority, image, and product links. The other person can review the request, understand whether it is safe to buy, discuss it, and decide whether to approve, decline, postpone, or ask for more information.
 
 The app is currently an early prototype. It already supports creating requests, adding priority and budget, attaching images, listing requests, viewing request details, and discussing requests through comments. The long-term product direction should move from a generic task/ticket app toward a clear purchase approval workflow.
 
-The visual identity is black and neon green. The theme is documented in `BRAND_THEME.md`, with logo assets stored under `assets/brand` and `assets/images`.
+The visual identity is warm, premium, and calm. The theme is documented in `BRAND_THEME.md`, with logo assets stored under `assets/brand` and `assets/images`.
 
 ## Target Users
 
-- Husband and wife managing household purchases together.
+- Partners managing shared purchases together.
 - Couples who want to avoid impulsive spending.
-- Partners who want transparency around budget, priority, and purchase reasoning.
-- Households that need a simple approval and discussion flow before buying items.
+- Roommates, families, events, or small teams that need a shared purchase approval flow.
+- People who want transparency around budget, priority, and purchase reasoning.
+- Groups that want calmer money conversations before buying items.
 
 ## Current Workflow
 
@@ -31,6 +32,26 @@ The visual identity is black and neon green. The theme is documented in `BRAND_T
 7. A user can open details for the request.
 8. A user can open comments for the request.
 9. In comments, users can discuss the item, add links, and attach images.
+
+## Product Positioning
+
+Hife should be positioned as a shared purchase decision app with budget
+confidence. It should not present itself as a full personal finance or banking
+replacement until it has income setup, committed expense tracking, savings
+buffers, and deeper spending analytics.
+
+The core promise is:
+
+Can we safely buy this without creating stress later?
+
+The product should answer this using:
+
+- Current monthly budget
+- Approved spend
+- Pending spend
+- Category budget
+- Remaining budget after approval
+- Decision status and partner discussion
 
 ## Intended Future Workflow
 
@@ -91,15 +112,12 @@ Suggested meaning:
 
 ## Main Product Gaps
 
-- The app currently behaves like a generic ticket/comment app.
-- There is no approve or decline action yet.
-- There is no household or partner pairing model.
-- Product links are not structured as part of the request.
-- Budget logic is very basic.
-- There is no monthly spending summary.
-- There is no notification or real-time listener flow.
-- Some UI text and files still use Expo starter defaults.
-- The image upload flow should store the uploaded Cloudinary URL, not the local image URI.
+- The app still needs a stronger safe-to-spend model.
+- Income, committed expenses, and savings buffers are not modeled yet.
+- The dashboard needs to explain money confidence faster.
+- Priority labels such as P0/P1/P2/P3 are still too technical for normal users.
+- Missing images and blank setup states need more trustworthy presentation.
+- Monthly and category insights need to feel more like finance guidance, not only request history.
 
 ## AI Feature Ideas
 
