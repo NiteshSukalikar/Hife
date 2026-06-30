@@ -1,4 +1,5 @@
 import useToast from "@/components/toast/useToast";
+import { useHifeTheme } from "@/hooks/use-hife-theme";
 import {
   BudgetSettings,
   ProductLink,
@@ -142,6 +143,7 @@ export default function CommentsScreen() {
   const navigation = useNavigation();
   const { show } = useToast();
   const insets = useSafeAreaInsets();
+  const { palette } = useHifeTheme();
 
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -171,10 +173,10 @@ export default function CommentsScreen() {
     navigation.setOptions({
       title: `${request?.productName || title || "Request"} - Discussion`,
       headerTitleAlign: "center",
-      headerStyle: { backgroundColor: "#FFFFFF" },
-      headerTintColor: "#3A2E28",
+      headerStyle: { backgroundColor: palette.chrome },
+      headerTintColor: palette.chromeText,
       headerTitleStyle: {
-        color: "#3A2E28",
+        color: palette.chromeText,
         fontWeight: "800",
       },
     });
@@ -189,7 +191,7 @@ export default function CommentsScreen() {
       setMyUserId(userId);
       myUserIdRef.current = userId;
     });
-  }, [isPreview, navigation, request?.productName, title]);
+  }, [isPreview, navigation, palette.chrome, palette.chromeText, request?.productName, title]);
 
   useEffect(() => {
     if (isPreview) {
@@ -444,7 +446,9 @@ export default function CommentsScreen() {
   const requestLinks: ProductLink[] = request?.links || [];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: palette.background }]}
+    >
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -455,7 +459,12 @@ export default function CommentsScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {requestSummary ? (
-            <View style={styles.summaryCard}>
+            <View
+              style={[
+                styles.summaryCard,
+                { backgroundColor: palette.card, borderBottomColor: palette.border },
+              ]}
+            >
               <View style={styles.summaryTopRow}>
                 <View style={styles.summaryTitleWrap}>
                   <Text style={styles.summaryEyebrow}>Discussing</Text>
@@ -635,6 +644,7 @@ export default function CommentsScreen() {
         <View
           style={[
             styles.inputArea,
+            { backgroundColor: palette.chrome, borderColor: palette.border },
             { paddingBottom: 10 + insets.bottom },
           ]}
         >

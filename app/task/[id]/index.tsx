@@ -4,6 +4,7 @@ import {
   updatePurchaseRequestStatus,
 } from "@/services/purchaseRequests";
 import useToast from "@/components/toast/useToast";
+import { useHifeTheme } from "@/hooks/use-hife-theme";
 import {
   BudgetSettings,
   ProductLink,
@@ -148,6 +149,7 @@ export default function RequestDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { show } = useToast();
+  const { palette } = useHifeTheme();
 
   const [request, setRequest] = useState<PurchaseRequest | null>(null);
   const [householdRequests, setHouseholdRequests] = useState<PurchaseRequest[]>([]);
@@ -355,22 +357,25 @@ export default function RequestDetailsScreen() {
         options={{
           title: request?.productName || "Request details",
           headerTitleAlign: "center",
-          headerStyle: { backgroundColor: "#FFFFFF" },
-          headerTintColor: "#3A2E28",
+          headerStyle: { backgroundColor: palette.chrome },
+          headerTintColor: palette.chromeText,
           headerTitleStyle: {
-            color: "#3A2E28",
+            color: palette.chromeText,
             fontWeight: "800",
           },
         }}
       />
 
       <KeyboardAvoidingView
-        style={styles.screen}
+        style={[styles.screen, { backgroundColor: palette.background }]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 60}
       >
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[
+          styles.container,
+          { backgroundColor: palette.background },
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         {loading && !request ? (
@@ -393,7 +398,12 @@ export default function RequestDetailsScreen() {
             {request.image ? (
               <Image source={{ uri: request.image }} style={styles.image} />
             ) : (
-              <View style={styles.imagePlaceholder}>
+              <View
+                style={[
+                  styles.imagePlaceholder,
+                  { backgroundColor: palette.card, borderColor: palette.border },
+                ]}
+              >
                 <View style={styles.imagePlaceholderMark}>
                   <Text style={styles.imagePlaceholderMarkText}>H</Text>
                 </View>
@@ -552,6 +562,7 @@ export default function RequestDetailsScreen() {
               style={[
                 styles.section,
                 styles.budgetImpact,
+                { backgroundColor: palette.card, borderColor: palette.border },
                 wouldReduceSafeToSpendBelowZero ||
                 wouldExceedCategoryBudget ||
                 wouldConsumeTooMuchCategory
@@ -638,7 +649,12 @@ export default function RequestDetailsScreen() {
               />
             </View>
 
-            <View style={styles.actionPanel}>
+            <View
+              style={[
+                styles.actionPanel,
+                { backgroundColor: palette.card, borderColor: palette.border },
+              ]}
+            >
               <Text style={styles.actionPanelTitle}>Choose a decision</Text>
               <Text style={styles.actionPanelHint}>
                 Decline, buy later, and needs info require a short reason.
@@ -762,7 +778,12 @@ export default function RequestDetailsScreen() {
         ) : null}
       </ScrollView>
       {request ? (
-        <View style={styles.stickyDecisionBar}>
+        <View
+          style={[
+            styles.stickyDecisionBar,
+            { backgroundColor: palette.chrome, borderColor: palette.border },
+          ]}
+        >
           <Pressable
             style={styles.stickySecondary}
             onPress={() =>

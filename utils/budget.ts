@@ -112,6 +112,29 @@ function cleanMoneyValue(value: unknown) {
   return Math.max(0, Number(value || 0));
 }
 
+export function cleanMoneyInputValue(value: string) {
+  return value.replace(/[^0-9]/g, "");
+}
+
+export function buildCategoryBudgetsFromInputs(
+  inputs: Record<string, string>
+) {
+  return Object.entries(inputs).reduce((budgets, [category, value]) => {
+    const cleanCategory = category.trim();
+    if (!cleanCategory) return budgets;
+
+    budgets[cleanCategory] = cleanMoneyValue(value);
+    return budgets;
+  }, {} as Record<string, number>);
+}
+
+export function sumCategoryBudgetInputs(inputs: Record<string, string>) {
+  return Object.values(buildCategoryBudgetsFromInputs(inputs)).reduce(
+    (total, value) => total + value,
+    0
+  );
+}
+
 export function buildBudgetSummary(
   requests: PurchaseRequest[],
   settings: BudgetSettings = DEFAULT_BUDGET_SETTINGS

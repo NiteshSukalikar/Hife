@@ -4,13 +4,12 @@ import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useHifeTheme } from '@/hooks/use-hife-theme';
 import { getActiveHousehold } from '@/services/households';
 import { logError } from '@/utils/safeLogger';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { palette } = useHifeTheme();
   const isPreview =
     Platform.OS === 'web' &&
     typeof window !== 'undefined' &&
@@ -49,9 +48,9 @@ export default function TabLayout() {
 
   if (checkingHousehold) {
     return (
-      <View style={{ alignItems: 'center', backgroundColor: '#FAF6EE', flex: 1, justifyContent: 'center', padding: 24 }}>
-        <ActivityIndicator color="#A85C44" />
-        <Text style={{ color: '#776E64', fontSize: 13, fontWeight: '700', marginTop: 12, textAlign: 'center' }}>
+      <View style={{ alignItems: 'center', backgroundColor: palette.background, flex: 1, justifyContent: 'center', padding: 24 }}>
+        <ActivityIndicator color={palette.primary} />
+        <Text style={{ color: palette.mutedText, fontSize: 13, fontWeight: '700', marginTop: 12, textAlign: 'center' }}>
           Checking your Hife room
         </Text>
       </View>
@@ -60,15 +59,15 @@ export default function TabLayout() {
 
   if (householdCheckFailed) {
     return (
-      <View style={{ alignItems: 'center', backgroundColor: '#FAF6EE', flex: 1, justifyContent: 'center', padding: 24 }}>
-        <Text style={{ color: '#3A2E28', fontSize: 20, fontWeight: '900', textAlign: 'center' }}>
+      <View style={{ alignItems: 'center', backgroundColor: palette.background, flex: 1, justifyContent: 'center', padding: 24 }}>
+        <Text style={{ color: palette.text, fontSize: 20, fontWeight: '900', textAlign: 'center' }}>
           Could not check your room
         </Text>
-        <Text style={{ color: '#776E64', fontSize: 14, lineHeight: 20, marginTop: 8, textAlign: 'center' }}>
+        <Text style={{ color: palette.mutedText, fontSize: 14, lineHeight: 20, marginTop: 8, textAlign: 'center' }}>
           Your room data is not changed. Try again before setting up a new room.
         </Text>
         <Pressable
-          style={{ alignItems: 'center', backgroundColor: '#A85C44', borderRadius: 8, justifyContent: 'center', marginTop: 16, minHeight: 46, paddingHorizontal: 18 }}
+          style={{ alignItems: 'center', backgroundColor: palette.primary, borderRadius: 8, justifyContent: 'center', marginTop: 16, minHeight: 46, paddingHorizontal: 18 }}
           onPress={() => {
             setCheckingHousehold(true);
             setHouseholdCheckFailed(false);
@@ -81,7 +80,7 @@ export default function TabLayout() {
               .finally(() => setCheckingHousehold(false));
           }}
         >
-          <Text style={{ color: '#FAF6EE', fontSize: 14, fontWeight: '900' }}>
+          <Text style={{ color: palette.buttonText, fontSize: 14, fontWeight: '900' }}>
             Retry
           </Text>
         </Pressable>
@@ -96,11 +95,11 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
+        tabBarActiveTintColor: palette.primary,
+        tabBarInactiveTintColor: palette.tabInactive,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E8DECE',
+          backgroundColor: palette.chrome,
+          borderTopColor: palette.border,
           height: 78,
           paddingBottom: 12,
           paddingTop: 8,
@@ -124,6 +123,13 @@ export default function TabLayout() {
         options={{
           title: 'Create',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
         }}
       />
     </Tabs>

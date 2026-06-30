@@ -1,5 +1,6 @@
 import Header from "@/components/header";
 import useToast from "@/components/toast/useToast";
+import { useHifeTheme } from "@/hooks/use-hife-theme";
 import {
   AiDecisionResult,
   AiRecommendation,
@@ -152,6 +153,7 @@ function SelectTiles<T extends string>({
 }
 
 export default function CreateRequestScreen() {
+  const { palette } = useHifeTheme();
   const [image, setImage] = useState<string | null>(null);
   const [productName, setProductName] = useState("");
   const [reason, setReason] = useState("");
@@ -477,7 +479,7 @@ export default function CreateRequestScreen() {
   return (
     <>
       <Header />
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -490,6 +492,7 @@ export default function CreateRequestScreen() {
             <Pressable
               style={[
                 styles.imagePicker,
+                { backgroundColor: palette.card, borderColor: palette.border },
                 imageError ? styles.imagePickerError : null,
               ]}
               disabled={isSaving}
@@ -542,7 +545,12 @@ export default function CreateRequestScreen() {
               maxLength={500}
             />
 
-            <View style={styles.formSection}>
+            <View
+              style={[
+                styles.formSection,
+                { backgroundColor: palette.card, borderColor: palette.border },
+              ]}
+            >
               <Text style={styles.label}>Category</Text>
               <SelectTiles
                 options={budgetCategories.map((item) => ({
@@ -605,6 +613,7 @@ export default function CreateRequestScreen() {
             <View
               style={[
                 styles.budgetImpact,
+                { backgroundColor: palette.card, borderColor: palette.border },
                 exceedsSafeToSpend || exceedsCategoryBudget || consumesTooMuchCategory
                   ? styles.budgetImpactWarning
                   : null,
@@ -662,7 +671,12 @@ export default function CreateRequestScreen() {
               ) : null}
             </View>
 
-            <View style={styles.aiPanel}>
+            <View
+              style={[
+                styles.aiPanel,
+                { backgroundColor: palette.card, borderColor: palette.border },
+              ]}
+            >
               <View style={styles.aiHeader}>
                 <View style={styles.aiHeaderText}>
                   <Text style={styles.aiTitle}>AI decision assistant</Text>
@@ -673,6 +687,7 @@ export default function CreateRequestScreen() {
                 <Pressable
                   style={[
                     styles.askAiButton,
+                    { backgroundColor: palette.primary },
                     isAskingAi ? styles.disabledBtn : null,
                   ]}
                   disabled={isAskingAi}
@@ -749,7 +764,11 @@ export default function CreateRequestScreen() {
             />
 
             <Pressable
-              style={[styles.saveBtn, isSaving ? styles.disabledBtn : null]}
+              style={[
+                styles.saveBtn,
+                { backgroundColor: palette.primary },
+                isSaving ? styles.disabledBtn : null,
+              ]}
               disabled={isSaving}
               onPress={() => onSave()}
             >

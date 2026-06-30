@@ -1,15 +1,26 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useHifeTheme } from "@/hooks/use-hife-theme";
 
 export default function Header() {
   const insets = useSafeAreaInsets();
+  const { palette } = useHifeTheme();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 6 }]}>
-      <View style={styles.orbitOne} />
-      <View style={styles.orbitTwo} />
-      <Text style={styles.watermark}>H</Text>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: palette.chrome,
+          borderBottomColor: palette.border,
+          paddingTop: insets.top + 6,
+        },
+      ]}
+    >
+      <View style={[styles.orbitOne, { borderColor: palette.hairline }]} />
+      <View style={[styles.orbitTwo, { borderColor: palette.hairline }]} />
+      <Text style={[styles.watermark, { color: palette.hairline }]}>H</Text>
       <View style={styles.brandRow}>
         <Image
           source={require("@/assets/images/favicon.png")}
@@ -17,13 +28,21 @@ export default function Header() {
           resizeMode="contain"
         />
         <View>
-          <Text style={styles.title}>Hife</Text>
-          <Text style={styles.subtitle}>Shared purchase decisions</Text>
+          <Text style={[styles.title, { color: palette.chromeText }]}>Hife</Text>
+          <Text style={[styles.subtitle, { color: palette.chromeMutedText }]}>
+            Shared purchase decisions
+          </Text>
         </View>
       </View>
-      <Pressable style={styles.alertButton} hitSlop={10}>
-        <Ionicons name="notifications-outline" size={22} color="#A85C44" />
-        <View style={styles.alertDot} />
+      <Pressable
+        style={[
+          styles.alertButton,
+          { backgroundColor: palette.input, borderColor: palette.border },
+        ]}
+        hitSlop={10}
+      >
+        <Ionicons name="notifications-outline" size={22} color={palette.primary} />
+        <View style={[styles.alertDot, { backgroundColor: palette.accent }]} />
       </Pressable>
     </View>
   );
@@ -32,8 +51,6 @@ export default function Header() {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: "#E8DECE",
     borderBottomWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -53,21 +70,17 @@ const styles = StyleSheet.create({
     width: 42,
   },
   title: {
-    color: "#3A2E28",
     fontFamily: "serif",
     fontSize: 28,
     fontWeight: "700",
     letterSpacing: 0,
   },
   subtitle: {
-    color: "#8F867A",
     fontSize: 13,
     marginTop: 2,
   },
   alertButton: {
     alignItems: "center",
-    backgroundColor: "#F5F0E8",
-    borderColor: "#E8DECE",
     borderRadius: 999,
     borderWidth: 1,
     height: 42,
@@ -76,7 +89,6 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   alertDot: {
-    backgroundColor: "#C4943A",
     borderRadius: 999,
     height: 9,
     position: "absolute",
@@ -85,7 +97,6 @@ const styles = StyleSheet.create({
     width: 9,
   },
   orbitOne: {
-    borderColor: "rgba(168, 92, 68, 0.20)",
     borderRadius: 180,
     borderWidth: 1,
     height: 220,
@@ -95,7 +106,6 @@ const styles = StyleSheet.create({
     width: 220,
   },
   orbitTwo: {
-    borderColor: "rgba(196, 148, 58, 0.14)",
     borderRadius: 210,
     borderWidth: 1,
     height: 280,
@@ -105,7 +115,6 @@ const styles = StyleSheet.create({
     width: 280,
   },
   watermark: {
-    color: "rgba(168, 92, 68, 0.07)",
     fontFamily: "serif",
     fontSize: 132,
     fontWeight: "900",

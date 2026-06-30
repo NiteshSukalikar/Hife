@@ -1,4 +1,4 @@
-import { BrandColors } from "@/constants/theme";
+import { useHifeTheme } from "@/hooks/use-hife-theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -18,6 +18,7 @@ type StartupIntroProps = {
 };
 
 export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
+  const { palette } = useHifeTheme();
   const skipIntro =
     Platform.OS === "web" &&
     typeof window !== "undefined" &&
@@ -93,7 +94,12 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
   if (skipIntro || !visible) return null;
 
   return (
-    <Animated.View style={[styles.overlay, { opacity: fade }]}>
+    <Animated.View
+      style={[
+        styles.overlay,
+        { backgroundColor: palette.background, opacity: fade },
+      ]}
+    >
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
           <Animated.View
@@ -114,14 +120,24 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.brand}>Hife</Text>
-            <Text style={styles.subtitle}>Shared purchase decisions.</Text>
+            <Text style={[styles.brand, { color: palette.text }]}>Hife</Text>
+            <Text style={[styles.subtitle, { color: palette.mutedText }]}>
+              Shared purchase decisions.
+            </Text>
           </Animated.View>
         </View>
 
-        <Pressable style={styles.getStartedButton} onPress={hide}>
-          <Text style={styles.getStartedText}>Get started</Text>
-          <Ionicons name="arrow-forward" size={18} color={BrandColors.warmCream} />
+        <Pressable
+          style={[
+            styles.getStartedButton,
+            { backgroundColor: palette.primary, borderColor: palette.primary },
+          ]}
+          onPress={hide}
+        >
+          <Text style={[styles.getStartedText, { color: palette.buttonText }]}>
+            Get started
+          </Text>
+          <Ionicons name="arrow-forward" size={18} color={palette.buttonText} />
         </Pressable>
       </SafeAreaView>
     </Animated.View>
@@ -131,7 +147,6 @@ export default function StartupIntro({ durationMs = 4200 }: StartupIntroProps) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: BrandColors.warmCream,
     zIndex: 1000,
   },
   safe: {
@@ -171,7 +186,6 @@ const styles = StyleSheet.create({
     width: 132,
   },
   brand: {
-    color: BrandColors.charcoal,
     fontFamily: "serif",
     fontSize: 54,
     fontWeight: "800",
@@ -179,7 +193,6 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   subtitle: {
-    color: BrandColors.mutedText,
     fontSize: 16,
     fontWeight: "600",
     lineHeight: 23,
@@ -189,8 +202,6 @@ const styles = StyleSheet.create({
   },
   getStartedButton: {
     alignItems: "center",
-    backgroundColor: BrandColors.clay,
-    borderColor: BrandColors.clay,
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: "row",
@@ -199,7 +210,6 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   getStartedText: {
-    color: BrandColors.warmCream,
     fontSize: 16,
     fontWeight: "900",
   },

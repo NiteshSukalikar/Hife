@@ -1,5 +1,6 @@
 import { ToastProvider } from "@/components/toast/toastProvider";
 import StartupIntro from "@/components/startup-intro";
+import { HifeThemeProvider, useHifeTheme } from "@/hooks/use-hife-theme";
 import {
   DefaultTheme,
   ThemeProvider,
@@ -9,27 +10,28 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-const HifeNavigationTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: "#A85C44",
-    background: "#FAF6EE",
-    card: "#FFFFFF",
-    text: "#3A2E28",
-    border: "#E8DECE",
-    notification: "#C4943A",
-  },
-};
-
 export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-export default function RootLayout() {
+function ThemedRootLayout() {
+  const { palette } = useHifeTheme();
+  const hifeNavigationTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: palette.primary,
+      background: palette.background,
+      card: palette.chrome,
+      text: palette.chromeText,
+      border: palette.border,
+      notification: palette.accent,
+    },
+  };
+
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={HifeNavigationTheme}>
+      <ThemeProvider value={hifeNavigationTheme}>
         <ToastProvider>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -45,8 +47,16 @@ export default function RootLayout() {
           <StartupIntro />
         </ToastProvider>
 
-        <StatusBar style="dark" />
+        <StatusBar style={palette.statusBar} />
       </ThemeProvider>
     </SafeAreaProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <HifeThemeProvider>
+      <ThemedRootLayout />
+    </HifeThemeProvider>
   );
 }

@@ -1,4 +1,5 @@
 import Header from "@/components/header";
+import { useHifeTheme } from "@/hooks/use-hife-theme";
 import {
   BudgetSettings,
   PurchaseRequest,
@@ -38,9 +39,11 @@ import { getDeviceUserId } from "@/utils/deviceUser";
 import {
   buildBudgetSummary,
   DEFAULT_BUDGET_SETTINGS,
+  buildCategoryBudgetsFromInputs,
+  cleanMoneyInputValue,
   formatInr,
-  getBudgetCategories,
   getRequestAmount,
+  sumCategoryBudgetInputs,
 } from "@/utils/budget";
 import {
   getPriorityChipColor,
@@ -109,22 +112,6 @@ const PREVIEW_REQUESTS: PurchaseRequest[] = [
   },
 ];
 
-function splitMonthlyBudgetAcrossCategories(
-  monthlyBudget: number,
-  categories: string[]
-) {
-  const cleanCategories = categories.map((item) => item.trim()).filter(Boolean);
-  const targetCategories = cleanCategories.length ? cleanCategories : ["Other"];
-  const total = Math.max(0, Math.round(monthlyBudget || 0));
-  const base = Math.floor(total / targetCategories.length);
-  const remainder = total % targetCategories.length;
-
-  return targetCategories.reduce((budgets, category, index) => {
-    budgets[category] = base + (index < remainder ? 1 : 0);
-    return budgets;
-  }, {} as Record<string, number>);
-}
-
 function budgetInputsFromSettings(settings: BudgetSettings) {
   return Object.entries(settings.categoryBudgets || {}).reduce(
     (inputs, [category, value]) => ({
@@ -170,6 +157,7 @@ function formatSafeToSpend(amount: number) {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { palette } = useHifeTheme();
   const params = useLocalSearchParams<{ filter?: string }>();
   const isPreview =
     Platform.OS === "web" &&
@@ -194,6 +182,7 @@ export default function HomeScreen() {
   const [showBudgetSettings, setShowBudgetSettings] = useState(false);
   const [showCategorySummary, setShowCategorySummary] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryBudgetInput, setNewCategoryBudgetInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [readCommentCounts, setReadCommentCounts] = useState<
@@ -221,6 +210,9 @@ export default function HomeScreen() {
       );
       setSavingsReserveInput(String(PREVIEW_BUDGET_SETTINGS.savingsReserve || 0));
       setCategoryBudgetInputs(budgetInputsFromSettings(PREVIEW_BUDGET_SETTINGS));
+      setMonthlyBudgetInput(
+        String(sumCategoryBudgetInputs(budgetInputsFromSettings(PREVIEW_BUDGET_SETTINGS)))
+      );
       setLoading(false);
       return;
     }
@@ -243,8 +235,9 @@ export default function HomeScreen() {
       setMyUserId(userId);
       myUserIdRef.current = userId;
       notificationSettingsRef.current = savedNotificationSettings;
+      const nextCategoryInputs = budgetInputsFromSettings(nextSettings);
       setMonthlyBudgetInput(
-        nextSettings.monthlyBudget ? String(nextSettings.monthlyBudget) : ""
+        String(sumCategoryBudgetInputs(nextCategoryInputs))
       );
       setMonthlyIncomeInput(
         nextSettings.monthlyIncome ? String(nextSettings.monthlyIncome) : ""
@@ -257,7 +250,7 @@ export default function HomeScreen() {
       setSavingsReserveInput(
         nextSettings.savingsReserve ? String(nextSettings.savingsReserve) : ""
       );
-      setCategoryBudgetInputs(budgetInputsFromSettings(nextSettings));
+      setCategoryBudgetInputs(nextCategoryInputs);
     } catch (e) {
       logError("Failed to fetch requests", e);
       setError("Could not load purchase requests. Pull to try again.");
@@ -378,10 +371,6 @@ export default function HomeScreen() {
     () => buildBudgetSummary(requests, budgetSettings),
     [budgetSettings, requests]
   );
-  const budgetCategories = useMemo(
-    () => getBudgetCategories(budgetSettings),
-    [budgetSettings]
-  );
   const healthCopy = HEALTH_COPY[budgetSummary.budgetHealth];
   const topCategorySummaries = budgetSummary.categorySummaries.slice(0, 3);
 
@@ -430,19 +419,18 @@ export default function HomeScreen() {
 
     try {
       setSavingBudget(true);
-      const categories = Object.keys(categoryBudgetInputs);
+      const categoryBudgets = buildCategoryBudgetsFromInputs(categoryBudgetInputs);
+      const monthlyBudget = sumCategoryBudgetInputs(categoryBudgetInputs);
       const settings = await updateBudgetSettings({
-        monthlyBudget: Number(monthlyBudgetInput || 0),
+        monthlyBudget,
         monthlyIncome: Number(monthlyIncomeInput || 0),
         committedExpenses: Number(committedExpensesInput || 0),
         savingsReserve: Number(savingsReserveInput || 0),
-        categoryBudgets: splitMonthlyBudgetAcrossCategories(
-          Number(monthlyBudgetInput || 0),
-          categories
-        ),
+        categoryBudgets,
       });
 
       setBudgetSettings(settings);
+      setMonthlyBudgetInput(String(settings.monthlyBudget || 0));
       setCategoryBudgetInputs(budgetInputsFromSettings(settings));
       setShowBudgetSettings(false);
       toast.show("Budget settings saved", "success");
@@ -454,28 +442,21 @@ export default function HomeScreen() {
     }
   };
 
-  const updateMonthlyBudgetInput = (value: string) => {
-    const cleanValue = value.replace(/[^0-9]/g, "");
-    const categories = Object.keys(categoryBudgetInputs);
-
-    setMonthlyBudgetInput(cleanValue);
-    setCategoryBudgetInputs(
-      Object.entries(
-        splitMonthlyBudgetAcrossCategories(Number(cleanValue || 0), categories)
-      ).reduce(
-        (inputs, [category, amount]) => ({
-          ...inputs,
-          [category]: String(amount),
-        }),
-        {} as Record<string, string>
-      )
-    );
-  };
-
   const updateMoneyInput =
     (setter: (value: string) => void) => (value: string) => {
-      setter(value.replace(/[^0-9]/g, ""));
+      setter(cleanMoneyInputValue(value));
     };
+
+  const updateCategoryBudgetInput = (category: string, value: string) => {
+    setCategoryBudgetInputs((current) => {
+      const nextInputs = {
+        ...current,
+        [category]: cleanMoneyInputValue(value),
+      };
+      setMonthlyBudgetInput(String(sumCategoryBudgetInputs(nextInputs)));
+      return nextInputs;
+    });
+  };
 
   const addCategory = async () => {
     if (savingBudget) return;
@@ -491,77 +472,57 @@ export default function HomeScreen() {
       return;
     }
 
-    try {
-      setSavingBudget(true);
-      const categories = [...Object.keys(categoryBudgetInputs), cleanName];
-      const settings = await updateBudgetSettings({
-        monthlyBudget: Number(monthlyBudgetInput || 0),
-        monthlyIncome: Number(monthlyIncomeInput || 0),
-        committedExpenses: Number(committedExpensesInput || 0),
-        savingsReserve: Number(savingsReserveInput || 0),
-        categoryBudgets: splitMonthlyBudgetAcrossCategories(
-          Number(monthlyBudgetInput || 0),
-          categories
-        ),
-      });
-
-      setBudgetSettings(settings);
-      setCategoryBudgetInputs(budgetInputsFromSettings(settings));
-      setNewCategoryName("");
-      toast.show("Category added", "success");
-    } catch (error) {
-      logError("Failed to add category", error);
-      toast.show("Failed to add category", "error");
-    } finally {
-      setSavingBudget(false);
-    }
+    const nextInputs = {
+      ...categoryBudgetInputs,
+      [cleanName]: cleanMoneyInputValue(newCategoryBudgetInput),
+    };
+    setCategoryBudgetInputs(nextInputs);
+    setMonthlyBudgetInput(String(sumCategoryBudgetInputs(nextInputs)));
+    setNewCategoryName("");
+    setNewCategoryBudgetInput("");
+    toast.show("Category added. Save budget to apply.", "success");
   };
 
   const removeCategory = async (category: string) => {
     if (savingBudget) return;
 
-    const categories = Object.keys(categoryBudgetInputs).filter(
-      (item) => item !== category
-    );
+    const categories = Object.keys(categoryBudgetInputs).filter((item) => item !== category);
 
     if (!categories.length) {
       toast.show("Keep at least one category", "error");
       return;
     }
 
-    try {
-      setSavingBudget(true);
-      const settings = await updateBudgetSettings({
-        monthlyBudget: Number(monthlyBudgetInput || 0),
-        monthlyIncome: Number(monthlyIncomeInput || 0),
-        committedExpenses: Number(committedExpensesInput || 0),
-        savingsReserve: Number(savingsReserveInput || 0),
-        categoryBudgets: splitMonthlyBudgetAcrossCategories(
-          Number(monthlyBudgetInput || 0),
-          categories
-        ),
-      });
-
-      setBudgetSettings(settings);
-      setCategoryBudgetInputs(budgetInputsFromSettings(settings));
-      toast.show("Category removed", "success");
-    } catch (error) {
-      logError("Failed to remove category", error);
-      toast.show("Failed to remove category", "error");
-    } finally {
-      setSavingBudget(false);
-    }
+    const nextInputs = categories.reduce(
+      (inputs, item) => ({
+        ...inputs,
+        [item]: categoryBudgetInputs[item],
+      }),
+      {} as Record<string, string>
+    );
+    setCategoryBudgetInputs(nextInputs);
+    setMonthlyBudgetInput(String(sumCategoryBudgetInputs(nextInputs)));
+    toast.show("Category removed. Save budget to apply.", "success");
   };
 
   const ListHeader = (
-    <View style={styles.budgetPanel}>
+    <View
+      style={[
+        styles.budgetPanel,
+        { backgroundColor: palette.card, borderColor: palette.border },
+      ]}
+    >
       <Pressable
         style={styles.budgetHeader}
         onPress={() => setShowBudgetOverview((value) => !value)}
       >
         <View>
-          <Text style={styles.budgetEyebrow}>Can we safely buy?</Text>
-          <Text style={styles.budgetTitle}>Safe to spend</Text>
+          <Text style={[styles.budgetEyebrow, { color: palette.accent }]}>
+            Can we safely buy?
+          </Text>
+          <Text style={[styles.budgetTitle, { color: palette.text }]}>
+            Safe to spend
+          </Text>
         </View>
         <View style={styles.budgetHeaderAction}>
           <Text
@@ -578,12 +539,14 @@ export default function HomeScreen() {
         </View>
       </Pressable>
 
-      <View style={styles.safeSpendHero}>
-        <Text style={styles.safeSpendValue}>
+      <View style={[styles.safeSpendHero, { borderBottomColor: palette.border }]}>
+        <Text style={[styles.safeSpendValue, { color: palette.text }]}>
           {formatSafeToSpend(budgetSummary.safeToSpend)}
         </Text>
-        <Text style={styles.safeSpendHelp}>{healthCopy.message}</Text>
-        <View style={styles.progressTrack}>
+        <Text style={[styles.safeSpendHelp, { color: palette.mutedText }]}>
+          {healthCopy.message}
+        </Text>
+        <View style={[styles.progressTrack, { backgroundColor: palette.input }]}>
           <View
             style={[
               styles.progressFill,
@@ -604,24 +567,29 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={styles.compactBudgetRow}>
+      <View
+        style={[
+          styles.compactBudgetRow,
+          { backgroundColor: palette.input, borderColor: palette.border },
+        ]}
+      >
         <View style={styles.compactBudgetItem}>
           <Text style={styles.statLabel}>Approved</Text>
-          <Text style={styles.compactBudgetValue}>
+            <Text style={[styles.compactBudgetValue, { color: palette.text }]}>
             {formatInr(budgetSummary.approvedTotal)}
           </Text>
         </View>
         <View style={styles.compactDivider} />
         <View style={styles.compactBudgetItem}>
           <Text style={styles.statLabel}>Pending</Text>
-          <Text style={styles.compactBudgetValue}>
+            <Text style={[styles.compactBudgetValue, { color: palette.text }]}>
             {formatInr(budgetSummary.pendingTotal)}
           </Text>
         </View>
         <View style={styles.compactDivider} />
         <View style={styles.compactBudgetItem}>
           <Text style={styles.statLabel}>Remaining</Text>
-          <Text style={styles.compactBudgetValue}>
+            <Text style={[styles.compactBudgetValue, { color: palette.text }]}>
             {formatInr(budgetSummary.remainingBudget)}
           </Text>
         </View>
@@ -734,10 +702,10 @@ export default function HomeScreen() {
         <View style={styles.settingsPanel}>
           <Text style={styles.inputLabel}>Monthly room budget</Text>
           <TextInput
-            style={styles.budgetInput}
+            style={[styles.budgetInput, styles.disabledBudgetInput]}
             value={monthlyBudgetInput}
             keyboardType="numeric"
-            onChangeText={updateMonthlyBudgetInput}
+            editable={false}
             placeholder="INR"
             placeholderTextColor="#8F867A"
           />
@@ -772,13 +740,18 @@ export default function HomeScreen() {
             placeholderTextColor="#8F867A"
           />
 
-          <Text style={styles.inputLabel}>Category budgets auto split</Text>
-          {budgetCategories.map((category) => (
+          <Text style={styles.inputLabel}>Category budgets</Text>
+          {Object.keys(categoryBudgetInputs).map((category) => (
             <View key={category} style={styles.categoryInputRow}>
               <Text style={styles.categoryInputLabel}>{category}</Text>
-              <Text style={styles.categoryAmountText}>
-                {formatInr(Number(categoryBudgetInputs[category] || 0))}
-              </Text>
+              <TextInput
+                style={[styles.budgetInput, styles.categoryInput]}
+                value={categoryBudgetInputs[category]}
+                keyboardType="numeric"
+                onChangeText={(value) => updateCategoryBudgetInput(category, value)}
+                placeholder="INR"
+                placeholderTextColor="#8F867A"
+              />
               <Pressable
                 style={styles.removeCategoryButton}
                 disabled={savingBudget}
@@ -795,6 +768,16 @@ export default function HomeScreen() {
               value={newCategoryName}
               onChangeText={setNewCategoryName}
               placeholder="Add custom category"
+              placeholderTextColor="#8F867A"
+            />
+            <TextInput
+              style={[styles.budgetInput, styles.newCategoryAmountInput]}
+              value={newCategoryBudgetInput}
+              keyboardType="numeric"
+              onChangeText={(value) =>
+                setNewCategoryBudgetInput(cleanMoneyInputValue(value))
+              }
+              placeholder="INR"
               placeholderTextColor="#8F867A"
             />
             <Pressable
@@ -910,10 +893,15 @@ export default function HomeScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       <Header />
 
-      <View style={styles.filtersWrapper}>
+      <View
+        style={[
+          styles.filtersWrapper,
+          { backgroundColor: palette.background, borderColor: palette.border },
+        ]}
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -925,13 +913,20 @@ export default function HomeScreen() {
             return (
               <Pressable
                 key={filter.value}
-                style={[styles.filterChip, isActive && styles.filterChipActive]}
+                style={[
+                  styles.filterChip,
+                  { backgroundColor: palette.card, borderColor: palette.border },
+                  isActive && {
+                    backgroundColor: palette.primary,
+                    borderColor: palette.primary,
+                  },
+                ]}
                 onPress={() => setActiveFilter(filter.value)}
               >
                 <Text
                   style={[
                     styles.filterText,
-                    isActive && styles.filterTextActive,
+                    { color: isActive ? palette.buttonText : palette.mutedText },
                   ]}
                 >
                   {filter.label}
@@ -997,7 +992,10 @@ export default function HomeScreen() {
 
           return (
             <Pressable
-              style={styles.card}
+              style={[
+                styles.card,
+                { backgroundColor: palette.card, borderColor: palette.border },
+              ]}
               onPress={() =>
                 router.push({
                   pathname: "/task/[id]",
@@ -1401,6 +1399,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     padding: 10,
   },
+  disabledBudgetInput: {
+    opacity: 0.78,
+  },
   categoryInputRow: {
     alignItems: "center",
     flexDirection: "row",
@@ -1445,6 +1446,9 @@ const styles = StyleSheet.create({
   },
   addCategoryInput: {
     flex: 1,
+  },
+  newCategoryAmountInput: {
+    width: 96,
   },
   addCategoryButton: {
     alignItems: "center",

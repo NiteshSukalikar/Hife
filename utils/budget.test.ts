@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { BudgetSettings, PurchaseRequest } from "@/constants/types";
-import { buildBudgetSummary } from "@/utils/budget";
+import {
+  buildBudgetSummary,
+  buildCategoryBudgetsFromInputs,
+  sumCategoryBudgetInputs,
+} from "@/utils/budget";
 
 const currentTimestamp = {
   toDate: () => new Date(),
@@ -166,5 +170,22 @@ describe("buildBudgetSummary", () => {
     expect(home?.purchasedTotal).toBe(1500);
     expect(home?.remaining).toBe(3500);
     expect(home?.projectedRemaining).toBe(1500);
+  });
+});
+
+describe("category budget input helpers", () => {
+  it("builds category budgets and totals the monthly budget from category rows", () => {
+    const inputs = {
+      Grocery: "5000",
+      Home: "3500",
+      Empty: "",
+    };
+
+    expect(buildCategoryBudgetsFromInputs(inputs)).toEqual({
+      Grocery: 5000,
+      Home: 3500,
+      Empty: 0,
+    });
+    expect(sumCategoryBudgetInputs(inputs)).toBe(8500);
   });
 });
