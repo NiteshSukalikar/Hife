@@ -22,6 +22,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import type { DimensionValue } from "react-native";
 import {
   getPurchaseRequests,
   subscribeToPurchaseRequests,
@@ -110,6 +111,44 @@ const PREVIEW_REQUESTS: PurchaseRequest[] = [
     lastCommentBy: "partner-b",
     lastCommentText: "Looks useful. Approved.",
   },
+  {
+    id: "preview-kitchen",
+    title: "Steel lunch boxes",
+    productName: "Steel lunch boxes",
+    info: "Replace old plastic boxes.",
+    reason: "The older boxes leak and this keeps lunches cleaner.",
+    priority: "P2",
+    expectedPrice: 1200,
+    maxBudget: 1800,
+    budget: 1800,
+    category: "Kitchen",
+    links: [],
+    status: "approved",
+    image: null,
+    householdId: "preview-household",
+    createdAt: { toDate: () => new Date("2026-06-12T11:00:00+05:30") },
+    updatedAt: { toDate: () => new Date("2026-06-12T11:00:00+05:30") },
+    lastActivityAt: { toDate: () => new Date("2026-06-12T11:00:00+05:30") },
+  },
+  {
+    id: "preview-old",
+    title: "Work desk lamp",
+    productName: "Work desk lamp",
+    info: "Better evening light.",
+    reason: "A useful work upgrade, but not urgent.",
+    priority: "P3",
+    expectedPrice: 1600,
+    maxBudget: 2000,
+    budget: 2000,
+    category: "Work",
+    links: [],
+    status: "buy_later",
+    image: null,
+    householdId: "preview-household",
+    createdAt: { toDate: () => new Date("2026-05-16T11:00:00+05:30") },
+    updatedAt: { toDate: () => new Date("2026-05-16T11:00:00+05:30") },
+    lastActivityAt: { toDate: () => new Date("2026-05-16T11:00:00+05:30") },
+  },
 ];
 
 function budgetInputsFromSettings(settings: BudgetSettings) {
@@ -147,12 +186,24 @@ const HEALTH_COPY = {
   },
 } as const;
 
-function clampProgress(value: number) {
-  return `${Math.max(0, Math.min(1, value)) * 100}%`;
+function clampProgress(value: number): DimensionValue {
+  return `${Math.max(0, Math.min(1, value)) * 100}%` as DimensionValue;
 }
 
 function formatSafeToSpend(amount: number) {
   return amount < 0 ? `Over by ${formatInr(Math.abs(amount))}` : formatInr(amount);
+}
+
+function formatCount(value: number, singular: string, plural = `${singular}s`) {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
+function formatMonthComparison(difference: number) {
+  if (difference === 0) return "Same as the previous active month";
+
+  return difference > 0
+    ? `${formatInr(difference)} more than previous active month`
+    : `${formatInr(Math.abs(difference))} less than previous active month`;
 }
 
 export default function HomeScreen() {
@@ -372,7 +423,17 @@ export default function HomeScreen() {
     [budgetSettings, requests]
   );
   const healthCopy = HEALTH_COPY[budgetSummary.budgetHealth];
-  const topCategorySummaries = budgetSummary.categorySummaries.slice(0, 3);
+  const topCategorySummaries = [...budgetSummary.categorySummaries]
+    .sort(
+      (a, b) =>
+        b.approvedTotal + b.pendingTotal - (a.approvedTotal + a.pendingTotal)
+    )
+    .slice(0, 3);
+  const hasCompletedDecisions =
+    budgetSummary.decisionSummary.approvedCount > 0 ||
+    budgetSummary.decisionSummary.declinedCount > 0 ||
+    budgetSummary.decisionSummary.buyLaterCount > 0 ||
+    budgetSummary.decisionSummary.purchasedCount > 0;
 
   useFocusEffect(
     useCallback(() => {
@@ -851,42 +912,173 @@ export default function HomeScreen() {
         style={styles.summaryToggle}
         onPress={() => setShowCategorySummary((value) => !value)}
       >
-        <Text style={styles.sectionHeading}>Category summary</Text>
+        <Text style={styles.sectionHeading}>Finance insights</Text>
         <Text style={styles.summaryToggleText}>
           {showCategorySummary ? "Hide" : "Show"}
         </Text>
       </Pressable>
 
-      {showCategorySummary
-        ? budgetSummary.categorySummaries.map((item) => (
-            <View key={item.category} style={styles.summaryRow}>
-              <Text style={styles.summaryCategory}>{item.category}</Text>
-              <Text style={styles.summaryText}>
-                {formatInr(item.approvedTotal)} approved /{" "}
-                {formatInr(item.pendingTotal)} pending /{" "}
-                {formatInr(item.purchasedTotal)} purchased
-              </Text>
-              <Text style={styles.summaryText}>
-                {formatInr(item.projectedRemaining)} projected left of{" "}
-                {formatInr(item.budget)}
+      {showCategorySummary ? (
+        <>
+          <View style={styles.decisionGrid}>
+            <View style={styles.decisionTile}>
+              <Text style={styles.statLabel}>Approved</Text>
+              <Text style={styles.decisionValue}>
+                {budgetSummary.decisionSummary.approvedCount}
               </Text>
             </View>
-          ))
-        : null}
+            <View style={styles.decisionTile}>
+              <Text style={styles.statLabel}>Purchased</Text>
+              <Text style={styles.decisionValue}>
+                {budgetSummary.decisionSummary.purchasedCount}
+              </Text>
+            </View>
+            <View style={styles.decisionTile}>
+              <Text style={styles.statLabel}>Declined</Text>
+              <Text style={styles.decisionValue}>
+                {budgetSummary.decisionSummary.declinedCount}
+              </Text>
+            </View>
+            <View style={styles.decisionTile}>
+              <Text style={styles.statLabel}>Buy later / info</Text>
+              <Text style={styles.decisionValue}>
+                {budgetSummary.decisionSummary.postponedCount}
+              </Text>
+            </View>
+          </View>
 
-      <Text style={styles.sectionHeading}>Spending history</Text>
-      {budgetSummary.monthlyHistory.length === 0 ? (
-        <Text style={styles.historyEmpty}>No approved or pending requests yet.</Text>
-      ) : (
-        budgetSummary.monthlyHistory.slice(0, 4).map((item) => (
-          <View key={item.monthKey} style={styles.historyRow}>
-            <Text style={styles.historyMonth}>{item.label}</Text>
-            <Text style={styles.historyText}>
-              {formatInr(item.approvedTotal)} approved, {formatInr(item.pendingTotal)} pending
+          {!hasCompletedDecisions ? (
+            <Text style={styles.historyEmpty}>
+              Insights will get useful after a few requests are approved,
+              declined, purchased, or marked buy later.
+            </Text>
+          ) : null}
+
+          <Text style={styles.sectionHeading}>Current-month category spend</Text>
+          {budgetSummary.currentMonthCategorySpend.length === 0 ? (
+            <Text style={styles.historyEmpty}>
+              No approved or purchased decisions this month yet.
+            </Text>
+          ) : (
+            budgetSummary.currentMonthCategorySpend.slice(0, 5).map((item) => (
+              <View key={item.category} style={styles.summaryRow}>
+                <View style={styles.insightRowTop}>
+                  <Text style={styles.summaryCategory}>{item.category}</Text>
+                  <Text style={styles.insightAmount}>{formatInr(item.total)}</Text>
+                </View>
+                <Text style={styles.summaryText}>
+                  {formatInr(item.purchasedTotal)} purchased /{" "}
+                  {formatInr(item.approvedTotal - item.purchasedTotal)} approved
+                  but not purchased
+                </Text>
+              </View>
+            ))
+          )}
+
+          <Text style={styles.sectionHeading}>Top categories by decisions</Text>
+          {budgetSummary.topCategoriesBySpend.length === 0 ? (
+            <Text style={styles.historyEmpty}>
+              Top categories appear after approved or purchased decisions.
+            </Text>
+          ) : (
+            budgetSummary.topCategoriesBySpend.slice(0, 4).map((item) => (
+              <View key={item.category} style={styles.summaryRow}>
+                <View style={styles.insightRowTop}>
+                  <Text style={styles.summaryCategory}>{item.category}</Text>
+                  <Text style={styles.insightAmount}>{formatInr(item.total)}</Text>
+                </View>
+                <Text style={styles.summaryText}>
+                  Shared purchase decisions only, not bank-account tracking.
+                </Text>
+              </View>
+            ))
+          )}
+
+          <Text style={styles.sectionHeading}>Monthly purchase history</Text>
+          {budgetSummary.monthlyHistory.length === 0 ? (
+            <Text style={styles.historyEmpty}>
+              Monthly history starts after the first purchase decision.
+            </Text>
+          ) : (
+            budgetSummary.monthlyHistory.slice(0, 5).map((item) => (
+              <View key={item.monthKey} style={styles.historyBlock}>
+                <View style={styles.insightRowTop}>
+                  <Text style={styles.historyMonth}>{item.label}</Text>
+                  <Text style={styles.insightAmount}>
+                    {formatInr(item.approvedTotal)}
+                  </Text>
+                </View>
+                <Text style={styles.summaryText}>
+                  {formatInr(item.purchasedTotal)} purchased /{" "}
+                  {formatInr(item.pendingTotal)} still pending
+                </Text>
+                <Text style={styles.summaryText}>
+                  {formatCount(item.declinedCount, "decline")} /{" "}
+                  {formatCount(item.postponedCount, "postponed decision")}
+                </Text>
+              </View>
+            ))
+          )}
+
+          <Text style={styles.sectionHeading}>Month-over-month</Text>
+          {budgetSummary.monthOverMonth.previousMonthKey ? (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryCategory}>
+                {formatMonthComparison(budgetSummary.monthOverMonth.difference)}
+              </Text>
+              <Text style={styles.summaryText}>
+                Based on approved and purchased shared decisions in active
+                request months.
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.historyEmpty}>
+              Add another month of decisions to compare spending confidence.
+            </Text>
+          )}
+
+          <Text style={styles.sectionHeading}>Repeat purchase signals</Text>
+          {budgetSummary.recurringSignals.length === 0 ? (
+            <Text style={styles.historyEmpty}>
+              Repeated approved purchases will show here so the household can
+              decide whether they belong in the monthly plan.
+            </Text>
+          ) : (
+            budgetSummary.recurringSignals.slice(0, 3).map((item) => (
+              <View key={item.key} style={styles.summaryRow}>
+                <View style={styles.insightRowTop}>
+                  <Text style={styles.summaryCategory}>{item.label}</Text>
+                  <Text style={styles.insightAmount}>
+                    {formatCount(item.count, "time")}
+                  </Text>
+                </View>
+                <Text style={styles.summaryText}>
+                  {formatInr(item.total)} across {item.category} decisions.
+                </Text>
+              </View>
+            ))
+          )}
+
+          <View style={styles.monthlyReviewBox}>
+            <Text style={styles.monthlyReviewTitle}>Monthly review summary</Text>
+            <Text style={styles.monthlyReviewText}>
+              This household has {formatCount(
+                budgetSummary.decisionSummary.requestedCount,
+                "request"
+              )},{" "}
+              {formatCount(
+                budgetSummary.decisionSummary.approvedCount,
+                "approval"
+              )},{" "}
+              and {formatCount(
+                budgetSummary.decisionSummary.postponedCount,
+                "postponed decision"
+              )} in Hife. Use this as a shared decision check-in, not a full
+              expense ledger.
             </Text>
           </View>
-        ))
-      )}
+        </>
+      ) : null}
         </>
       ) : null}
     </View>
@@ -1507,14 +1699,53 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     paddingVertical: 8,
   },
+  decisionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 8,
+  },
+  decisionTile: {
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
+    borderWidth: 1,
+    flexBasis: "48%",
+    flexGrow: 1,
+    minWidth: 128,
+    padding: 10,
+  },
+  decisionValue: {
+    color: "#3A2E28",
+    fontSize: 24,
+    fontWeight: "900",
+    marginTop: 3,
+  },
+  insightRowTop: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    justifyContent: "space-between",
+  },
+  insightAmount: {
+    color: "#3A2E28",
+    flexShrink: 1,
+    fontSize: 13,
+    fontWeight: "900",
+    textAlign: "right",
+  },
   summaryCategory: {
     color: "#3A2E28",
+    flex: 1,
     fontSize: 14,
     fontWeight: "800",
+    minWidth: 150,
   },
   summaryText: {
     color: "#776E64",
     fontSize: 12,
+    lineHeight: 17,
     marginTop: 2,
   },
   historyRow: {
@@ -1537,6 +1768,32 @@ const styles = StyleSheet.create({
   historyEmpty: {
     color: "#776E64",
     fontSize: 13,
+    lineHeight: 19,
+  },
+  historyBlock: {
+    borderTopColor: "#E8DECE",
+    borderTopWidth: 1,
+    paddingVertical: 8,
+  },
+  monthlyReviewBox: {
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 12,
+    padding: 12,
+  },
+  monthlyReviewTitle: {
+    color: "#A85C44",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  monthlyReviewText: {
+    color: "#3A2E28",
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 19,
+    marginTop: 5,
   },
   card: {
     alignItems: "center",

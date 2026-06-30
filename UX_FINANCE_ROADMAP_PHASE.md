@@ -158,15 +158,15 @@ Goal: Make the app feel modern, trustworthy, and daily-use worthy.
 
 Goal: Help users understand habits over time, not only one purchase at a time.
 
-- [ ] Add monthly purchase history.
-- [ ] Add spending by category for the current month.
-- [ ] Add spending by category for past months.
-- [ ] Add approved versus declined request counts.
-- [ ] Add postponed request tracking.
-- [ ] Add top categories by spend.
-- [ ] Add simple month-over-month comparison.
-- [ ] Add recurring purchase detection or manual recurring labels.
-- [ ] Add export or summary view if users need monthly review outside the app.
+- [x] Add monthly purchase history.
+- [x] Add spending by category for the current month.
+- [x] Add spending by category for past months.
+- [x] Add approved versus declined request counts.
+- [x] Add postponed request tracking.
+- [x] Add top categories by spend.
+- [x] Add simple month-over-month comparison.
+- [x] Add recurring purchase detection or manual recurring labels.
+- [x] Add export or summary view if users need monthly review outside the app.
 
 ## Phase 20: Verification And Release Quality
 

@@ -171,6 +171,133 @@ describe("buildBudgetSummary", () => {
     expect(home?.remaining).toBe(3500);
     expect(home?.projectedRemaining).toBe(1500);
   });
+
+  it("groups purchase history by month with category spend and decision counts", () => {
+    const summary = buildBudgetSummary(
+      [
+        request({
+          id: "current-purchased",
+          category: "Home",
+          expectedPrice: 3000,
+          status: "purchased",
+          createdAt: { toDate: () => new Date("2026-06-10T10:00:00+05:30") },
+        }),
+        request({
+          id: "current-approved",
+          category: "Kitchen",
+          expectedPrice: 1200,
+          status: "approved",
+          createdAt: { toDate: () => new Date("2026-06-12T10:00:00+05:30") },
+        }),
+        request({
+          id: "past-declined",
+          expectedPrice: 900,
+          status: "declined",
+          createdAt: { toDate: () => new Date("2026-05-02T10:00:00+05:30") },
+        }),
+        request({
+          id: "past-buy-later",
+          expectedPrice: 600,
+          status: "buy_later",
+          createdAt: { toDate: () => new Date("2026-05-03T10:00:00+05:30") },
+        }),
+      ],
+      settings
+    );
+
+    expect(summary.monthlyHistory[0].monthKey).toBe("2026-06");
+    expect(summary.monthlyHistory[0].approvedTotal).toBe(4200);
+    expect(summary.monthlyHistory[0].purchasedTotal).toBe(3000);
+    expect(summary.monthlyHistory[0].categorySpend).toEqual([
+      {
+        category: "Home",
+        total: 3000,
+        purchasedTotal: 3000,
+        approvedTotal: 3000,
+      },
+      {
+        category: "Kitchen",
+        total: 1200,
+        purchasedTotal: 0,
+        approvedTotal: 1200,
+      },
+    ]);
+    expect(summary.monthlyHistory[1].declinedCount).toBe(1);
+    expect(summary.monthlyHistory[1].buyLaterCount).toBe(1);
+    expect(summary.monthlyHistory[1].postponedCount).toBe(1);
+  });
+
+  it("summarizes decisions, top categories, month comparison, and repeat signals", () => {
+    const summary = buildBudgetSummary(
+      [
+        request({
+          id: "current",
+          productName: "Water filter refill",
+          category: "Home",
+          expectedPrice: 2000,
+          status: "purchased",
+          createdAt: { toDate: () => new Date("2026-06-10T10:00:00+05:30") },
+        }),
+        request({
+          id: "previous",
+          productName: "Water Filter Refill",
+          category: "Home",
+          expectedPrice: 1000,
+          status: "approved",
+          createdAt: { toDate: () => new Date("2026-05-10T10:00:00+05:30") },
+        }),
+        request({
+          id: "declined",
+          expectedPrice: 500,
+          status: "declined",
+          createdAt: { toDate: () => new Date("2026-06-11T10:00:00+05:30") },
+        }),
+        request({
+          id: "later",
+          expectedPrice: 700,
+          status: "buy_later",
+          createdAt: { toDate: () => new Date("2026-06-12T10:00:00+05:30") },
+        }),
+        request({
+          id: "info",
+          expectedPrice: 800,
+          status: "needs_more_info",
+          createdAt: { toDate: () => new Date("2026-06-13T10:00:00+05:30") },
+        }),
+      ],
+      settings
+    );
+
+    expect(summary.decisionSummary).toMatchObject({
+      approvedCount: 1,
+      declinedCount: 1,
+      buyLaterCount: 1,
+      postponedCount: 2,
+      purchasedCount: 1,
+      requestedCount: 5,
+    });
+    expect(summary.topCategoriesBySpend[0]).toMatchObject({
+      category: "Home",
+      total: 3000,
+    });
+    expect(summary.monthOverMonth).toMatchObject({
+      currentMonthKey: summary.currentMonthKey,
+      previousMonthKey: "2026-05",
+      currentApprovedTotal: 2000,
+      previousApprovedTotal: 1000,
+      difference: 1000,
+      percentChange: 1,
+    });
+    expect(summary.recurringSignals).toEqual([
+      {
+        key: "water filter refill",
+        label: "Water filter refill",
+        category: "Home",
+        count: 2,
+        total: 3000,
+      },
+    ]);
+  });
 });
 
 describe("category budget input helpers", () => {

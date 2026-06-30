@@ -444,6 +444,7 @@ export default function CommentsScreen() {
   const statusColor = request ? getStatusChipColor(request.status) : null;
   const urgencyColor = request ? getPriorityChipColor(request.priority) : null;
   const requestLinks: ProductLink[] = request?.links || [];
+  const activeRequest = requestSummary && request ? request : null;
 
   return (
     <SafeAreaView
@@ -458,7 +459,7 @@ export default function CommentsScreen() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          {requestSummary ? (
+          {requestSummary && activeRequest ? (
             <View
               style={[
                 styles.summaryCard,
@@ -506,9 +507,9 @@ export default function CommentsScreen() {
                     </Text>
                   </View>
                 ) : null}
-                {request.category ? (
+                {activeRequest.category ? (
                   <Text style={styles.summaryCategory} numberOfLines={1}>
-                    {request.category}
+                    {activeRequest.category}
                   </Text>
                 ) : null}
               </View>
@@ -530,7 +531,7 @@ export default function CommentsScreen() {
                 {requestSummary.budgetLine}
               </Text>
 
-              {request.lastCommentText ? (
+              {activeRequest.lastCommentText ? (
                 <View style={styles.latestActivityRow}>
                   <Ionicons
                     name="chatbubble-ellipses-outline"
@@ -538,7 +539,7 @@ export default function CommentsScreen() {
                     color="#776E64"
                   />
                   <Text style={styles.latestActivityText} numberOfLines={2}>
-                    Latest note: {request.lastCommentText}
+                    Latest note: {activeRequest.lastCommentText}
                   </Text>
                 </View>
               ) : null}

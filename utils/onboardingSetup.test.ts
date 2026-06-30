@@ -43,7 +43,9 @@ describe("onboarding setup helpers", () => {
       isValid: false,
       message: "Enter the room invite code",
     });
-    expect(result.message).not.toMatch(/\bP[0-3]\b/);
+    if (!result.isValid) {
+      expect(result.message).not.toMatch(/\bP[0-3]\b/);
+    }
   });
 
   it("explains partner invite guidance in plain language", () => {
