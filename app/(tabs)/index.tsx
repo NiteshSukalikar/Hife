@@ -67,6 +67,9 @@ const previewTimestamp = {
 };
 const PREVIEW_BUDGET_SETTINGS: BudgetSettings = {
   monthlyBudget: 5000,
+  monthlyIncome: 12000,
+  committedExpenses: 3000,
+  savingsReserve: 2000,
   categoryBudgets: {
     Home: 5000,
     Kitchen: 2500,
@@ -177,6 +180,9 @@ export default function HomeScreen() {
     DEFAULT_BUDGET_SETTINGS
   );
   const [monthlyBudgetInput, setMonthlyBudgetInput] = useState("");
+  const [monthlyIncomeInput, setMonthlyIncomeInput] = useState("");
+  const [committedExpensesInput, setCommittedExpensesInput] = useState("");
+  const [savingsReserveInput, setSavingsReserveInput] = useState("");
   const [categoryBudgetInputs, setCategoryBudgetInputs] = useState<
     Record<string, string>
   >({});
@@ -208,6 +214,11 @@ export default function HomeScreen() {
       setReadCommentCounts({ preview: 1 });
       setMyUserId("partner-a");
       setMonthlyBudgetInput(String(PREVIEW_BUDGET_SETTINGS.monthlyBudget));
+      setMonthlyIncomeInput(String(PREVIEW_BUDGET_SETTINGS.monthlyIncome || 0));
+      setCommittedExpensesInput(
+        String(PREVIEW_BUDGET_SETTINGS.committedExpenses || 0)
+      );
+      setSavingsReserveInput(String(PREVIEW_BUDGET_SETTINGS.savingsReserve || 0));
       setCategoryBudgetInputs(budgetInputsFromSettings(PREVIEW_BUDGET_SETTINGS));
       setLoading(false);
       return;
@@ -233,6 +244,17 @@ export default function HomeScreen() {
       notificationSettingsRef.current = savedNotificationSettings;
       setMonthlyBudgetInput(
         nextSettings.monthlyBudget ? String(nextSettings.monthlyBudget) : ""
+      );
+      setMonthlyIncomeInput(
+        nextSettings.monthlyIncome ? String(nextSettings.monthlyIncome) : ""
+      );
+      setCommittedExpensesInput(
+        nextSettings.committedExpenses
+          ? String(nextSettings.committedExpenses)
+          : ""
+      );
+      setSavingsReserveInput(
+        nextSettings.savingsReserve ? String(nextSettings.savingsReserve) : ""
       );
       setCategoryBudgetInputs(budgetInputsFromSettings(nextSettings));
     } catch (e) {
@@ -410,6 +432,9 @@ export default function HomeScreen() {
       const categories = Object.keys(categoryBudgetInputs);
       const settings = await updateBudgetSettings({
         monthlyBudget: Number(monthlyBudgetInput || 0),
+        monthlyIncome: Number(monthlyIncomeInput || 0),
+        committedExpenses: Number(committedExpensesInput || 0),
+        savingsReserve: Number(savingsReserveInput || 0),
         categoryBudgets: splitMonthlyBudgetAcrossCategories(
           Number(monthlyBudgetInput || 0),
           categories
@@ -446,6 +471,11 @@ export default function HomeScreen() {
     );
   };
 
+  const updateMoneyInput =
+    (setter: (value: string) => void) => (value: string) => {
+      setter(value.replace(/[^0-9]/g, ""));
+    };
+
   const addCategory = async () => {
     if (savingBudget) return;
 
@@ -465,6 +495,9 @@ export default function HomeScreen() {
       const categories = [...Object.keys(categoryBudgetInputs), cleanName];
       const settings = await updateBudgetSettings({
         monthlyBudget: Number(monthlyBudgetInput || 0),
+        monthlyIncome: Number(monthlyIncomeInput || 0),
+        committedExpenses: Number(committedExpensesInput || 0),
+        savingsReserve: Number(savingsReserveInput || 0),
         categoryBudgets: splitMonthlyBudgetAcrossCategories(
           Number(monthlyBudgetInput || 0),
           categories
@@ -499,6 +532,9 @@ export default function HomeScreen() {
       setSavingBudget(true);
       const settings = await updateBudgetSettings({
         monthlyBudget: Number(monthlyBudgetInput || 0),
+        monthlyIncome: Number(monthlyIncomeInput || 0),
+        committedExpenses: Number(committedExpensesInput || 0),
+        savingsReserve: Number(savingsReserveInput || 0),
         categoryBudgets: splitMonthlyBudgetAcrossCategories(
           Number(monthlyBudgetInput || 0),
           categories
@@ -562,7 +598,7 @@ export default function HomeScreen() {
             {formatInr(budgetSummary.approvedTotal + budgetSummary.pendingTotal)}
           </Text>
           <Text style={styles.progressMetaText}>
-            Budget {formatInr(budgetSummary.monthlyBudget)}
+            Decision budget {formatInr(budgetSummary.decisionBudget)}
           </Text>
         </View>
       </View>
@@ -641,6 +677,30 @@ export default function HomeScreen() {
               </Text>
             </View>
             <View style={styles.budgetStat}>
+              <Text style={styles.statLabel}>Monthly income</Text>
+              <Text style={styles.statValue}>
+                {formatInr(budgetSummary.monthlyIncome)}
+              </Text>
+            </View>
+            <View style={styles.budgetStat}>
+              <Text style={styles.statLabel}>Committed expenses</Text>
+              <Text style={styles.statValue}>
+                {formatInr(budgetSummary.committedExpenses)}
+              </Text>
+            </View>
+            <View style={styles.budgetStat}>
+              <Text style={styles.statLabel}>Savings reserve</Text>
+              <Text style={styles.statValue}>
+                {formatInr(budgetSummary.savingsReserve)}
+              </Text>
+            </View>
+            <View style={styles.budgetStat}>
+              <Text style={styles.statLabel}>Decision budget</Text>
+              <Text style={styles.statValue}>
+                {formatInr(budgetSummary.decisionBudget)}
+              </Text>
+            </View>
+            <View style={styles.budgetStat}>
               <Text style={styles.statLabel}>Approved spend</Text>
               <Text style={styles.statValue}>
                 {formatInr(budgetSummary.approvedTotal)}
@@ -677,6 +737,36 @@ export default function HomeScreen() {
             value={monthlyBudgetInput}
             keyboardType="numeric"
             onChangeText={updateMonthlyBudgetInput}
+            placeholder="INR"
+            placeholderTextColor="#8F867A"
+          />
+
+          <Text style={styles.inputLabel}>Monthly household income</Text>
+          <TextInput
+            style={styles.budgetInput}
+            value={monthlyIncomeInput}
+            keyboardType="numeric"
+            onChangeText={updateMoneyInput(setMonthlyIncomeInput)}
+            placeholder="INR"
+            placeholderTextColor="#8F867A"
+          />
+
+          <Text style={styles.inputLabel}>Committed monthly expenses</Text>
+          <TextInput
+            style={styles.budgetInput}
+            value={committedExpensesInput}
+            keyboardType="numeric"
+            onChangeText={updateMoneyInput(setCommittedExpensesInput)}
+            placeholder="INR"
+            placeholderTextColor="#8F867A"
+          />
+
+          <Text style={styles.inputLabel}>Emergency buffer / reserve</Text>
+          <TextInput
+            style={styles.budgetInput}
+            value={savingsReserveInput}
+            keyboardType="numeric"
+            onChangeText={updateMoneyInput(setSavingsReserveInput)}
             placeholder="INR"
             placeholderTextColor="#8F867A"
           />
@@ -789,10 +879,12 @@ export default function HomeScreen() {
               <Text style={styles.summaryCategory}>{item.category}</Text>
               <Text style={styles.summaryText}>
                 {formatInr(item.approvedTotal)} approved /{" "}
-                {formatInr(item.pendingTotal)} pending
+                {formatInr(item.pendingTotal)} pending /{" "}
+                {formatInr(item.purchasedTotal)} purchased
               </Text>
               <Text style={styles.summaryText}>
-                {formatInr(item.remaining)} left of {formatInr(item.budget)}
+                {formatInr(item.projectedRemaining)} projected left of{" "}
+                {formatInr(item.budget)}
               </Text>
             </View>
           ))
@@ -891,9 +983,16 @@ export default function HomeScreen() {
           );
           const reservesBudget =
             item.status === "pending" || item.status === "needs_more_info";
-          const afterApproval = reservesBudget
-            ? budgetSummary.safeToSpend - itemAmount
-            : budgetSummary.safeToSpend;
+          const afterApproval = budgetSummary.safeToSpend;
+          const categoryAfterApproval =
+            categorySummary?.projectedRemaining || 0;
+          const safeSpendWarning = reservesBudget && budgetSummary.safeToSpend < 0;
+          const categoryWarning =
+            reservesBudget &&
+            !!categorySummary?.budget &&
+            (categorySummary.approvedTotal + categorySummary.pendingTotal >
+              categorySummary.budget ||
+              itemAmount > categorySummary.budget * 0.5);
 
           return (
             <Pressable
@@ -961,8 +1060,18 @@ export default function HomeScreen() {
                   {formatSafeToSpend(afterApproval)}
                 </Text>
                 <Text style={styles.cardBudgetMeta} numberOfLines={1}>
-                  Category left: {formatInr(categorySummary?.remaining || 0)}
+                  Category projected left:{" "}
+                  {formatSafeToSpend(categoryAfterApproval)}
                 </Text>
+                {safeSpendWarning ? (
+                  <Text style={styles.cardWarningText} numberOfLines={1}>
+                    Would push safe-to-spend below zero.
+                  </Text>
+                ) : categoryWarning ? (
+                  <Text style={styles.cardWarningText} numberOfLines={1}>
+                    Large impact on this category.
+                  </Text>
+                ) : null}
                 <Text style={styles.activityText} numberOfLines={1}>
                   Last activity: {formatActivity(item.lastActivityAt)}
                 </Text>
@@ -1520,6 +1629,12 @@ const styles = StyleSheet.create({
     color: "#776E64",
     fontSize: 12,
     fontWeight: "700",
+    marginTop: 2,
+  },
+  cardWarningText: {
+    color: "#A05232",
+    fontSize: 12,
+    fontWeight: "900",
     marginTop: 2,
   },
   activityText: {

@@ -25,6 +25,9 @@ export type CategoryBudgetMap = Record<string, number>;
 export type BudgetSettings = {
   monthlyBudget: number;
   categoryBudgets: CategoryBudgetMap;
+  monthlyIncome?: number;
+  committedExpenses?: number;
+  savingsReserve?: number;
 };
 
 export type AiDecisionResult = {

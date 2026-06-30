@@ -20,16 +20,28 @@ export async function getBudgetSettings() {
 
   return {
     monthlyBudget: Number(household.monthlyBudget || 0),
+    monthlyIncome: Number(household.monthlyIncome || 0),
+    committedExpenses: Number(household.committedExpenses || 0),
+    savingsReserve: Number(household.savingsReserve || 0),
     categoryBudgets: normalizeCategoryBudgets(household.categoryBudgets),
   };
 }
 
-export async function updateBudgetSettings({ monthlyBudget, categoryBudgets }) {
+export async function updateBudgetSettings({
+  monthlyBudget,
+  monthlyIncome,
+  committedExpenses,
+  savingsReserve,
+  categoryBudgets,
+}) {
   const household = await requireActiveHousehold();
   const cleanCategoryBudgets = normalizeCategoryBudgets(categoryBudgets);
 
   await updateDoc(doc(db, "households", household.id), {
     monthlyBudget: Number(monthlyBudget || 0),
+    monthlyIncome: Number(monthlyIncome || 0),
+    committedExpenses: Number(committedExpenses || 0),
+    savingsReserve: Number(savingsReserve || 0),
     categoryBudgets: cleanCategoryBudgets,
     updatedAt: serverTimestamp(),
   });
@@ -37,6 +49,9 @@ export async function updateBudgetSettings({ monthlyBudget, categoryBudgets }) {
 
   return {
     monthlyBudget: Number(monthlyBudget || 0),
+    monthlyIncome: Number(monthlyIncome || 0),
+    committedExpenses: Number(committedExpenses || 0),
+    savingsReserve: Number(savingsReserve || 0),
     categoryBudgets: cleanCategoryBudgets,
   };
 }

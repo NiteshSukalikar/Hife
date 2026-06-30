@@ -52,19 +52,23 @@ dashboard.
 
 Goal: Add the finance structure needed to support real budget decisions.
 
-- [ ] Add income setup for the room or household.
-- [ ] Add committed monthly expense tracking.
-- [ ] Add monthly budget rollover behavior or explicitly document that rollover
+- [x] Add income setup for the room or household.
+- [x] Add committed monthly expense tracking.
+- [x] Add monthly budget rollover behavior or explicitly document that rollover
   is not supported.
-- [ ] Add category-level remaining budget calculations.
-- [ ] Add approved purchase totals by category.
-- [ ] Add pending purchase totals by category.
-- [ ] Add purchased totals by category.
-- [ ] Add safe-to-spend calculation based on income, committed expenses, approved
+- [x] Add category-level remaining budget calculations.
+- [x] Add approved purchase totals by category.
+- [x] Add pending purchase totals by category.
+- [x] Add purchased totals by category.
+- [x] Add safe-to-spend calculation based on income, committed expenses, approved
   purchases, pending purchases, and savings reserve.
-- [ ] Add a savings reserve or emergency buffer setting.
-- [ ] Add warnings when a request would reduce safe-to-spend below zero.
-- [ ] Add warnings when a request consumes too much of a category budget.
+- [x] Add a savings reserve or emergency buffer setting.
+- [x] Add warnings when a request would reduce safe-to-spend below zero.
+- [x] Add warnings when a request consumes too much of a category budget.
+
+Phase 13 note: monthly budget rollover is not supported yet. Safe-to-spend is
+calculated for the current month only from the configured decision budget,
+approved purchases, and pending purchases.
 
 ## Phase 14: Request Creation Flow Upgrade
 
@@ -181,7 +185,7 @@ private use.
 - [ ] Test comments with long messages and links.
 - [ ] Run lint.
 - [ ] Run unit tests.
-- [ ] Add or update tests for safe-to-spend and budget impact calculations.
+- [x] Add or update tests for safe-to-spend and budget impact calculations.
 - [ ] Capture screenshots after each completed phase for visual comparison.
 
 ## Recommended Build Order

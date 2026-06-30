@@ -49,6 +49,9 @@ const previewTimestamp = {
 };
 const PREVIEW_BUDGET_SETTINGS: BudgetSettings = {
   monthlyBudget: 5000,
+  monthlyIncome: 12000,
+  committedExpenses: 3000,
+  savingsReserve: 2000,
   categoryBudgets: {
     Home: 5000,
     Kitchen: 2500,
@@ -256,21 +259,23 @@ export default function RequestDetailsScreen() {
       )
     : null;
   const requestAmount = request ? getRequestAmount(request) : 0;
-  const remainingAfterApproval = Math.max(
-    0,
-    budgetSummary.remainingBudget -
-      (request?.status === "pending" ? requestAmount : 0)
-  );
-  const wouldExceedMonthlyBudget =
+  const safeToSpendAfterApproval = budgetSummary.safeToSpend;
+  const wouldReduceSafeToSpendBelowZero =
     !!request &&
-    budgetSummary.monthlyBudget > 0 &&
+    budgetSummary.decisionBudget > 0 &&
     request.status === "pending" &&
-    requestAmount > budgetSummary.remainingBudget;
+    safeToSpendAfterApproval < 0;
   const wouldExceedCategoryBudget =
     !!request &&
     !!categorySummary?.budget &&
     request.status === "pending" &&
-    requestAmount > categorySummary.remaining;
+    categorySummary.approvedTotal + categorySummary.pendingTotal >
+      categorySummary.budget;
+  const wouldConsumeTooMuchCategory =
+    !!request &&
+    !!categorySummary?.budget &&
+    request.status === "pending" &&
+    requestAmount > categorySummary.budget * 0.5;
 
   return (
     <>
@@ -398,7 +403,9 @@ export default function RequestDetailsScreen() {
               style={[
                 styles.section,
                 styles.budgetImpact,
-                wouldExceedMonthlyBudget || wouldExceedCategoryBudget
+                wouldReduceSafeToSpendBelowZero ||
+                wouldExceedCategoryBudget ||
+                wouldConsumeTooMuchCategory
                   ? styles.budgetImpactWarning
                   : null,
               ]}
@@ -414,26 +421,31 @@ export default function RequestDetailsScreen() {
                 Current pending this month: {formatInr(budgetSummary.pendingTotal)}
               </Text>
               <Text style={styles.budgetImpactText}>
-                Monthly remaining now: {formatInr(budgetSummary.remainingBudget)}
+                Safe to spend now: {formatInr(budgetSummary.safeToSpend)}
               </Text>
               <Text style={styles.budgetImpactText}>
-                Remaining after approval: {formatInr(remainingAfterApproval)}
+                Decision budget: {formatInr(budgetSummary.decisionBudget)}
               </Text>
               {categorySummary ? (
                 <Text style={styles.budgetImpactText}>
-                  {request.category} remaining:{" "}
-                  {formatInr(categorySummary.remaining)} of{" "}
+                  {request.category} projected left:{" "}
+                  {formatInr(categorySummary.projectedRemaining)} of{" "}
                   {formatInr(categorySummary.budget)}
                 </Text>
               ) : null}
-              {wouldExceedMonthlyBudget ? (
+              {wouldReduceSafeToSpendBelowZero ? (
                 <Text style={styles.warningText}>
-                  Approval would exceed the available monthly budget.
+                  Approval would keep safe-to-spend below zero.
                 </Text>
               ) : null}
               {wouldExceedCategoryBudget ? (
                 <Text style={styles.warningText}>
                   Approval would exceed the remaining {request.category} budget.
+                </Text>
+              ) : null}
+              {!wouldExceedCategoryBudget && wouldConsumeTooMuchCategory ? (
+                <Text style={styles.warningText}>
+                  This uses a large share of the {request.category} category.
                 </Text>
               ) : null}
             </View>

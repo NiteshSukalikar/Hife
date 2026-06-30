@@ -59,6 +59,9 @@ const PRIORITY_OPTIONS: { label: string; value: RequestPriority; helper: string 
 ];
 const PREVIEW_BUDGET_SETTINGS: BudgetSettings = {
   monthlyBudget: 5000,
+  monthlyIncome: 12000,
+  committedExpenses: 3000,
+  savingsReserve: 2000,
   categoryBudgets: {
     Home: 5000,
     Kitchen: 2500,
@@ -213,15 +216,20 @@ export default function CreateRequestScreen() {
     [budgetSettings]
   );
   const categoryRemaining = Number(categorySummary?.remaining || 0);
+  const categoryProjectedRemaining = Number(
+    categorySummary?.projectedRemaining || 0
+  );
+  const safeToSpendAfterRequest = budgetSummary.safeToSpend - expectedAmount;
   const maxRequestBudget =
-    budgetSummary.monthlyBudget > 0
-      ? Math.min(categoryRemaining, budgetSummary.remainingBudget)
+    budgetSummary.decisionBudget > 0
+      ? Math.min(categoryProjectedRemaining, Math.max(0, budgetSummary.safeToSpend))
       : categoryRemaining;
-  const exceedsMonthlyBudget =
-    budgetSummary.monthlyBudget > 0 &&
-    expectedAmount > budgetSummary.remainingBudget;
+  const exceedsSafeToSpend =
+    budgetSummary.decisionBudget > 0 && safeToSpendAfterRequest < 0;
   const exceedsCategoryBudget =
-    !!categorySummary?.budget && expectedAmount > categorySummary.remaining;
+    !!categorySummary?.budget && expectedAmount > categoryProjectedRemaining;
+  const consumesTooMuchCategory =
+    !!categorySummary?.budget && expectedAmount > categorySummary.budget * 0.5;
 
   useEffect(() => {
     setAiDecision(null);
@@ -307,12 +315,12 @@ export default function CreateRequestScreen() {
         category,
         recentSpending: {
           monthKey: budgetSummary.currentMonthKey,
-          monthlyBudget: budgetSummary.monthlyBudget,
+          monthlyBudget: budgetSummary.decisionBudget,
           approvedThisMonth: budgetSummary.approvedTotal,
           pendingThisMonth: budgetSummary.pendingTotal,
-          monthlyRemaining: budgetSummary.remainingBudget,
+          monthlyRemaining: budgetSummary.safeToSpend,
           categoryBudget: categorySummary?.budget || 0,
-          categoryRemaining: categorySummary?.remaining || 0,
+          categoryRemaining: categorySummary?.projectedRemaining || 0,
         },
       });
 
@@ -514,30 +522,43 @@ export default function CreateRequestScreen() {
             <View
               style={[
                 styles.budgetImpact,
-                exceedsMonthlyBudget || exceedsCategoryBudget
+                exceedsSafeToSpend || exceedsCategoryBudget || consumesTooMuchCategory
                   ? styles.budgetImpactWarning
                   : null,
               ]}
             >
               <Text style={styles.budgetImpactTitle}>Budget impact</Text>
               <Text style={styles.budgetImpactText}>
-                Monthly remaining: {formatInr(budgetSummary.remainingBudget)}
+                Safe to spend now: {formatInr(budgetSummary.safeToSpend)}
               </Text>
               <Text style={styles.budgetImpactText}>
-                {category} remaining:{" "}
-                {formatInr(categorySummary?.remaining || 0)}
+                After this request:{" "}
+                {safeToSpendAfterRequest < 0
+                  ? `over by ${formatInr(Math.abs(safeToSpendAfterRequest))}`
+                  : formatInr(safeToSpendAfterRequest)}
+              </Text>
+              <Text style={styles.budgetImpactText}>
+                {category} projected left:{" "}
+                {formatInr(categoryProjectedRemaining)}
               </Text>
               <Text style={styles.budgetImpactText}>
                 Priority: {priority} - {PRIORITY_EXPLANATIONS[priority]}
               </Text>
-              {expectedAmount > 0 && exceedsMonthlyBudget ? (
+              {expectedAmount > 0 && exceedsSafeToSpend ? (
                 <Text style={styles.warningText}>
-                  This request exceeds the available monthly budget.
+                  This request would push safe-to-spend below zero.
                 </Text>
               ) : null}
               {expectedAmount > 0 && exceedsCategoryBudget ? (
                 <Text style={styles.warningText}>
                   This request exceeds the remaining {category} category budget.
+                </Text>
+              ) : null}
+              {expectedAmount > 0 &&
+              !exceedsCategoryBudget &&
+              consumesTooMuchCategory ? (
+                <Text style={styles.warningText}>
+                  This request uses a large share of the {category} category.
                 </Text>
               ) : null}
             </View>

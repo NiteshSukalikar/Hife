@@ -41,6 +41,12 @@ service cloud.firestore {
         && request.resource.data.inviteCode.matches('^[A-Z0-9]{6}$')
         && request.resource.data.monthlyBudget is number
         && request.resource.data.monthlyBudget >= 0
+        && request.resource.data.monthlyIncome is number
+        && request.resource.data.monthlyIncome >= 0
+        && request.resource.data.committedExpenses is number
+        && request.resource.data.committedExpenses >= 0
+        && request.resource.data.savingsReserve is number
+        && request.resource.data.savingsReserve >= 0
         && request.resource.data.categoryBudgets is map;
     }
 
@@ -58,10 +64,26 @@ service cloud.firestore {
 
     function isBudgetUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['monthlyBudget', 'categoryBudgets', 'updatedAt'])
+        .hasOnly([
+          'monthlyBudget',
+          'monthlyIncome',
+          'committedExpenses',
+          'savingsReserve',
+          'categoryBudgets',
+          'updatedAt'
+        ])
         && request.resource.data.monthlyBudget is number
         && request.resource.data.monthlyBudget >= 0
         && request.resource.data.monthlyBudget <= 10000000
+        && request.resource.data.monthlyIncome is number
+        && request.resource.data.monthlyIncome >= 0
+        && request.resource.data.monthlyIncome <= 10000000
+        && request.resource.data.committedExpenses is number
+        && request.resource.data.committedExpenses >= 0
+        && request.resource.data.committedExpenses <= 10000000
+        && request.resource.data.savingsReserve is number
+        && request.resource.data.savingsReserve >= 0
+        && request.resource.data.savingsReserve <= 10000000
         && request.resource.data.categoryBudgets is map;
     }
 

@@ -13,6 +13,9 @@ export const DEFAULT_CATEGORY_BUDGETS = REQUEST_CATEGORIES.reduce(
 export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
   monthlyBudget: 0,
   categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
+  monthlyIncome: 0,
+  committedExpenses: 0,
+  savingsReserve: 0,
 };
 
 export function getBudgetCategories(
@@ -33,8 +36,10 @@ export type CategorySummary = {
   category: string;
   approvedTotal: number;
   pendingTotal: number;
+  purchasedTotal: number;
   budget: number;
   remaining: number;
+  projectedRemaining: number;
 };
 
 export type MonthSummary = {
@@ -46,9 +51,15 @@ export type MonthSummary = {
 
 export type BudgetSummary = {
   currentMonthKey: string;
+  monthlyIncome: number;
+  committedExpenses: number;
+  savingsReserve: number;
+  incomeAvailableForPurchases: number;
+  decisionBudget: number;
   monthlyBudget: number;
   approvedTotal: number;
   pendingTotal: number;
+  purchasedTotal: number;
   remainingBudget: number;
   safeToSpend: number;
   spendingProgress: number;
@@ -97,6 +108,10 @@ export function getRequestAmount(request: PurchaseRequest) {
   return Number(request.expectedPrice || request.maxBudget || request.budget || 0);
 }
 
+function cleanMoneyValue(value: unknown) {
+  return Math.max(0, Number(value || 0));
+}
+
 export function buildBudgetSummary(
   requests: PurchaseRequest[],
   settings: BudgetSettings = DEFAULT_BUDGET_SETTINGS
@@ -107,6 +122,7 @@ export function buildBudgetSummary(
   const historyMap = new Map<string, MonthSummary>();
   let approvedTotal = 0;
   let pendingTotal = 0;
+  let purchasedTotal = 0;
 
   const budgetCategories = getBudgetCategories(settings);
 
@@ -115,8 +131,10 @@ export function buildBudgetSummary(
       category,
       approvedTotal: 0,
       pendingTotal: 0,
+      purchasedTotal: 0,
       budget: Number(categoryBudgets[category] || 0),
       remaining: Number(categoryBudgets[category] || 0),
+      projectedRemaining: Number(categoryBudgets[category] || 0),
     });
   });
 
@@ -124,8 +142,8 @@ export function buildBudgetSummary(
     const amount = getRequestAmount(request);
     const monthKey = getRequestMonthKey(request);
     const isCurrentMonth = monthKey === currentMonthKey;
-    const isApprovedSpend =
-      request.status === "approved" || request.status === "purchased";
+    const isPurchased = request.status === "purchased";
+    const isApprovedSpend = request.status === "approved" || isPurchased;
     const isPending = request.status === "pending" || request.status === "needs_more_info";
 
     if (!isApprovedSpend && !isPending) return;
@@ -145,6 +163,7 @@ export function buildBudgetSummary(
 
     if (isApprovedSpend) approvedTotal += amount;
     if (isPending) pendingTotal += amount;
+    if (isPurchased) purchasedTotal += amount;
 
     const category = budgetCategories.includes(request.category)
       ? request.category
@@ -154,29 +173,51 @@ export function buildBudgetSummary(
 
     if (isApprovedSpend) summary.approvedTotal += amount;
     if (isPending) summary.pendingTotal += amount;
+    if (isPurchased) summary.purchasedTotal += amount;
     summary.remaining = Math.max(0, summary.budget - summary.approvedTotal);
+    summary.projectedRemaining = Math.max(
+      0,
+      summary.budget - summary.approvedTotal - summary.pendingTotal
+    );
   });
-  const monthlyBudget = Number(settings.monthlyBudget || 0);
-  const safeToSpend = monthlyBudget - approvedTotal - pendingTotal;
+  const monthlyBudget = cleanMoneyValue(settings.monthlyBudget);
+  const monthlyIncome = cleanMoneyValue(settings.monthlyIncome);
+  const committedExpenses = cleanMoneyValue(settings.committedExpenses);
+  const savingsReserve = cleanMoneyValue(settings.savingsReserve);
+  const incomeAvailableForPurchases =
+    monthlyIncome > 0
+      ? monthlyIncome - committedExpenses - savingsReserve
+      : monthlyBudget;
+  const decisionBudget =
+    monthlyBudget > 0 && monthlyIncome > 0
+      ? Math.min(monthlyBudget, incomeAvailableForPurchases)
+      : incomeAvailableForPurchases;
+  const safeToSpend = decisionBudget - approvedTotal - pendingTotal;
   const spendingProgress =
-    monthlyBudget > 0
-      ? Math.min(1, (approvedTotal + pendingTotal) / monthlyBudget)
+    decisionBudget > 0
+      ? Math.min(1, (approvedTotal + pendingTotal) / decisionBudget)
       : 0;
   const budgetHealth =
-    monthlyBudget <= 0
+    decisionBudget <= 0
       ? "needs_review"
       : safeToSpend < 0
         ? "over_budget"
-        : safeToSpend <= monthlyBudget * 0.2
+        : safeToSpend <= decisionBudget * 0.2
           ? "tight"
           : "safe";
 
   return {
     currentMonthKey,
+    monthlyIncome,
+    committedExpenses,
+    savingsReserve,
+    incomeAvailableForPurchases,
+    decisionBudget,
     monthlyBudget,
     approvedTotal,
     pendingTotal,
-    remainingBudget: Math.max(0, monthlyBudget - approvedTotal),
+    purchasedTotal,
+    remainingBudget: Math.max(0, decisionBudget - approvedTotal),
     safeToSpend,
     spendingProgress,
     budgetHealth,
