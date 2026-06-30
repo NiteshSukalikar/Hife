@@ -1,13 +1,23 @@
 import Header from "@/components/header";
 import useToast from "@/components/toast/useToast";
+import { updateBudgetSettings } from "@/services/budgets";
 import {
   createHousehold,
   getActiveHousehold,
   joinHouseholdByInviteCode,
 } from "@/services/households";
 import { logError } from "@/utils/safeLogger";
+import {
+  buildInviteGuidance,
+  cleanMoneyInput,
+  getSetupCategoryNames,
+  normalizeInviteCode,
+  parseMoneyInput,
+  splitBudgetAcrossCategories,
+  validateHouseholdSetup,
+} from "@/utils/onboardingSetup";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -32,9 +42,17 @@ export default function HouseholdScreen() {
   const [roomPassword, setRoomPassword] = useState("");
   const [currentInviteCode, setCurrentInviteCode] = useState("");
   const [currentRoomPassword, setCurrentRoomPassword] = useState("");
+  const [monthlyBudgetInput, setMonthlyBudgetInput] = useState("");
+  const [categoryNamesInput, setCategoryNamesInput] = useState(
+    "Home, Groceries, Other"
+  );
+  const [loadingHousehold, setLoadingHousehold] = useState(true);
+  const [setupError, setSetupError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const loadActiveHousehold = useCallback(() => {
+    setLoadingHousehold(true);
+    setSetupError(null);
     getActiveHousehold()
       .then((household) => {
         if (household) {
@@ -43,29 +61,42 @@ export default function HouseholdScreen() {
       })
       .catch((error) => {
         logError("Failed to load household", error);
+        setSetupError(
+          "We could not check your room yet. Your data is not changed. Try again when the connection settles."
+        );
+      })
+      .finally(() => {
+        setLoadingHousehold(false);
       });
   }, []);
+
+  useEffect(() => {
+    loadActiveHousehold();
+  }, [loadActiveHousehold]);
 
   const submit = async () => {
     if (saving) return;
 
-    if (!displayName.trim()) {
-      show("Add your display name", "error");
-      return;
-    }
+    const validation = validateHouseholdSetup({
+      mode,
+      displayName,
+      roleLabel,
+      householdName,
+      inviteCode,
+      roomPassword,
+      monthlyBudgetInput,
+      categoryNamesInput,
+    });
 
-    if (mode === "join" && !inviteCode.trim()) {
-      show("Enter the room invite code", "error");
-      return;
-    }
-
-    if (roomPassword.trim().length < 4) {
-      show("Room password must be at least 4 characters", "error");
+    if (!validation.isValid) {
+      show(validation.message, "error");
+      setSetupError(validation.message);
       return;
     }
 
     try {
       setSaving(true);
+      setSetupError(null);
       const household =
         mode === "create"
           ? await createHousehold({
@@ -75,7 +106,7 @@ export default function HouseholdScreen() {
               roomPassword,
             })
           : await joinHouseholdByInviteCode({
-              inviteCode,
+              inviteCode: normalizeInviteCode(inviteCode),
               roomPassword,
               displayName,
               roleLabel: roleLabel || "Partner B",
@@ -83,6 +114,30 @@ export default function HouseholdScreen() {
 
       setCurrentInviteCode(household.inviteCode);
       setCurrentRoomPassword(mode === "create" ? roomPassword : "");
+
+      if (mode === "create" && parseMoneyInput(monthlyBudgetInput) > 0) {
+        try {
+          const monthlyBudget = parseMoneyInput(monthlyBudgetInput);
+          const categoryNames = getSetupCategoryNames(categoryNamesInput);
+
+          await updateBudgetSettings({
+            monthlyBudget,
+            monthlyIncome: 0,
+            committedExpenses: 0,
+            savingsReserve: 0,
+            categoryBudgets: splitBudgetAcrossCategories(
+              monthlyBudget,
+              categoryNames
+            ),
+          });
+        } catch (budgetError) {
+          logError("First budget setup failed", budgetError);
+          setSetupError(
+            "Room created, but the first budget did not save. Continue to the room and edit the budget from the dashboard."
+          );
+        }
+      }
+
       show(
         mode === "create" ? "Room created" : "Room joined",
         "success"
@@ -101,6 +156,7 @@ export default function HouseholdScreen() {
             ? error.message
             : "Room setup failed";
 
+      setSetupError(message);
       show(
         message,
         "error"
@@ -113,22 +169,66 @@ export default function HouseholdScreen() {
   const switchMode = (nextMode: Mode) => {
     setMode(nextMode);
     setRoleLabel(nextMode === "create" ? "Partner A" : "Partner B");
+    setSetupError(null);
   };
+
+  const inviteGuidance = buildInviteGuidance(
+    currentInviteCode,
+    !!currentRoomPassword
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
       <Header />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.intro}>
-          <Text style={styles.title}>Set up your room</Text>
+          <Text style={styles.eyebrow}>Shared purchase decisions</Text>
+          <Text style={styles.title}>Set up your Hife room</Text>
           <Text style={styles.subtitle}>
-            Hife keeps requests, budgets, and discussions inside one shared
-            room. Create a room, or join with an invite code and password.
+            Hife helps a household decide what is safe to buy before money is
+            spent. Start with a room, a simple role, and an optional first
+            monthly budget.
           </Text>
         </View>
 
+        <View style={styles.explainerGrid}>
+          <View style={styles.explainerCard}>
+            <Text style={styles.explainerTitle}>Decide together</Text>
+            <Text style={styles.explainerText}>
+              Requests, reasons, and decisions stay in one shared room.
+            </Text>
+          </View>
+          <View style={styles.explainerCard}>
+            <Text style={styles.explainerTitle}>Check the budget first</Text>
+            <Text style={styles.explainerText}>
+              A monthly budget helps Hife show safe-to-spend before approvals.
+            </Text>
+          </View>
+        </View>
+
+        {loadingHousehold ? (
+          <View style={styles.noticeCard}>
+            <Text style={styles.noticeTitle}>Checking your room</Text>
+            <Text style={styles.noticeText}>
+              This should only take a moment. Returning users go straight back
+              to their active room.
+            </Text>
+          </View>
+        ) : null}
+
+        {setupError ? (
+          <View style={styles.errorCard}>
+            <Text style={styles.errorTitle}>Setup needs another try</Text>
+            <Text style={styles.errorText}>{setupError}</Text>
+            <Pressable style={styles.retryButton} onPress={loadActiveHousehold}>
+              <Text style={styles.retryText}>Retry check</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {currentInviteCode ? (
           <View style={styles.inviteCard}>
+            <Text style={styles.inviteTitle}>{inviteGuidance.title}</Text>
             <Text style={styles.inviteLabel}>Your room invite code</Text>
             <Text style={styles.inviteCode}>{currentInviteCode}</Text>
             {currentRoomPassword ? (
@@ -138,7 +238,7 @@ export default function HouseholdScreen() {
               </>
             ) : null}
             <Text style={styles.inviteHelp}>
-              Share the invite code and room password with trusted people only.
+              {inviteGuidance.body}
             </Text>
             <Pressable
               style={styles.continueButton}
@@ -149,110 +249,159 @@ export default function HouseholdScreen() {
           </View>
         ) : null}
 
-        <View style={styles.segmented}>
-          <Pressable
-            style={[styles.segment, mode === "create" && styles.segmentActive]}
-            onPress={() => switchMode("create")}
-          >
-            <Text
-              style={[
-                styles.segmentText,
-                mode === "create" && styles.segmentTextActive,
-              ]}
-            >
-              Create
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.segment, mode === "join" && styles.segmentActive]}
-            onPress={() => switchMode("join")}
-          >
-            <Text
-              style={[
-                styles.segmentText,
-                mode === "join" && styles.segmentTextActive,
-              ]}
-            >
-              Join
-            </Text>
-          </Pressable>
-        </View>
-
-        {mode === "create" ? (
+        {!currentInviteCode ? (
           <>
-            <Text style={styles.label}>Room name</Text>
+            <View style={styles.segmented}>
+              <Pressable
+                style={[
+                  styles.segment,
+                  mode === "create" && styles.segmentActive,
+                ]}
+                onPress={() => switchMode("create")}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    mode === "create" && styles.segmentTextActive,
+                  ]}
+                >
+                  Create room
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.segment, mode === "join" && styles.segmentActive]}
+                onPress={() => switchMode("join")}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    mode === "join" && styles.segmentTextActive,
+                  ]}
+                >
+                  Join room
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text style={styles.sectionTitle}>Room details</Text>
+            {mode === "create" ? (
+              <>
+                <Text style={styles.label}>Room name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={householdName}
+                  onChangeText={setHouseholdName}
+                  placeholder="Example: Home, wedding, shared flat"
+                  placeholderTextColor="#8F867A"
+                  maxLength={40}
+                />
+              </>
+            ) : (
+              <>
+                <Text style={styles.label}>Invite code</Text>
+                <TextInput
+                  style={[styles.input, styles.codeInput]}
+                  value={inviteCode}
+                  onChangeText={(text) => setInviteCode(normalizeInviteCode(text))}
+                  placeholder="ABC123"
+                  placeholderTextColor="#8F867A"
+                  autoCapitalize="characters"
+                  maxLength={12}
+                />
+              </>
+            )}
+
+            <Text style={styles.label}>Room password</Text>
             <TextInput
               style={styles.input}
-              value={householdName}
-              onChangeText={setHouseholdName}
-              placeholder="Example: Family, event, office"
+              value={roomPassword}
+              onChangeText={setRoomPassword}
+              placeholder={
+                mode === "create"
+                  ? "Create a password for this room"
+                  : "Enter the room password"
+              }
               placeholderTextColor="#8F867A"
+              secureTextEntry
               maxLength={40}
             />
-          </>
-        ) : (
-          <>
-            <Text style={styles.label}>Invite code</Text>
+            <Text style={styles.helpText}>
+              The invite code finds the room. The password is a simple shared
+              check so only people you trust can join.
+            </Text>
+
+            <Text style={styles.sectionTitle}>Your profile</Text>
+            <Text style={styles.label}>Your display name</Text>
             <TextInput
-              style={[styles.input, styles.codeInput]}
-              value={inviteCode}
-              onChangeText={(text) => setInviteCode(text.toUpperCase())}
-              placeholder="ABC123"
+              style={styles.input}
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="What should your partner see?"
               placeholderTextColor="#8F867A"
-              autoCapitalize="characters"
-              maxLength={12}
+              maxLength={32}
             />
+
+            <Text style={styles.label}>Role label</Text>
+            <TextInput
+              style={styles.input}
+              value={roleLabel}
+              onChangeText={setRoleLabel}
+              placeholder="Partner, roommate, parent, or custom"
+              placeholderTextColor="#8F867A"
+              maxLength={32}
+            />
+            <Text style={styles.helpText}>
+              You can use practical labels now and edit the wording later as the
+              room grows.
+            </Text>
+
+            {mode === "create" ? (
+              <>
+                <Text style={styles.sectionTitle}>First budget</Text>
+                <Text style={styles.label}>Monthly room budget</Text>
+                <TextInput
+                  style={styles.input}
+                  value={monthlyBudgetInput}
+                  onChangeText={(text) =>
+                    setMonthlyBudgetInput(cleanMoneyInput(text))
+                  }
+                  placeholder="Optional, example: 12000"
+                  placeholderTextColor="#8F867A"
+                  keyboardType="numeric"
+                  maxLength={9}
+                />
+
+                <Text style={styles.label}>Starting categories</Text>
+                <TextInput
+                  style={styles.input}
+                  value={categoryNamesInput}
+                  onChangeText={setCategoryNamesInput}
+                  placeholder="Home, Groceries, Other"
+                  placeholderTextColor="#8F867A"
+                  maxLength={80}
+                />
+                <Text style={styles.helpText}>
+                  Keep this light for now. Hife will split the first budget
+                  across these categories so requests have useful context.
+                </Text>
+              </>
+            ) : null}
+
+            <Pressable
+              style={[styles.primaryButton, saving && styles.disabledButton]}
+              disabled={saving}
+              onPress={submit}
+            >
+              <Text style={styles.primaryText}>
+                {saving
+                  ? "Saving..."
+                  : mode === "create"
+                    ? "Create room"
+                    : "Join room"}
+              </Text>
+            </Pressable>
           </>
-        )}
-
-        <Text style={styles.label}>Room password</Text>
-        <TextInput
-          style={styles.input}
-          value={roomPassword}
-          onChangeText={setRoomPassword}
-          placeholder={
-            mode === "create"
-              ? "Create a password for this room"
-              : "Enter the room password"
-          }
-          placeholderTextColor="#8F867A"
-          secureTextEntry
-          maxLength={40}
-        />
-
-        <Text style={styles.label}>Your display name</Text>
-        <TextInput
-          style={styles.input}
-          value={displayName}
-          onChangeText={setDisplayName}
-          placeholder="What should your partner see?"
-          placeholderTextColor="#8F867A"
-          maxLength={32}
-        />
-
-        <Text style={styles.label}>Role label</Text>
-        <TextInput
-          style={styles.input}
-          value={roleLabel}
-          onChangeText={setRoleLabel}
-          placeholder="Partner A, Partner B, or a custom label"
-          placeholderTextColor="#8F867A"
-          maxLength={32}
-        />
-
-        <Pressable
-          style={[styles.primaryButton, saving && styles.disabledButton]}
-          disabled={saving}
-          onPress={submit}
-        >
-          <Text style={styles.primaryText}>
-            {saving
-              ? "Saving..."
-              : mode === "create"
-                ? "Create Room"
-                : "Join Room"}
-          </Text>
-        </Pressable>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -270,6 +419,14 @@ const styles = StyleSheet.create({
   intro: {
     marginBottom: 18,
   },
+  eyebrow: {
+    color: "#A85C44",
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 0,
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
   title: {
     color: "#3A2E28",
     fontSize: 26,
@@ -281,6 +438,82 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: 8,
   },
+  explainerGrid: {
+    gap: 10,
+    marginBottom: 18,
+  },
+  explainerCard: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 14,
+  },
+  explainerTitle: {
+    color: "#3A2E28",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  explainerText: {
+    color: "#776E64",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  noticeCard: {
+    backgroundColor: "#FFFDF8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 14,
+    padding: 14,
+  },
+  noticeTitle: {
+    color: "#3A2E28",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  noticeText: {
+    color: "#776E64",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  errorCard: {
+    backgroundColor: "#FFF4EF",
+    borderColor: "#D89A82",
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 14,
+    padding: 14,
+  },
+  errorTitle: {
+    color: "#7A341E",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  errorText: {
+    color: "#7A341E",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  retryButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    borderColor: "#A85C44",
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: "center",
+    marginTop: 10,
+    minHeight: 38,
+    paddingHorizontal: 12,
+  },
+  retryText: {
+    color: "#A85C44",
+    fontSize: 13,
+    fontWeight: "900",
+  },
   inviteCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "#A85C44",
@@ -288,6 +521,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 18,
     padding: 14,
+  },
+  inviteTitle: {
+    color: "#3A2E28",
+    fontSize: 16,
+    fontWeight: "900",
+    marginBottom: 10,
   },
   inviteLabel: {
     color: "#8F867A",
@@ -361,6 +600,13 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 12,
   },
+  sectionTitle: {
+    color: "#6F7F6A",
+    fontSize: 13,
+    fontWeight: "900",
+    marginTop: 16,
+    textTransform: "uppercase",
+  },
   input: {
     backgroundColor: "#FFFFFF",
     borderColor: "#E8DECE",
@@ -369,6 +615,12 @@ const styles = StyleSheet.create({
     color: "#3A2E28",
     fontSize: 15,
     padding: 11,
+  },
+  helpText: {
+    color: "#776E64",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 6,
   },
   codeInput: {
     fontWeight: "800",

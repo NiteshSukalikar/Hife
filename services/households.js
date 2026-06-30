@@ -131,6 +131,16 @@ export async function joinHouseholdByInviteCode({
 
   if (inviteSnapshot.exists()) {
     const householdId = inviteSnapshot.data().householdId;
+    const householdSnapshot = await getDoc(doc(db, "households", householdId));
+    await recordUsage("households.read", { reads: 1 });
+
+    if (!householdSnapshot.exists()) {
+      throw new Error("No room found for that invite code");
+    }
+
+    if ((householdSnapshot.data().roomPassword || "") !== roomPassword.trim()) {
+      throw new Error("Room password is incorrect");
+    }
 
     await updateDoc(doc(db, "households", householdId), {
       memberIds: arrayUnion(user.uid),

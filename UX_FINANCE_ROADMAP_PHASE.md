@@ -126,16 +126,16 @@ decisions.
 Goal: Make first use reliable, clear, and trustworthy before users enter money
 details.
 
-- [ ] Fix blank or failed intro/setup screens.
-- [ ] Add a short onboarding path that explains what Hife is for.
-- [ ] Add room or household creation with clear naming.
-- [ ] Explain how invite codes and passwords work.
-- [ ] Add partner invite guidance after room creation.
-- [ ] Add first monthly budget setup during onboarding.
-- [ ] Add first category budget setup during onboarding.
-- [ ] Add display name and role setup that feels human and editable.
-- [ ] Add fallback/error states for setup failures.
-- [ ] Verify onboarding on Android mobile dimensions.
+- [x] Fix blank or failed intro/setup screens.
+- [x] Add a short onboarding path that explains what Hife is for.
+- [x] Add room or household creation with clear naming.
+- [x] Explain how invite codes and passwords work.
+- [x] Add partner invite guidance after room creation.
+- [x] Add first monthly budget setup during onboarding.
+- [x] Add first category budget setup during onboarding.
+- [x] Add display name and role setup that feels human and editable.
+- [x] Add fallback/error states for setup failures.
+- [x] Verify onboarding on Android mobile dimensions.
 
 ## Phase 18: Premium Visual Design Pass
 

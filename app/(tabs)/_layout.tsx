@@ -1,6 +1,6 @@
 import { Redirect, Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -17,6 +17,7 @@ export default function TabLayout() {
     new URLSearchParams(window.location.search).has('preview');
   const [checkingHousehold, setCheckingHousehold] = useState(true);
   const [hasHousehold, setHasHousehold] = useState(false);
+  const [householdCheckFailed, setHouseholdCheckFailed] = useState(false);
 
   useEffect(() => {
     if (isPreview) {
@@ -27,13 +28,15 @@ export default function TabLayout() {
 
     let isMounted = true;
 
+    setCheckingHousehold(true);
+    setHouseholdCheckFailed(false);
     getActiveHousehold()
       .then((household) => {
         if (isMounted) setHasHousehold(!!household);
       })
       .catch((error) => {
         logError("Failed to check household", error);
-        if (isMounted) setHasHousehold(false);
+        if (isMounted) setHouseholdCheckFailed(true);
       })
       .finally(() => {
         if (isMounted) setCheckingHousehold(false);
@@ -46,8 +49,42 @@ export default function TabLayout() {
 
   if (checkingHousehold) {
     return (
-      <View style={{ alignItems: 'center', backgroundColor: '#FAF6EE', flex: 1, justifyContent: 'center' }}>
+      <View style={{ alignItems: 'center', backgroundColor: '#FAF6EE', flex: 1, justifyContent: 'center', padding: 24 }}>
         <ActivityIndicator color="#A85C44" />
+        <Text style={{ color: '#776E64', fontSize: 13, fontWeight: '700', marginTop: 12, textAlign: 'center' }}>
+          Checking your Hife room
+        </Text>
+      </View>
+    );
+  }
+
+  if (householdCheckFailed) {
+    return (
+      <View style={{ alignItems: 'center', backgroundColor: '#FAF6EE', flex: 1, justifyContent: 'center', padding: 24 }}>
+        <Text style={{ color: '#3A2E28', fontSize: 20, fontWeight: '900', textAlign: 'center' }}>
+          Could not check your room
+        </Text>
+        <Text style={{ color: '#776E64', fontSize: 14, lineHeight: 20, marginTop: 8, textAlign: 'center' }}>
+          Your room data is not changed. Try again before setting up a new room.
+        </Text>
+        <Pressable
+          style={{ alignItems: 'center', backgroundColor: '#A85C44', borderRadius: 8, justifyContent: 'center', marginTop: 16, minHeight: 46, paddingHorizontal: 18 }}
+          onPress={() => {
+            setCheckingHousehold(true);
+            setHouseholdCheckFailed(false);
+            getActiveHousehold()
+              .then((household) => setHasHousehold(!!household))
+              .catch((error) => {
+                logError("Failed to retry household check", error);
+                setHouseholdCheckFailed(true);
+              })
+              .finally(() => setCheckingHousehold(false));
+          }}
+        >
+          <Text style={{ color: '#FAF6EE', fontSize: 14, fontWeight: '900' }}>
+            Retry
+          </Text>
+        </Pressable>
       </View>
     );
   }
