@@ -40,6 +40,7 @@ import {
   DEFAULT_BUDGET_SETTINGS,
   formatInr,
   getBudgetCategories,
+  getRequestAmount,
 } from "@/utils/budget";
 import {
   getPriorityChipColor,
@@ -131,6 +132,37 @@ function budgetInputsFromSettings(settings: BudgetSettings) {
 }
 
 type NotificationSettings = typeof DEFAULT_NOTIFICATION_SETTINGS;
+
+const HEALTH_COPY = {
+  safe: {
+    label: "Safe",
+    message: "Pending requests still fit inside this month's budget.",
+    color: "#BFD4B8",
+  },
+  tight: {
+    label: "Tight",
+    message: "There is little room left after pending decisions.",
+    color: "#E0B95C",
+  },
+  over_budget: {
+    label: "Over budget",
+    message: "Pending and approved spend are above the monthly budget.",
+    color: "#E7A18E",
+  },
+  needs_review: {
+    label: "Needs review",
+    message: "Set a monthly budget before relying on safe-to-spend.",
+    color: "#EDE4D6",
+  },
+} as const;
+
+function clampProgress(value: number) {
+  return `${Math.max(0, Math.min(1, value)) * 100}%`;
+}
+
+function formatSafeToSpend(amount: number) {
+  return amount < 0 ? `Over by ${formatInr(Math.abs(amount))}` : formatInr(amount);
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -327,6 +359,8 @@ export default function HomeScreen() {
     () => getBudgetCategories(budgetSettings),
     [budgetSettings]
   );
+  const healthCopy = HEALTH_COPY[budgetSummary.budgetHealth];
+  const topCategorySummaries = budgetSummary.categorySummaries.slice(0, 3);
 
   useFocusEffect(
     useCallback(() => {
@@ -489,14 +523,15 @@ export default function HomeScreen() {
         onPress={() => setShowBudgetOverview((value) => !value)}
       >
         <View>
-          <Text style={styles.budgetEyebrow}>Current month</Text>
-          <Text style={styles.budgetTitle}>Budget overview</Text>
+          <Text style={styles.budgetEyebrow}>Can we safely buy?</Text>
+          <Text style={styles.budgetTitle}>Safe to spend</Text>
         </View>
         <View style={styles.budgetHeaderAction}>
-          <Text style={styles.budgetHeaderMeta} numberOfLines={1}>
-            {budgetSummary.remainingBudget >= 1000
-              ? `INR ${(budgetSummary.remainingBudget / 1000).toFixed(1)}k`
-              : formatInr(budgetSummary.remainingBudget)}
+          <Text
+            style={[styles.healthPill, { color: healthCopy.color }]}
+            numberOfLines={1}
+          >
+            {healthCopy.label}
           </Text>
           <Ionicons
             name={showBudgetOverview ? "chevron-up" : "chevron-down"}
@@ -506,28 +541,94 @@ export default function HomeScreen() {
         </View>
       </Pressable>
 
-      {!showBudgetOverview ? (
-        <View style={styles.compactBudgetRow}>
-          <View>
-            <Text style={styles.statLabel}>Monthly</Text>
-            <Text style={styles.compactBudgetValue}>
-              {formatInr(budgetSummary.monthlyBudget)}
-            </Text>
-          </View>
-          <View style={styles.compactDivider} />
-          <View>
-            <Text style={styles.statLabel}>Pending</Text>
-            <Text style={styles.compactBudgetValue}>
-              {formatInr(budgetSummary.pendingTotal)}
-            </Text>
-          </View>
-          <Pressable
-            style={styles.compactDetailsButton}
-            onPress={() => setShowBudgetOverview(true)}
-          >
-            <Text style={styles.compactDetailsText}>Details</Text>
-          </Pressable>
+      <View style={styles.safeSpendHero}>
+        <Text style={styles.safeSpendValue}>
+          {formatSafeToSpend(budgetSummary.safeToSpend)}
+        </Text>
+        <Text style={styles.safeSpendHelp}>{healthCopy.message}</Text>
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: clampProgress(budgetSummary.spendingProgress) },
+              budgetSummary.budgetHealth === "over_budget" &&
+                styles.progressFillWarning,
+            ]}
+          />
         </View>
+        <View style={styles.progressMetaRow}>
+          <Text style={styles.progressMetaText}>
+            Approved + pending{" "}
+            {formatInr(budgetSummary.approvedTotal + budgetSummary.pendingTotal)}
+          </Text>
+          <Text style={styles.progressMetaText}>
+            Budget {formatInr(budgetSummary.monthlyBudget)}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.compactBudgetRow}>
+        <View style={styles.compactBudgetItem}>
+          <Text style={styles.statLabel}>Approved</Text>
+          <Text style={styles.compactBudgetValue}>
+            {formatInr(budgetSummary.approvedTotal)}
+          </Text>
+        </View>
+        <View style={styles.compactDivider} />
+        <View style={styles.compactBudgetItem}>
+          <Text style={styles.statLabel}>Pending</Text>
+          <Text style={styles.compactBudgetValue}>
+            {formatInr(budgetSummary.pendingTotal)}
+          </Text>
+        </View>
+        <View style={styles.compactDivider} />
+        <View style={styles.compactBudgetItem}>
+          <Text style={styles.statLabel}>Remaining</Text>
+          <Text style={styles.compactBudgetValue}>
+            {formatInr(budgetSummary.remainingBudget)}
+          </Text>
+        </View>
+      </View>
+
+      {topCategorySummaries.length > 0 ? (
+        <View style={styles.categoryPreview}>
+          {topCategorySummaries.map((item) => {
+            const categoryProgress =
+              item.budget > 0
+                ? (item.approvedTotal + item.pendingTotal) / item.budget
+                : 0;
+
+            return (
+              <View key={item.category} style={styles.categoryPreviewRow}>
+                <View style={styles.categoryPreviewTop}>
+                  <Text style={styles.categoryPreviewName} numberOfLines={1}>
+                    {item.category}
+                  </Text>
+                  <Text style={styles.categoryPreviewAmount}>
+                    {formatInr(item.remaining)} left
+                  </Text>
+                </View>
+                <View style={styles.categoryTrack}>
+                  <View
+                    style={[
+                      styles.categoryFill,
+                      { width: clampProgress(categoryProgress) },
+                    ]}
+                  />
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {!showBudgetOverview ? (
+        <Pressable
+          style={styles.compactDetailsButton}
+          onPress={() => setShowBudgetOverview(true)}
+        >
+          <Text style={styles.compactDetailsText}>View budget details</Text>
+        </Pressable>
       ) : null}
 
       {showBudgetOverview ? (
@@ -540,19 +641,19 @@ export default function HomeScreen() {
               </Text>
             </View>
             <View style={styles.budgetStat}>
-              <Text style={styles.statLabel}>Approved</Text>
+              <Text style={styles.statLabel}>Approved spend</Text>
               <Text style={styles.statValue}>
                 {formatInr(budgetSummary.approvedTotal)}
               </Text>
             </View>
             <View style={styles.budgetStat}>
-              <Text style={styles.statLabel}>Pending</Text>
+              <Text style={styles.statLabel}>Pending decisions</Text>
               <Text style={styles.statValue}>
                 {formatInr(budgetSummary.pendingTotal)}
               </Text>
             </View>
             <View style={styles.budgetStat}>
-              <Text style={styles.statLabel}>Remaining</Text>
+              <Text style={styles.statLabel}>Remaining before pending</Text>
               <Text style={styles.statValue}>
                 {formatInr(budgetSummary.remainingBudget)}
               </Text>
@@ -759,12 +860,22 @@ export default function HomeScreen() {
           !loading ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>
-                {error ? "Requests unavailable" : "No matching requests"}
+                {error
+                  ? "Requests unavailable"
+                  : budgetSummary.monthlyBudget <= 0
+                    ? "Set a monthly budget first"
+                    : requests.length === 0
+                      ? "No purchase decisions yet"
+                      : "No matching requests"}
               </Text>
               <Text style={styles.emptyText}>
                 {error
                   ? error
-                  : "Create a purchase request or switch filters to see more."}
+                  : budgetSummary.monthlyBudget <= 0
+                    ? "Add a monthly room budget so Hife can calculate safe-to-spend before requests are created."
+                    : requests.length === 0
+                      ? "Create the first request when someone wants to buy something and needs a quick budget check."
+                      : "Switch filters to see approved, pending, postponed, or purchased requests."}
               </Text>
             </View>
           ) : null
@@ -774,6 +885,15 @@ export default function HomeScreen() {
           const priorityColor = getPriorityChipColor(
             item.priority as RequestPriority
           );
+          const itemAmount = getRequestAmount(item);
+          const categorySummary = budgetSummary.categorySummaries.find(
+            (summary) => summary.category === item.category
+          );
+          const reservesBudget =
+            item.status === "pending" || item.status === "needs_more_info";
+          const afterApproval = reservesBudget
+            ? budgetSummary.safeToSpend - itemAmount
+            : budgetSummary.safeToSpend;
 
           return (
             <Pressable
@@ -793,7 +913,7 @@ export default function HomeScreen() {
 
               <View style={styles.info}>
                 <View style={styles.cardTopRow}>
-                  <Text style={styles.title} numberOfLines={1}>
+                  <Text style={styles.title} numberOfLines={2}>
                     {item.productName}
                   </Text>
                   <Text style={styles.priceText}>
@@ -834,10 +954,14 @@ export default function HomeScreen() {
                 </View>
 
                 <Text style={styles.metaText} numberOfLines={1}>
-                  {item.category}
+                  {item.category} category
                 </Text>
-                <Text style={styles.budget}>
-                  Max budget {formatInr(item.maxBudget)}
+                <Text style={styles.budget} numberOfLines={1}>
+                  {reservesBudget ? "After approval" : "Safe to spend"}:{" "}
+                  {formatSafeToSpend(afterApproval)}
+                </Text>
+                <Text style={styles.cardBudgetMeta} numberOfLines={1}>
+                  Category left: {formatInr(categorySummary?.remaining || 0)}
                 </Text>
                 <Text style={styles.activityText} numberOfLines={1}>
                   Last activity: {formatActivity(item.lastActivityAt)}
@@ -956,11 +1080,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
   },
-  budgetHeaderMeta: {
-    color: "#C8A15A",
-    fontSize: 15,
-    fontWeight: "800",
-    maxWidth: 112,
+  healthPill: {
+    borderColor: "rgba(237, 228, 214, 0.18)",
+    borderRadius: 999,
+    borderWidth: 1,
+    fontSize: 12,
+    fontWeight: "900",
+    maxWidth: 116,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    textTransform: "uppercase",
   },
   budgetEyebrow: {
     color: "#C8A15A",
@@ -974,6 +1103,50 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "800",
     marginTop: 2,
+  },
+  safeSpendHero: {
+    borderBottomColor: "rgba(237, 228, 214, 0.12)",
+    borderBottomWidth: 1,
+    marginTop: 14,
+    paddingBottom: 14,
+  },
+  safeSpendValue: {
+    color: "#F7F2EB",
+    fontSize: 36,
+    fontWeight: "900",
+  },
+  safeSpendHelp: {
+    color: "rgba(237, 228, 214, 0.72)",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 4,
+  },
+  progressTrack: {
+    backgroundColor: "rgba(247, 242, 235, 0.11)",
+    borderRadius: 999,
+    height: 9,
+    marginTop: 12,
+    overflow: "hidden",
+  },
+  progressFill: {
+    backgroundColor: "#6F7F6A",
+    borderRadius: 999,
+    height: "100%",
+  },
+  progressFillWarning: {
+    backgroundColor: "#B66A3C",
+  },
+  progressMetaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginTop: 7,
+  },
+  progressMetaText: {
+    color: "rgba(237, 228, 214, 0.58)",
+    flexShrink: 1,
+    fontSize: 11,
+    fontWeight: "700",
   },
   settingsButton: {
     alignItems: "center",
@@ -1010,6 +1183,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  compactBudgetItem: {
+    flex: 1,
+    minWidth: 0,
+  },
   compactBudgetValue: {
     color: "#F7F2EB",
     fontSize: 18,
@@ -1027,6 +1204,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     justifyContent: "center",
+    marginTop: 12,
     minHeight: 36,
     paddingHorizontal: 12,
   },
@@ -1034,6 +1212,41 @@ const styles = StyleSheet.create({
     color: "#C8A15A",
     fontSize: 12,
     fontWeight: "900",
+  },
+  categoryPreview: {
+    gap: 10,
+    marginTop: 12,
+  },
+  categoryPreviewRow: {
+    gap: 6,
+  },
+  categoryPreviewTop: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  categoryPreviewName: {
+    color: "#F7F2EB",
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  categoryPreviewAmount: {
+    color: "rgba(237, 228, 214, 0.68)",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  categoryTrack: {
+    backgroundColor: "rgba(247, 242, 235, 0.09)",
+    borderRadius: 999,
+    height: 6,
+    overflow: "hidden",
+  },
+  categoryFill: {
+    backgroundColor: "#C8A15A",
+    borderRadius: 999,
+    height: "100%",
   },
   budgetStat: {
     backgroundColor: "rgba(247, 242, 235, 0.08)",
@@ -1218,17 +1431,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: "row",
     marginBottom: 16,
-    padding: 14,
+    padding: 12,
     shadowColor: "#6A3D27",
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.10,
     shadowRadius: 22,
   },
   image: {
-    width: 104,
-    height: 104,
-    borderRadius: 14,
-    marginRight: 16,
+    width: 82,
+    height: 92,
+    borderRadius: 12,
+    marginRight: 12,
   },
   actions: {
     justifyContent: "space-between",
@@ -1248,7 +1461,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cardTopRow: {
-    alignItems: "center",
+    alignItems: "flex-start",
     flexDirection: "row",
     gap: 8,
   },
@@ -1256,12 +1469,12 @@ const styles = StyleSheet.create({
     color: "#1C1510",
     flex: 1,
     fontFamily: "serif",
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "800",
   },
   priceText: {
     color: "#6A3D27",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "900",
   },
   chipRow: {
@@ -1302,6 +1515,12 @@ const styles = StyleSheet.create({
     color: "#A05232",
     fontSize: 15,
     fontWeight: "800",
+  },
+  cardBudgetMeta: {
+    color: "#776E64",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 2,
   },
   activityText: {
     color: "#776E64",

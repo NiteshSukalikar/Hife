@@ -32,20 +32,20 @@ budgeting intelligence, not a generic task tracker or incomplete finance app.
 Goal: Turn the home screen from a request inbox into a calm money decision
 dashboard.
 
-- [ ] Reduce the visual height of the top brand/header area on mobile.
-- [ ] Move the most important money insight above the request list.
-- [ ] Add a safe-to-spend amount for the current month.
-- [ ] Show monthly budget, approved spend, pending spend, and remaining budget
+- [x] Reduce the visual height of the top brand/header area on mobile.
+- [x] Move the most important money insight above the request list.
+- [x] Add a safe-to-spend amount for the current month.
+- [x] Show monthly budget, approved spend, pending spend, and remaining budget
   together.
-- [ ] Show category budget status without making the dashboard feel clustered.
-- [ ] Add simple budget health states such as Safe, Tight, Over Budget, and Needs
+- [x] Show category budget status without making the dashboard feel clustered.
+- [x] Add simple budget health states such as Safe, Tight, Over Budget, and Needs
   Review.
-- [ ] Add a visual budget progress bar for monthly spending.
-- [ ] Add a visual budget progress bar for selected category spending.
-- [ ] Improve request cards so product names do not truncate too early.
-- [ ] Show amount, category, status, priority, and budget impact on each request
+- [x] Add a visual budget progress bar for monthly spending.
+- [x] Add a visual budget progress bar for selected category spending.
+- [x] Improve request cards so product names do not truncate too early.
+- [x] Show amount, category, status, priority, and budget impact on each request
   card.
-- [ ] Add clearer empty states for no requests, no budget set, and no category
+- [x] Add clearer empty states for no requests, no budget set, and no category
   budget set.
 
 ## Phase 13: Budget Model Upgrade
@@ -201,7 +201,7 @@ private use.
 
 Start with:
 
-- [ ] Add a safe-to-spend amount for the current month.
+- [x] Add a safe-to-spend amount for the current month.
 
 This is the highest-impact first change because it directly answers the main
 user question: "Can we safely buy this?"

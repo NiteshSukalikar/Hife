@@ -50,6 +50,9 @@ export type BudgetSummary = {
   approvedTotal: number;
   pendingTotal: number;
   remainingBudget: number;
+  safeToSpend: number;
+  spendingProgress: number;
+  budgetHealth: "safe" | "tight" | "over_budget" | "needs_review";
   categorySummaries: CategorySummary[];
   monthlyHistory: MonthSummary[];
 };
@@ -154,6 +157,19 @@ export function buildBudgetSummary(
     summary.remaining = Math.max(0, summary.budget - summary.approvedTotal);
   });
   const monthlyBudget = Number(settings.monthlyBudget || 0);
+  const safeToSpend = monthlyBudget - approvedTotal - pendingTotal;
+  const spendingProgress =
+    monthlyBudget > 0
+      ? Math.min(1, (approvedTotal + pendingTotal) / monthlyBudget)
+      : 0;
+  const budgetHealth =
+    monthlyBudget <= 0
+      ? "needs_review"
+      : safeToSpend < 0
+        ? "over_budget"
+        : safeToSpend <= monthlyBudget * 0.2
+          ? "tight"
+          : "safe";
 
   return {
     currentMonthKey,
@@ -161,6 +177,9 @@ export function buildBudgetSummary(
     approvedTotal,
     pendingTotal,
     remainingBudget: Math.max(0, monthlyBudget - approvedTotal),
+    safeToSpend,
+    spendingProgress,
+    budgetHealth,
     categorySummaries: Array.from(categoryMap.values()),
     monthlyHistory: Array.from(historyMap.values()).sort((a, b) =>
       b.monthKey.localeCompare(a.monthKey)
