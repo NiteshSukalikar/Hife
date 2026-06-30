@@ -57,6 +57,28 @@ async function rememberHousehold(householdId) {
   await AsyncStorage.setItem(ACTIVE_HOUSEHOLD_KEY, householdId);
 }
 
+async function forgetRememberedHousehold() {
+  await AsyncStorage.removeItem(ACTIVE_HOUSEHOLD_KEY);
+}
+
+function isRecoverableRememberedHouseholdError(error) {
+  return (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error.code === "permission-denied" || error.code === "not-found")
+  );
+}
+
+function isRecoverableMembershipLookupError(error) {
+  return (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    error.code === "permission-denied"
+  );
+}
+
 export async function createHousehold({
   displayName,
   roleLabel = "Partner A",
@@ -205,25 +227,45 @@ export async function getActiveHousehold() {
   const rememberedId = await AsyncStorage.getItem(ACTIVE_HOUSEHOLD_KEY);
 
   if (rememberedId) {
-    const snapshot = await getDoc(doc(db, "households", rememberedId));
-    await recordUsage("households.read", { reads: 1 });
+    try {
+      const snapshot = await getDoc(doc(db, "households", rememberedId));
+      await recordUsage("households.read", { reads: 1 });
 
-    if (snapshot.exists()) {
-      const household = mapHouseholdDoc(snapshot);
+      if (snapshot.exists()) {
+        const household = mapHouseholdDoc(snapshot);
 
-      if (household.memberIds.includes(user.uid)) {
-        return household;
+        if (household.memberIds.includes(user.uid)) {
+          return household;
+        }
       }
+
+      await forgetRememberedHousehold();
+    } catch (error) {
+      if (!isRecoverableRememberedHouseholdError(error)) {
+        throw error;
+      }
+
+      await forgetRememberedHousehold();
     }
   }
 
-  const membershipQuery = query(
-    collection(db, "households"),
-    where("memberIds", "array-contains", user.uid),
-    limit(1)
-  );
-  const snapshot = await getDocs(membershipQuery);
-  await recordUsage("households.membershipLookup", { reads: snapshot.size });
+  let snapshot;
+
+  try {
+    const membershipQuery = query(
+      collection(db, "households"),
+      where("memberIds", "array-contains", user.uid),
+      limit(1)
+    );
+    snapshot = await getDocs(membershipQuery);
+    await recordUsage("households.membershipLookup", { reads: snapshot.size });
+  } catch (error) {
+    if (!isRecoverableMembershipLookupError(error)) {
+      throw error;
+    }
+
+    return null;
+  }
 
   if (snapshot.empty) return null;
 

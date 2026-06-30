@@ -180,7 +180,8 @@ service cloud.firestore {
     }
 
     match /households/{householdId} {
-      allow read: if isHouseholdMember(householdId);
+      allow get: if isHouseholdMember(householdId);
+      allow list: if signedIn() && request.auth.uid in resource.data.memberIds;
       allow create: if isCreatingOwnHousehold();
       allow update: if isHouseholdMember(householdId) && isBudgetUpdate()
         || isJoiningHousehold();
