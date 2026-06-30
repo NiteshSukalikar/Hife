@@ -1,19 +1,45 @@
 import useToast from "@/components/toast/useToast";
+import {
+  BudgetSettings,
+  ProductLink,
+  PurchaseRequest,
+} from "@/constants/types";
+import { getBudgetSettings } from "@/services/budgets";
 import { addComment, subscribeToComments } from "@/services/comments";
 import {
   getNotificationSettings,
   markCommentsRead,
   scheduleLocalNotification,
 } from "@/services/notifications";
+import {
+  subscribeToPurchaseRequest,
+  subscribeToPurchaseRequests,
+} from "@/services/purchaseRequests";
 import { uploadImage } from "@/services/uploadImage";
+import {
+  buildBudgetSummary,
+  DEFAULT_BUDGET_SETTINGS,
+  formatInr,
+  getRequestAmount,
+} from "@/utils/budget";
+import {
+  buildDiscussionRequestSummary,
+  DISCUSSION_QUICK_REPLIES,
+  getCommentLinkPreview,
+} from "@/utils/discussionPresentation";
 import { getDeviceUserId } from "@/utils/deviceUser";
 import { validateImageAsset } from "@/utils/productMedia";
 import { validateProductUrl } from "@/utils/productLinks";
+import { buildRequestBudgetImpact } from "@/utils/requestBudgetImpact";
+import {
+  getPriorityChipColor,
+  getStatusChipColor,
+} from "@/utils/requestPresentation";
 import { logError } from "@/utils/safeLogger";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -41,6 +67,48 @@ type Comment = {
   authorRoleLabel?: string;
   createdAt: string;
 };
+
+const previewTimestamp = {
+  toDate: () => new Date("2026-06-29T19:54:28+05:30"),
+};
+const PREVIEW_BUDGET_SETTINGS: BudgetSettings = {
+  monthlyBudget: 5000,
+  monthlyIncome: 12000,
+  committedExpenses: 3000,
+  savingsReserve: 2000,
+  categoryBudgets: {
+    Home: 5000,
+    Kitchen: 2500,
+    Work: 2000,
+  },
+};
+const PREVIEW_REQUEST: PurchaseRequest = {
+  id: "preview",
+  title: "Quiet Air Purifier",
+  productName: "Quiet Air Purifier",
+  info: "Needed for better sleep and cleaner room air.",
+  reason:
+    "The room gets dusty quickly, and this keeps the space healthier without making noise.",
+  priority: "P1",
+  expectedPrice: 3500,
+  maxBudget: 5000,
+  budget: 5000,
+  category: "Home",
+  links: [{ source: "Amazon", url: "https://example.com/quiet-air-purifier" }],
+  status: "pending",
+  image: null,
+  householdId: "preview-household",
+  createdBy: "partner-a",
+  createdByDisplayName: "Nitesh",
+  createdByRoleLabel: "Partner A",
+  createdAt: previewTimestamp,
+  updatedAt: previewTimestamp,
+  lastActivityAt: previewTimestamp,
+  lastActivityType: "comment",
+  commentCount: 3,
+  lastCommentBy: "partner-b",
+  lastCommentText: "Approved. Please buy the quieter model.",
+};
 const PREVIEW_COMMENTS: Comment[] = [
   {
     id: "c1",
@@ -52,7 +120,8 @@ const PREVIEW_COMMENTS: Comment[] = [
   },
   {
     id: "c2",
-    text: "Yes. INR 3,500, with INR 1,500 left after approval.",
+    text: "Yes. INR 3,500, with INR 1,500 left after approval. https://example.com/quiet-air-purifier",
+    link: "https://example.com/quiet-air-purifier",
     authorId: "partner-a",
     authorDisplayName: "Nitesh",
     authorRoleLabel: "Partner A",
@@ -76,6 +145,13 @@ export default function CommentsScreen() {
 
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [request, setRequest] = useState<PurchaseRequest | null>(null);
+  const [householdRequests, setHouseholdRequests] = useState<PurchaseRequest[]>(
+    []
+  );
+  const [budgetSettings, setBudgetSettings] = useState<BudgetSettings>(
+    DEFAULT_BUDGET_SETTINGS
+  );
   const [loading, setLoading] = useState(true);
 
   const [text, setText] = useState("");
@@ -93,7 +169,7 @@ export default function CommentsScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      title: `${title} - Discussion`,
+      title: `${request?.productName || title || "Request"} - Discussion`,
       headerTitleAlign: "center",
       headerStyle: { backgroundColor: "#0F0F10" },
       headerTintColor: "#F7F2EB",
@@ -114,7 +190,59 @@ export default function CommentsScreen() {
       setMyUserId(userId);
       myUserIdRef.current = userId;
     });
-  }, [isPreview, navigation, title]);
+  }, [isPreview, navigation, request?.productName, title]);
+
+  useEffect(() => {
+    if (isPreview) {
+      setRequest(PREVIEW_REQUEST);
+      setHouseholdRequests([PREVIEW_REQUEST]);
+      setBudgetSettings(PREVIEW_BUDGET_SETTINGS);
+      return;
+    }
+
+    let requestUnsubscribe: undefined | (() => void);
+    let listUnsubscribe: undefined | (() => void);
+    let cancelled = false;
+
+    getBudgetSettings()
+      .then(setBudgetSettings)
+      .catch((error) => {
+        logError("Failed to load discussion budget context", error);
+      });
+
+    subscribeToPurchaseRequest(
+      taskId as string,
+      (data: PurchaseRequest | null) => setRequest(data),
+      (error: unknown) => {
+        logError("Failed to listen for discussion request context", error);
+      }
+    ).then((stop) => {
+      if (cancelled) {
+        stop();
+      } else {
+        requestUnsubscribe = stop;
+      }
+    });
+
+    subscribeToPurchaseRequests(
+      (data: PurchaseRequest[]) => setHouseholdRequests(data),
+      (error: unknown) => {
+        logError("Failed to listen for discussion request list", error);
+      }
+    ).then((stop) => {
+      if (cancelled) {
+        stop();
+      } else {
+        listUnsubscribe = stop;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      requestUnsubscribe?.();
+      listUnsubscribe?.();
+    };
+  }, [isPreview, taskId]);
 
   useEffect(() => {
     myUserIdRef.current = myUserId;
@@ -277,6 +405,45 @@ export default function CommentsScreen() {
     }
   };
 
+  const addQuickReply = (reply: string) => {
+    setText((current) => {
+      const trimmed = current.trim();
+      if (!trimmed) return reply;
+      return `${trimmed}\n${reply}`;
+    });
+  };
+
+  const budgetBeforeRequest = useMemo(
+    () =>
+      buildBudgetSummary(
+        request
+          ? householdRequests.filter((item) => item.id !== request.id)
+          : householdRequests,
+        budgetSettings
+      ),
+    [budgetSettings, householdRequests, request]
+  );
+  const categorySummary = request
+    ? budgetBeforeRequest.categorySummaries.find(
+        (item) => item.category === request.category
+      )
+    : null;
+  const requestAmount = request ? getRequestAmount(request) : 0;
+  const budgetImpact = request
+    ? buildRequestBudgetImpact({
+        amount: requestAmount,
+        safeToSpend: budgetBeforeRequest.safeToSpend,
+        categoryBudget: categorySummary?.budget || 0,
+        categoryProjectedRemaining: categorySummary?.projectedRemaining || 0,
+      })
+    : null;
+  const requestSummary = request
+    ? buildDiscussionRequestSummary(request, budgetImpact)
+    : null;
+  const statusColor = request ? getStatusChipColor(request.status) : null;
+  const urgencyColor = request ? getPriorityChipColor(request.priority) : null;
+  const requestLinks: ProductLink[] = request?.links || [];
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -288,6 +455,105 @@ export default function CommentsScreen() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
+          {requestSummary ? (
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryTopRow}>
+                <View style={styles.summaryTitleWrap}>
+                  <Text style={styles.summaryEyebrow}>Discussing</Text>
+                  <Text style={styles.summaryTitle} numberOfLines={2}>
+                    {requestSummary.title}
+                  </Text>
+                </View>
+                <Text style={styles.summaryAmount}>{requestSummary.amount}</Text>
+              </View>
+
+              <View style={styles.summaryChipsRow}>
+                {statusColor ? (
+                  <View
+                    style={[
+                      styles.summaryChip,
+                      {
+                        backgroundColor: statusColor.bg,
+                        borderColor: statusColor.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.summaryChipText, { color: statusColor.text }]}>
+                      {requestSummary.status}
+                    </Text>
+                  </View>
+                ) : null}
+                {urgencyColor ? (
+                  <View
+                    style={[
+                      styles.summaryChip,
+                      {
+                        backgroundColor: urgencyColor.bg,
+                        borderColor: urgencyColor.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.summaryChipText, { color: urgencyColor.text }]}>
+                      {requestSummary.urgency}
+                    </Text>
+                  </View>
+                ) : null}
+                {request.category ? (
+                  <Text style={styles.summaryCategory} numberOfLines={1}>
+                    {request.category}
+                  </Text>
+                ) : null}
+              </View>
+
+              <View style={styles.summaryBudgetRow}>
+                <Ionicons name="wallet-outline" size={16} color="#7A8C6E" />
+                <Text style={styles.summaryBudgetText}>
+                  Safe to spend now: {formatInr(budgetImpact?.safeToSpendNow || 0)}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  styles.summaryBudgetLine,
+                  budgetImpact?.exceedsSafeToSpend
+                    ? styles.summaryBudgetWarning
+                    : null,
+                ]}
+              >
+                {requestSummary.budgetLine}
+              </Text>
+
+              {request.lastCommentText ? (
+                <View style={styles.latestActivityRow}>
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    size={15}
+                    color="#776E64"
+                  />
+                  <Text style={styles.latestActivityText} numberOfLines={2}>
+                    Latest note: {request.lastCommentText}
+                  </Text>
+                </View>
+              ) : null}
+
+              {requestLinks.length ? (
+                <View style={styles.requestLinksRow}>
+                  {requestLinks.slice(0, 2).map((item) => (
+                    <Pressable
+                      key={item.url}
+                      style={styles.requestLinkPill}
+                      onPress={() => openLink(item.url)}
+                    >
+                      <Ionicons name="link-outline" size={14} color="#B66A3C" />
+                      <Text style={styles.requestLinkText} numberOfLines={1}>
+                        {item.source || "Product link"}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
           <View style={styles.commentsContent}>
             {!loading && comments.length === 0 && (
               <View style={styles.emptyState}>
@@ -300,6 +566,7 @@ export default function CommentsScreen() {
 
             {comments.map((item) => {
               const isMe = item.authorId === myUserId;
+              const linkPreview = getCommentLinkPreview(item.text, item.link || "");
 
               return (
                 <View
@@ -338,12 +605,22 @@ export default function CommentsScreen() {
                     />
                   )}
 
-                  {item.link && (
+                  {linkPreview && (
                     <Pressable
                       style={styles.commentLinkButton}
-                      onPress={() => openLink(item.link || "")}
+                      onPress={() => openLink(linkPreview.url)}
                     >
-                      <Text style={styles.commentLink}>{item.link}</Text>
+                      <View style={styles.commentLinkIcon}>
+                        <Ionicons name="link-outline" size={16} color="#B66A3C" />
+                      </View>
+                      <View style={styles.commentLinkCopy}>
+                        <Text style={styles.commentLinkSource}>
+                          {linkPreview.source}
+                        </Text>
+                        <Text style={styles.commentLink} numberOfLines={1}>
+                          {linkPreview.url}
+                        </Text>
+                      </View>
                     </Pressable>
                   )}
 
@@ -386,8 +663,26 @@ export default function CommentsScreen() {
             <Text style={styles.errorText}>{imageError}</Text>
           ) : null}
 
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.quickReplies}
+          >
+            {DISCUSSION_QUICK_REPLIES.map((reply) => (
+              <Pressable
+                key={reply}
+                style={styles.quickReplyButton}
+                disabled={isSending}
+                onPress={() => addQuickReply(reply)}
+              >
+                <Text style={styles.quickReplyText}>{reply}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
           <TextInput
-            placeholder="Write a comment..."
+            placeholder="Add timing, budget risk, or missing info..."
             placeholderTextColor="#8F867A"
             style={styles.input}
             value={text}
@@ -417,11 +712,15 @@ export default function CommentsScreen() {
             />
 
             <Pressable
-              style={[styles.sendBtn, isSending ? styles.disabledBtn : null]}
+              style={[
+                styles.sendBtn,
+                isSending || !text.trim() ? styles.disabledBtn : null,
+              ]}
               disabled={isSending}
               onPress={handleAddComment}
             >
-              <Ionicons name="send" size={20} color="#FFF9F0" />
+              <Ionicons name="send" size={18} color="#FFF9F0" />
+              <Text style={styles.sendText}>{isSending ? "Sending" : "Send"}</Text>
             </Pressable>
           </View>
         </View>
@@ -434,6 +733,132 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0F0F10" },
   flex: { flex: 1 },
   scroll: { flexGrow: 1 },
+  summaryCard: {
+    backgroundColor: "#FFFBF5",
+    borderBottomColor: "#DDCDBB",
+    borderBottomWidth: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  summaryTopRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+  },
+  summaryTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  summaryEyebrow: {
+    color: "#776E64",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+  },
+  summaryTitle: {
+    color: "#1C1510",
+    fontSize: 18,
+    fontWeight: "900",
+    lineHeight: 23,
+    marginTop: 3,
+  },
+  summaryAmount: {
+    color: "#1C1510",
+    fontSize: 17,
+    fontWeight: "900",
+    lineHeight: 23,
+    textAlign: "right",
+  },
+  summaryChipsRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 12,
+  },
+  summaryChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  summaryChipText: {
+    fontSize: 11,
+    fontWeight: "900",
+  },
+  summaryCategory: {
+    color: "#665E54",
+    flexShrink: 1,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  summaryBudgetRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 12,
+  },
+  summaryBudgetText: {
+    color: "#4F6848",
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  summaryBudgetLine: {
+    color: "#665E54",
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 19,
+    marginTop: 4,
+  },
+  summaryBudgetWarning: {
+    color: "#873926",
+  },
+  latestActivityRow: {
+    alignItems: "flex-start",
+    backgroundColor: "#F7EFE6",
+    borderColor: "#DDCDBB",
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 7,
+    marginTop: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  latestActivityText: {
+    color: "#665E54",
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 17,
+  },
+  requestLinksRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 12,
+  },
+  requestLinkPill: {
+    alignItems: "center",
+    backgroundColor: "#F7EFE6",
+    borderColor: "#DDCDBB",
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 5,
+    maxWidth: "48%",
+    minHeight: 34,
+    paddingHorizontal: 10,
+  },
+  requestLinkText: {
+    color: "#B66A3C",
+    flexShrink: 1,
+    fontSize: 12,
+    fontWeight: "900",
+  },
   commentsContent: {
     padding: 20,
     paddingBottom: 28,
@@ -457,10 +882,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   commentCard: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     marginBottom: 16,
-    maxWidth: "78%",
+    maxWidth: "88%",
     padding: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 12 },
@@ -469,17 +894,13 @@ const styles = StyleSheet.create({
   },
   myComment: {
     backgroundColor: "#211913",
-    borderColor: "rgba(182, 106, 60, 0.68)",
+    borderColor: "rgba(200, 161, 90, 0.52)",
     alignSelf: "flex-end",
-    marginRight: 42,
-    maxWidth: 174,
   },
   otherComment: {
     backgroundColor: "#FFFBF5",
     borderColor: "#DDCDBB",
     alignSelf: "flex-start",
-    maxWidth: "76%",
-    marginRight: 76,
   },
   commentMetaRow: {
     alignItems: "center",
@@ -520,13 +941,40 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   commentLinkButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(247, 239, 230, 0.94)",
+    borderColor: "#DDCDBB",
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 8,
+    marginTop: 4,
     minHeight: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  commentLinkIcon: {
+    alignItems: "center",
+    backgroundColor: "#FFF9F0",
+    borderRadius: 14,
+    height: 28,
     justifyContent: "center",
+    width: 28,
+  },
+  commentLinkCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  commentLinkSource: {
+    color: "#1C1510",
+    fontSize: 12,
+    fontWeight: "900",
   },
   commentLink: {
-    color: "#B66A3C",
-    fontSize: 13,
-    marginBottom: 4,
+    color: "#776E64",
+    fontSize: 12,
+    marginTop: 1,
   },
   time: {
     fontSize: 10,
@@ -539,8 +987,7 @@ const styles = StyleSheet.create({
   inputArea: {
     borderTopWidth: 1,
     borderColor: "rgba(200, 161, 90, 0.24)",
-    paddingLeft: 14,
-    paddingRight: 30,
+    paddingHorizontal: 14,
     paddingVertical: 14,
     backgroundColor: "#171310",
   },
@@ -582,8 +1029,8 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: "#211913",
-    minHeight: 44,
-    maxHeight: 80,
+    minHeight: 58,
+    maxHeight: 104,
     borderWidth: 1,
     borderColor: "rgba(237, 228, 214, 0.20)",
     borderRadius: 12,
@@ -607,6 +1054,25 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     width: "100%",
   },
+  quickReplies: {
+    gap: 8,
+    paddingBottom: 10,
+  },
+  quickReplyButton: {
+    alignItems: "center",
+    backgroundColor: "#211913",
+    borderColor: "rgba(200, 161, 90, 0.34)",
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 34,
+    paddingHorizontal: 12,
+  },
+  quickReplyText: {
+    color: "#EDE4D6",
+    fontSize: 12,
+    fontWeight: "800",
+  },
   linkInput: {
     flex: 1,
     backgroundColor: "#211913",
@@ -621,11 +1087,18 @@ const styles = StyleSheet.create({
   sendBtn: {
     alignItems: "center",
     backgroundColor: "#B66A3C",
-    borderRadius: 50,
+    borderRadius: 999,
+    flexDirection: "row",
+    gap: 6,
     justifyContent: "center",
-    minHeight: 34,
-    minWidth: 34,
-    padding: 6,
+    minHeight: 44,
+    minWidth: 82,
+    paddingHorizontal: 12,
+  },
+  sendText: {
+    color: "#FFF9F0",
+    fontSize: 13,
+    fontWeight: "900",
   },
   iconButton: {
     alignItems: "center",

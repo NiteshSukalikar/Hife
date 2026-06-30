@@ -53,4 +53,26 @@ describe("comment helpers", () => {
       createdAtRaw: createdAt,
     });
   });
+
+  it("keeps older comment documents renderable", () => {
+    expect(
+      mapCommentDoc({
+        id: "old-comment",
+        data: () => ({
+          authorId: "user-1",
+        }),
+      })
+    ).toMatchObject({
+      id: "old-comment",
+      text: "",
+      image: null,
+      link: null,
+      householdId: null,
+      authorId: "user-1",
+      authorDisplayName: "",
+      authorRoleLabel: "",
+      createdAt: "",
+      createdAtRaw: null,
+    });
+  });
 });

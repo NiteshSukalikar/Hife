@@ -111,15 +111,15 @@ decline, postponement, and discussion.
 Goal: Make partner discussion feel calm, contextual, and useful for money
 decisions.
 
-- [ ] Add a compact request summary at the top of the discussion screen.
-- [ ] Show product price, status, and remaining budget while discussing.
-- [ ] Improve comment input layout and send button clarity.
-- [ ] Add link preview or link source display inside comments.
-- [ ] Add image attachment display inside comments if supported.
-- [ ] Add unread comments or new activity indicator.
-- [ ] Add quick reply prompts such as "Can we wait?", "Approved", and "Need more
+- [x] Add a compact request summary at the top of the discussion screen.
+- [x] Show product price, status, and remaining budget while discussing.
+- [x] Improve comment input layout and send button clarity.
+- [x] Add link preview or link source display inside comments.
+- [x] Add image attachment display inside comments if supported.
+- [x] Add unread comments or new activity indicator.
+- [x] Add quick reply prompts such as "Can we wait?", "Approved", and "Need more
   info".
-- [ ] Improve chat contrast so it feels premium, not heavy or unfinished.
+- [x] Improve chat contrast so it feels premium, not heavy or unfinished.
 
 ## Phase 17: Onboarding And Setup Trust
 
@@ -182,9 +182,9 @@ private use.
 - [ ] Test dashboard readability with no requests.
 - [ ] Test long product names, large INR amounts, and long decision reasons.
 - [ ] Test image missing, image loading, and image upload failed states.
-- [ ] Test comments with long messages and links.
-- [ ] Run lint.
-- [ ] Run unit tests.
+- [x] Test comments with long messages and links.
+- [x] Run lint.
+- [x] Run unit tests.
 - [x] Add or update tests for safe-to-spend and budget impact calculations.
 - [ ] Capture screenshots after each completed phase for visual comparison.
 

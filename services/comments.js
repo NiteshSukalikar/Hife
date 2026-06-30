@@ -21,7 +21,7 @@ export function mapCommentDoc(docSnapshot) {
 
   return {
     id: docSnapshot.id,
-    text: data.text,
+    text: data.text || "",
     image: data.image || null,
     link: data.link || null,
     householdId: data.householdId || null,
