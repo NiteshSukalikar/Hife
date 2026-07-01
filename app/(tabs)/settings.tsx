@@ -20,6 +20,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -212,7 +214,16 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
       <Header />
-      <ScrollView contentContainerStyle={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.intro}>
           <Text style={[styles.eyebrow, { color: palette.primary }]}>
             Settings
@@ -562,6 +573,7 @@ export default function SettingsScreen() {
         </View>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -570,10 +582,13 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
+  flex: {
+    flex: 1,
+  },
   container: {
     flexGrow: 1,
     padding: 18,
-    paddingBottom: 32,
+    paddingBottom: 140,
   },
   intro: {
     marginBottom: 18,

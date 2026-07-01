@@ -14,6 +14,8 @@ import {
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -150,7 +152,16 @@ export default function HouseholdScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <Header />
-      <ScrollView contentContainerStyle={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.intro}>
           <Text style={styles.eyebrow}>Shared purchase decisions</Text>
           <Text style={styles.title}>Set up your Hife room</Text>
@@ -341,6 +352,7 @@ export default function HouseholdScreen() {
           </>
         ) : null}
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -350,9 +362,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAF6EE",
     flex: 1,
   },
+  flex: {
+    flex: 1,
+  },
   container: {
     flexGrow: 1,
     padding: 16,
+    paddingBottom: 120,
   },
   intro: {
     marginBottom: 18,

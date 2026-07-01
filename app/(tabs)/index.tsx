@@ -14,6 +14,7 @@ import {
   Switch,
   FlatList,
   Image,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -1089,6 +1090,11 @@ export default function HomeScreen() {
     <View style={[styles.container, { backgroundColor: palette.background }]}>
       <Header />
 
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
       <View
         style={[
           styles.filtersWrapper,
@@ -1133,6 +1139,8 @@ export default function HomeScreen() {
       <FlatList
         contentContainerStyle={styles.listContent}
         data={filteredRequests}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         keyExtractor={(item) => item.id}
         refreshing={loading}
         onRefresh={loadRequests}
@@ -1311,6 +1319,7 @@ export default function HomeScreen() {
           );
         }}
       />
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -1319,6 +1328,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FAF6EE",
+  },
+  flex: {
+    flex: 1,
   },
   filtersWrapper: {
     borderBottomWidth: 1,
@@ -1355,7 +1367,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 18,
-    paddingBottom: 28,
+    paddingBottom: 140,
   },
   budgetPanel: {
     backgroundColor: "#FFFFFF",

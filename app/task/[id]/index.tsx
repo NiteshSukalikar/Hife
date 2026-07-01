@@ -376,13 +376,14 @@ export default function RequestDetailsScreen() {
       <KeyboardAvoidingView
         style={[styles.screen, { backgroundColor: palette.background }]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 60}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
       <ScrollView
         contentContainerStyle={[
           styles.container,
           { backgroundColor: palette.background },
         ]}
+        keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
       >
         {loading && !request ? (

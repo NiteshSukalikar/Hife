@@ -525,10 +525,11 @@ export default function CreateRequestScreen() {
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 60}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         >
           <ScrollView
             contentContainerStyle={styles.scroll}
+            keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
           >
             <Pressable
