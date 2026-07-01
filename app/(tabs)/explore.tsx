@@ -21,6 +21,7 @@ import {
 } from "@/services/purchaseRequests";
 import { uploadImage } from "@/services/uploadImage";
 import { logError } from "@/utils/safeLogger";
+import { Picker } from "@react-native-picker/picker";
 import {
   buildBudgetSummary,
   DEFAULT_BUDGET_SETTINGS,
@@ -148,6 +149,40 @@ function SelectTiles<T extends string>({
           </Pressable>
         );
       })}
+    </View>
+  );
+}
+
+type CategoryDropdownProps = {
+  options: string[];
+  value: string;
+  onChange: (value: string) => void;
+  palette: ReturnType<typeof useHifeTheme>["palette"];
+};
+
+function CategoryDropdown({
+  options,
+  value,
+  onChange,
+  palette,
+}: CategoryDropdownProps) {
+  return (
+    <View
+      style={[
+        styles.categoryPickerShell,
+        { backgroundColor: palette.input, borderColor: palette.border },
+      ]}
+    >
+      <Picker
+        selectedValue={value}
+        onValueChange={(itemValue) => onChange(String(itemValue))}
+        dropdownIconColor={palette.primary}
+        style={[styles.categoryPicker, { color: palette.text }]}
+      >
+        {options.map((option) => (
+          <Picker.Item key={option} label={option} value={option} />
+        ))}
+      </Picker>
     </View>
   );
 }
@@ -563,13 +598,11 @@ export default function CreateRequestScreen() {
               ]}
             >
               <Text style={[styles.label, { color: palette.text }]}>Category</Text>
-              <SelectTiles
-                options={budgetCategories.map((item) => ({
-                  label: item,
-                  value: item,
-                }))}
+              <CategoryDropdown
+                options={budgetCategories}
                 value={category}
                 onChange={setCategory}
+                palette={palette}
               />
 
               <Text style={[styles.label, { color: palette.text }]}>Priority</Text>
@@ -929,6 +962,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
+  },
+  categoryPickerShell: {
+    backgroundColor: "#F5F0E8",
+    borderColor: "#E8DECE",
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 52,
+    justifyContent: "center",
+    marginBottom: 4,
+    overflow: "hidden",
+  },
+  categoryPicker: {
+    height: 52,
+    width: "100%",
   },
   selectTile: {
     alignItems: "center",

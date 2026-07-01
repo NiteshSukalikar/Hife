@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BudgetSettings, PurchaseRequest } from "@/constants/types";
 import {
@@ -6,6 +6,15 @@ import {
   buildCategoryBudgetsFromInputs,
   sumCategoryBudgetInputs,
 } from "@/utils/budget";
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-06-15T10:00:00+05:30"));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const currentTimestamp = {
   toDate: () => new Date(),
